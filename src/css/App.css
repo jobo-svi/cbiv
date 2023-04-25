@@ -53,7 +53,7 @@
 }
 
 .builder .lesson-content {
-  background-color: #ebecf0;
+  background-color: #F2F2F2;
   overflow: auto;
   padding: 1rem 2rem 2rem 2rem;
 }
@@ -386,8 +386,8 @@
   grid-gap: 10px;
   margin: 0 auto;
   transform-origin: top;
-  padding: 5px;
-  background: #fff;
+  /* padding: 5px;
+  background: #fff; */
 }
 
 @media screen and (min-width: 0px) {
