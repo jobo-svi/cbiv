@@ -459,3 +459,8 @@
 .undefined-element .message {
   margin: 0 0.5rem;
 }
+
+.grid .preview {
+    height: 58px;
+    background: #DDE6EF;
+}

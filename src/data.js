@@ -3,13 +3,41 @@ import uuid from "react-uuid";
 export const data = {
   content: {
     body: [
-    //   {
-    //     _uid: uuid(),
-    //     component: "header",
-    //     props: {
-    //       text: "This is a header",
-    //     },
-    //   },
+      {
+        _uid: uuid(),
+        component: "header",
+        props: {
+          text: "Item 1",
+        },
+      },
+      {
+        _uid: uuid(),
+        component: "header",
+        props: {
+          text: "Item 2",
+        },
+      },
+      {
+        _uid: uuid(),
+        component: "header",
+        props: {
+          text: "Item 3",
+        },
+      },
+            {
+        _uid: uuid(),
+        component: "header",
+        props: {
+          text: "Item 4",
+        },
+      },
+      {
+        _uid: uuid(),
+        component: "header",
+        props: {
+          text: "Item 5",
+        },
+      },
     //   {
     //     _uid: uuid(),
     //     component: "image",

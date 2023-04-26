@@ -4,15 +4,12 @@ import { Components, constructComponent } from "./ComponentFactory";
 import uuid from "react-uuid";
 import { useDroppable } from "@dnd-kit/core";
 import Droppable from "./Droppable";
+import SortableItem from "../SortableItem";
 
-const Grid = React.forwardRef(({ items, setItems, onGridItemClick }, ref) => {
+const Grid = React.forwardRef(({ items, setItems, onGridItemClick, dropTargetIndex }, ref) => {
     const { isOver, setNodeRef } = useDroppable({
         id: "initial-droppable",
     });
-
-    const style = {
-        color: isOver ? "green" : undefined,
-    };
 
     return (
         <div className="grid-wrapper" ref={ref}>
@@ -23,24 +20,26 @@ const Grid = React.forwardRef(({ items, setItems, onGridItemClick }, ref) => {
                         ref={setNodeRef}
                         style={{
                             height: "100px",
-                            background: isOver ? "#FFF" : "#EBEBEB",
+                            background: isOver ? "#DDE6EF" : "#EBEBEB",
                             borderStyle: "dashed",
                             borderColor: "#393939",
                         }}
                     ></div>
                 )}
                 {items.length > 0 &&
-                    items.map((item) => {
+                    items.map((item, i) => {
                         return (
-                            <Droppable id={item._uid} key={item._uid}>
+                            <SortableItem id={item._uid} key={item._uid}>
+                                {/* {i === dropTargetIndex && <div className="preview"></div>} */}
                                 <div
                                     onClick={() => onGridItemClick(item)}
-                                    className="grid-item"
+                                    className={`grid-item`}
                                     id={item._uid}
                                 >
                                     {constructComponent(item)}
                                 </div>
-                            </Droppable>
+                                {/* {dropTargetIndex >= items.length && i === items.length - 1 && <div className="preview"></div>} */}
+                            </SortableItem>
                         );
                     })}
             </div>

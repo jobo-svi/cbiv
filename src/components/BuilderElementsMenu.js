@@ -5,6 +5,7 @@ import { ComponentsList } from "./ComponentFactory";
 import uuid from "react-uuid";
 import { useDraggable, DragOverEvent, DragOverlay } from "@dnd-kit/core";
 import "../css/App.css";
+import SortableItem from "../SortableItem";
 
 const BuilderElementsMenu = (props) => {
     return (
@@ -33,11 +34,6 @@ const BuilderElementsMenu = (props) => {
                     </button>
                 </DraggableElement>
             </div> */}
-            <DragOverlay dropAnimation={null}>
-                <button className="element">
-                    <FontAwesomeIcon icon="fa-solid fa-heading" /> HEADER
-                </button>
-            </DragOverlay>
         </div>
     );
 };
