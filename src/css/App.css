@@ -53,7 +53,7 @@
 }
 
 .builder .lesson-content {
-    background-color: #F2F2F2;
+    background-color: #F8F8F8;
     overflow: auto;
     padding: 1rem 2rem 2rem 2rem;
 }
@@ -315,5 +315,5 @@
 }
 
 .grid .grid-item {
-    border: 1px solid black;
+    border: 1px solid #A2A2A2;
 }

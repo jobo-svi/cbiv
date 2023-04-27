@@ -30,7 +30,8 @@ const BuilderElementsMenu = (props) => {
                     }}
                 >
                     <button className="element">
-                        <FontAwesomeIcon icon="fa-solid fa-heading" /> PARAGRAPH
+                        <FontAwesomeIcon icon="fa-solid fa-paragraph" />{" "}
+                        PARAGRAPH
                     </button>
                 </Draggable>
             </div>

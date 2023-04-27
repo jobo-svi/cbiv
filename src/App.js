@@ -2,17 +2,16 @@ import React from "react";
 import Builder from "./components/Builder";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import {
-  faImage,
-  faHeading,
-  faTriangleExclamation,
+    faImage,
+    faHeading,
+    faParagraph,
+    faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faImage, faHeading, faTriangleExclamation);
+library.add(faImage, faHeading, faParagraph, faTriangleExclamation);
 
 function App() {
-  return (
-      <Builder />
-  );
+    return <Builder />;
 }
 
 export default App;

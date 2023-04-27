@@ -10,7 +10,7 @@ const PlacementPreview = forwardRef((props, ref) => {
             <div
                 style={{
                     position: "absolute",
-                    background: "#DDE6EF",
+                    background: "#cae4ff",
                     top: 0,
                     bottom: 0,
                     left: 0,

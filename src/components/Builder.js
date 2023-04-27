@@ -1,45 +1,29 @@
-import "../css/App.css";
 import React, { useState, useEffect, useRef } from "react";
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragOverlay,
-    MeasuringStrategy,
-} from "@dnd-kit/core";
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    defaultAnimateLayoutChanges,
-} from "@dnd-kit/sortable";
-import Grid from "./Grid";
+import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
+import uuid from "react-uuid";
+import "../css/App.css";
 import { data } from "../data";
+import useMousePosition from "../hooks/useMousePosition";
+import Grid from "./Grid";
 import BuilderElementsMenu from "./BuilderElementsMenu";
 import ItemEditor from "./ItemEditor";
 import BuilderNavbar from "./BuilderNavbar";
-import uuid from "react-uuid";
-import useMousePosition from "../hooks/useMousePosition";
 import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
 
 const PageBuilder = () => {
-    const [draggingElement, setDraggingElement] = useState(null);
-    const mousePosition = useMousePosition();
-    const placementPreviewRef = useRef(null);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
+    // The lesson elements
     const [items, setItems] = useState(data.content.body);
+
+    // What element we're currently dragging
+    const [draggingElement, setDraggingElement] = useState(null);
+
+    // Track the position of the mouse for positioning the drag preview
+    const mousePosition = useMousePosition();
+
+    // Keep a reference to the placement preview, for measuring its height
+    const placementPreviewRef = useRef(null);
 
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
         position: "absolute",
@@ -147,7 +131,7 @@ const PageBuilder = () => {
                     // Render the placement preview
                     setPlacementPreviewStyle({
                         position: "absolute",
-                        background: "#DDE6EF",
+                        background: "#cae4ff",
                         width: c.width,
                         top: 0,
                         left: c.left,
@@ -167,10 +151,6 @@ const PageBuilder = () => {
 
     function handleDragOver(event) {
         const { over } = event;
-
-        // if (over) {
-        //     setPlacementPreviewStyle({position: "absolute", background: "#DDE6EF", height: over.rect.height, width: over.rect.width, left: over.rect.left, top: over.rect.top })
-        // }
     }
 
     function addElement(index, elementType) {
@@ -183,18 +163,14 @@ const PageBuilder = () => {
         return newItems;
     }
 
-    // useEffect(() => {
-    //     console.log("dragging", draggingElement);
-    // }, [draggingElement]);
-
     return (
         <DndContext
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}
             onDragOver={handleDragOver}
-            sensors={sensors}
-            // collisionDetection={closestCenter}
+            collisionDetection={closestCenter}
+            modifiers={[snapCenterToCursor]}
         >
             <div className="builder">
                 <BuilderNavbar />
