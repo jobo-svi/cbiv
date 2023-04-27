@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import DroppableElement from "./DroppableElement";
 import { Components, constructComponent } from "./ComponentFactory";
 import uuid from "react-uuid";
 import { useDroppable } from "@dnd-kit/core";
 import Droppable from "./Droppable";
-import SortableItem from "../SortableItem";
+import PlacementPreview from "./PlacementPreview";
 
 const Grid = React.forwardRef(
     (
@@ -14,6 +13,8 @@ const Grid = React.forwardRef(
             onGridItemClick,
             dropTargetIndex,
             placementPreviewStyle,
+            draggingElement,
+            placementPreviewRef,
         },
         ref
     ) => {
@@ -41,30 +42,20 @@ const Grid = React.forwardRef(
                             let style = {};
                             if (
                                 dropTargetIndex !== null &&
-                                i >= dropTargetIndex
+                                i >= dropTargetIndex &&
+                                placementPreviewRef.current
                             ) {
                                 style["transition"] = "transform 150ms ease 0s";
-                                style["transform"] =
-                                    "translate3d(0px, 60px, 0px)";
+                                style[
+                                    "transform"
+                                ] = `translate3d(0px, ${placementPreviewRef
+                                    .current.clientHeight + 12}px, 0px)`;
                             } else if (
                                 dropTargetIndex !== null &&
                                 i < dropTargetIndex
                             ) {
                                 style["transition"] = "transform 150ms ease 0s";
                             }
-
-                            // // testing something, setting random height
-                            // if (i === 0) {
-                            //     style["height"] = "200px";
-                            // } else if (i === 1) {
-                            //     style["height"] = "48px";
-                            // } else if (i === 2) {
-                            //     style["height"] = "100px";
-                            // } else if (i === 3) {
-                            //     style["height"] = "48px";
-                            // } else if (i === 4) {
-                            //     style["height"] = "120px";
-                            // }
 
                             return (
                                 <Droppable id={item._uid} key={item._uid}>
@@ -79,10 +70,6 @@ const Grid = React.forwardRef(
                                 </Droppable>
                             );
                         })}
-                    <div
-                        id="placement-preview"
-                        style={placementPreviewStyle}
-                    ></div>
                 </div>
             </div>
         );

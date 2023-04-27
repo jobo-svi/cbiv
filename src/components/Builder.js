@@ -1,5 +1,5 @@
 import "../css/App.css";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     DndContext,
     closestCenter,
@@ -23,12 +23,14 @@ import BuilderElementsMenu from "./BuilderElementsMenu";
 import ItemEditor from "./ItemEditor";
 import BuilderNavbar from "./BuilderNavbar";
 import uuid from "react-uuid";
-import { Components } from "./ComponentFactory";
 import useMousePosition from "../hooks/useMousePosition";
+import PlacementPreview from "./PlacementPreview";
+import { Components, constructComponent } from "./ComponentFactory";
 
 const PageBuilder = () => {
-    const [activeId, setActiveId] = useState(null);
+    const [draggingElement, setDraggingElement] = useState(null);
     const mousePosition = useMousePosition();
+    const placementPreviewRef = useRef(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -38,10 +40,10 @@ const PageBuilder = () => {
     );
 
     const [items, setItems] = useState(data.content.body);
-    const itemIds = useMemo(() => items.map((item) => item._uid), [items]); // ["1", "2", "3"]
 
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
         position: "absolute",
+        display: "none",
     });
 
     const [itemToEdit, setItemToEdit] = useState(null);
@@ -50,7 +52,7 @@ const PageBuilder = () => {
     const [dropTargetIndex, setDropTargetIndex] = useState(null);
 
     const handleGridItemClick = (item) => {
-        setItemToEdit(item);
+        //setItemToEdit(item);
     };
 
     const handleSaveChanges = (updatedItem) => {
@@ -65,7 +67,7 @@ const PageBuilder = () => {
     function handleDragStart(event) {
         const { active } = event;
 
-        setActiveId(active.id);
+        setDraggingElement(active);
     }
 
     function handleDragEnd(event) {
@@ -86,15 +88,18 @@ const PageBuilder = () => {
             }
         }
 
+        setDraggingElement(null);
         setDropTargetIndex(null);
         setHoverSide(null);
         setPlacementPreviewStyle({
             position: "absolute",
+            display: "none",
         });
     }
 
     function handleDragMove(event) {
         const { active, over, collisions } = event;
+        //console.log(event);
         if (over) {
             // The coordinates of the element we're hovering over
             const hoverBoundingRect = over.rect;
@@ -123,17 +128,39 @@ const PageBuilder = () => {
 
                 setDropTargetIndex(dropTarget);
 
-                // Render the placement preview
-                setPlacementPreviewStyle({
-                    position: "absolute",
-                    background: "#DDE6EF",
-                    height: "48px",
-                    width: over.rect.width,
-                    //top: over.rect.top,
-                    transition: "transform 150ms ease 0s",
-                    //transform: `translate3d(0px, ${60 * dropTarget}px, 0px)`,
-                    transform: `translate3d(0px, ${60 * dropTarget}px, 0px)`,
-                });
+                // get the dimensions of the element that matches the droptarget
+                let item = items[dropTarget];
+                let additional = 0;
+                if (dropTarget === items.length) {
+                    item = items[items.length - 1];
+                }
+
+                let c = collisions.find((c) => c.id === item._uid);
+
+                if (c) {
+                    c = c.data.droppableContainer.rect.current;
+
+                    if (dropTarget === items.length) {
+                        additional += c.height + 10;
+                    }
+
+                    // Render the placement preview
+                    setPlacementPreviewStyle({
+                        position: "absolute",
+                        background: "#DDE6EF",
+                        width: c.width,
+                        top: 0,
+                        left: c.left,
+                        transition: "transform 150ms ease 0s",
+                        transform: `translate3d(0px, ${c.top +
+                            additional}px, 0px)`,
+                    });
+                } else {
+                    setPlacementPreviewStyle({
+                        position: "absolute",
+                        display: "none",
+                    });
+                }
             }
         }
     }
@@ -151,10 +178,14 @@ const PageBuilder = () => {
         newItems.splice(index, 0, {
             _uid: uuid(),
             component: elementType,
-            props: { ...Components[elementType].defaults.props },
+            props: { ...Components[elementType].props },
         });
         return newItems;
     }
+
+    // useEffect(() => {
+    //     console.log("dragging", draggingElement);
+    // }, [draggingElement]);
 
     return (
         <DndContext
@@ -163,7 +194,7 @@ const PageBuilder = () => {
             onDragMove={handleDragMove}
             onDragOver={handleDragOver}
             sensors={sensors}
-            collisionDetection={closestCenter}
+            // collisionDetection={closestCenter}
         >
             <div className="builder">
                 <BuilderNavbar />
@@ -175,6 +206,8 @@ const PageBuilder = () => {
                         onGridItemClick={handleGridItemClick}
                         dropTargetIndex={dropTargetIndex}
                         placementPreviewStyle={placementPreviewStyle}
+                        draggingElement={draggingElement}
+                        placementPreviewRef={placementPreviewRef}
                     />
                 </div>
                 <div className="sidebar">
@@ -191,6 +224,16 @@ const PageBuilder = () => {
             <DragOverlay dropAnimation={null}>
                 <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
             </DragOverlay>
+            <PlacementPreview
+                ref={placementPreviewRef}
+                style={placementPreviewStyle}
+            >
+                {draggingElement
+                    ? constructComponent(
+                          Components[draggingElement.data.current.type]
+                      )
+                    : null}
+            </PlacementPreview>
         </DndContext>
     );
 };

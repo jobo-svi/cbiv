@@ -22,18 +22,18 @@ const BuilderElementsMenu = (props) => {
                     </button>
                 </Draggable>
             </div>
-            {/* <div className="element-wrapper">
-                <DraggableElement
-                    type="image-menu-item"
+            <div className="element-wrapper">
+                <Draggable
+                    id="paragraph-menu-item"
                     data={{
-                        type: "image",
+                        type: "paragraph",
                     }}
                 >
                     <button className="element">
-                        <FontAwesomeIcon icon="image" /> IMAGE
+                        <FontAwesomeIcon icon="fa-solid fa-heading" /> PARAGRAPH
                     </button>
-                </DraggableElement>
-            </div> */}
+                </Draggable>
+            </div>
         </div>
     );
 };
