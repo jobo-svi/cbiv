@@ -26,12 +26,6 @@ import uuid from "react-uuid";
 import { Components } from "./ComponentFactory";
 import useMousePosition from "../hooks/useMousePosition";
 
-const measuringConfig = {
-    droppable: {
-        strategy: MeasuringStrategy.Always,
-    },
-};
-
 const PageBuilder = () => {
     const [activeId, setActiveId] = useState(null);
     const mousePosition = useMousePosition();
@@ -45,6 +39,10 @@ const PageBuilder = () => {
 
     const [items, setItems] = useState(data.content.body);
     const itemIds = useMemo(() => items.map((item) => item._uid), [items]); // ["1", "2", "3"]
+
+    const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
+        position: "absolute",
+    });
 
     const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -72,57 +70,36 @@ const PageBuilder = () => {
 
     function handleDragEnd(event) {
         const { active, over } = event;
-
-        // Ensure we're not hovering over the same element
-        if (active.id !== over.id) {
-            const oldIndex = items.map((i) => i._uid).indexOf(active.id);
-            let newIndex = items.map((i) => i._uid).indexOf(over.id);
-
-            if (oldIndex === -1) {
-                console.log(newIndex);
-                if (hoverSide === "bottom") {
-                    newIndex += 1;
-                }
-                setItems(addElement(newIndex, active.data.current.type));
+        if (over) {
+            if (items.length === 0) {
+                setItems(addElement(0, active.data.current.type));
             } else {
-                console.log(newIndex);
-
-                setItems(arrayMove(items, oldIndex, newIndex));
+                let dropTargetIndex = items.map((i) => i._uid).indexOf(over.id);
+                if (dropTargetIndex !== -1) {
+                    if (hoverSide === "bottom") {
+                        dropTargetIndex += 1;
+                    }
+                    setItems(
+                        addElement(dropTargetIndex, active.data.current.type)
+                    );
+                }
             }
         }
 
-        setActiveId(null);
+        setDropTargetIndex(null);
+        setHoverSide(null);
+        setPlacementPreviewStyle({
+            position: "absolute",
+        });
     }
-
-    // function handleDragEnd(event) {
-    //     const { active, over } = event;
-    //     if (over) {
-    //         if (items.length === 0) {
-    //             setItems(addElement(0, active.data.current.type));
-    //         } else {
-    //             let dropTargetIndex = items.map((i) => i._uid).indexOf(over.id);
-    //             if (dropTargetIndex !== -1) {
-    //                 if (hoverSide === "bottom") {
-    //                     dropTargetIndex += 1;
-    //                 }
-    //                 setItems(
-    //                     addElement(dropTargetIndex, active.data.current.type)
-    //                 );
-    //             }
-    //         }
-    //     }
-
-    //     setDropTargetIndex(null);
-    //     setHoverSide(null);
-    // }
 
     function handleDragMove(event) {
         const { active, over, collisions } = event;
         if (over) {
-            // Determine rectangle on screen
+            // The coordinates of the element we're hovering over
             const hoverBoundingRect = over.rect;
 
-            // Get vertical middle
+            // Get the vertical middle of the element
             const hoverMiddleY =
                 (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
 
@@ -145,8 +122,28 @@ const PageBuilder = () => {
                 }
 
                 setDropTargetIndex(dropTarget);
+
+                // Render the placement preview
+                setPlacementPreviewStyle({
+                    position: "absolute",
+                    background: "#DDE6EF",
+                    height: "48px",
+                    width: over.rect.width,
+                    //top: over.rect.top,
+                    transition: "transform 150ms ease 0s",
+                    //transform: `translate3d(0px, ${60 * dropTarget}px, 0px)`,
+                    transform: `translate3d(0px, ${60 * dropTarget}px, 0px)`,
+                });
             }
         }
+    }
+
+    function handleDragOver(event) {
+        const { over } = event;
+
+        // if (over) {
+        //     setPlacementPreviewStyle({position: "absolute", background: "#DDE6EF", height: over.rect.height, width: over.rect.width, left: over.rect.left, top: over.rect.top })
+        // }
     }
 
     function addElement(index, elementType) {
@@ -159,49 +156,41 @@ const PageBuilder = () => {
         return newItems;
     }
 
-    useEffect(() => {
-        console.log(items);
-    }, [items]);
-
     return (
         <DndContext
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}
+            onDragOver={handleDragOver}
             sensors={sensors}
             collisionDetection={closestCenter}
-            measuring={measuringConfig}
         >
-            <SortableContext
-                items={itemIds}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="builder">
-                    <BuilderNavbar />
-                    <div className="lessons">lessons</div>
-                    <div className="lesson-content">
-                        <Grid
-                            items={items}
-                            setItems={setItems}
-                            onGridItemClick={handleGridItemClick}
-                            dropTargetIndex={dropTargetIndex}
-                        />
-                    </div>
-                    <div className="sidebar">
-                        {itemToEdit !== null ? (
-                            <ItemEditor
-                                item={itemToEdit}
-                                onSaveChanges={handleSaveChanges}
-                            />
-                        ) : (
-                            <BuilderElementsMenu />
-                        )}
-                    </div>
+            <div className="builder">
+                <BuilderNavbar />
+                <div className="lessons">lessons</div>
+                <div className="lesson-content">
+                    <Grid
+                        items={items}
+                        setItems={setItems}
+                        onGridItemClick={handleGridItemClick}
+                        dropTargetIndex={dropTargetIndex}
+                        placementPreviewStyle={placementPreviewStyle}
+                    />
                 </div>
-                <DragOverlay dropAnimation={null}>
-                    <h1 style={{ opacity: ".5" }}>My Header</h1>
-                </DragOverlay>
-            </SortableContext>
+                <div className="sidebar">
+                    {itemToEdit !== null ? (
+                        <ItemEditor
+                            item={itemToEdit}
+                            onSaveChanges={handleSaveChanges}
+                        />
+                    ) : (
+                        <BuilderElementsMenu />
+                    )}
+                </div>
+            </div>
+            <DragOverlay dropAnimation={null}>
+                <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
+            </DragOverlay>
         </DndContext>
     );
 };

@@ -2,15 +2,15 @@ import React from "react";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-function animateLayoutChanges(args) {
-    const {isSorting, wasDragging} = args;
+// function animateLayoutChanges(args) {
+//     const {isSorting, wasDragging} = args;
   
-    if (isSorting || wasDragging) {
-      return defaultAnimateLayoutChanges(args);
-    }
+//     if (isSorting || wasDragging) {
+//       return defaultAnimateLayoutChanges(args);
+//     }
   
-    return true;
-  }
+//     return true;
+//   }
 
 const SortableItem = (props) => {
     const Element = props.element || "div";
@@ -20,7 +20,7 @@ const SortableItem = (props) => {
         setNodeRef,
         transform,
         transition,
-    } = useSortable({ animateLayoutChanges, id: props.id, data: props.data });
+    } = useSortable({ /*animateLayoutChanges,*/ id: props.id, data: props.data });
 
     const style = {
         transition,
