@@ -229,11 +229,9 @@
 .grid {
     display: grid;
     grid-template-columns: 1fr;
-    grid-gap: 10px;
+    gap: 1rem;
     margin: 0 auto;
     transform-origin: top;
-    /* padding: 5px;
-  background: #fff; */
 }
 
 @media screen and (min-width: 0px) {
@@ -314,6 +312,13 @@
     background: #DDE6EF;
 }
 
-.grid .grid-item {
-    border: 1px solid #A2A2A2;
+.grid .grid-row {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 1rem;
+}
+
+.grid .grid-column {
+    /* border: 1px solid #A2A2A2; */
+    flex: 1;
 }

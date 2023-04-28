@@ -24,18 +24,19 @@ export const Components = {
     },
     image: {
         type: Image,
+        component: "image",
         props: {
-            src: `https://source.unsplash.com/random/150x150?t=1234`,
+            src: `img/image-${getRandomInt(1, 3)}.jpg`,
             alt: "Alt Text",
         },
     },
-    flipcard: {
-        type: FlipCard,
-        validChildComponents: [Image],
-    },
-    columnlayout: {
-        type: ColumnLayout,
-    },
+    // flipcard: {
+    //     type: FlipCard,
+    //     validChildComponents: [Image],
+    // },
+    // columnlayout: {
+    //     type: ColumnLayout,
+    // },
 };
 
 // TODO: need a map of what components can be children of what other components,
@@ -56,20 +57,7 @@ const getProps = (item) => {
             typeof value === "object" &&
             value.hasOwnProperty("component");
 
-        // const isArrayOfChildComponents = value !== null &&
-        // typeof value === "array" &&
-        // value.some((item) => )
-
         if (isChildComponent) {
-            // TODO: make sure its children are valid children (maybe put this in getProps)
-            // if (Components[item.component].validChildComponents) {
-            //   console.log(
-            //     Components[item.component].validChildComponents.includes(
-            //       Components[item.component].type
-            //     )
-            //   );
-            // }
-
             props[key] = React.createElement(
                 Components[value.component].type,
                 getProps(value)
@@ -98,3 +86,9 @@ export const constructComponent = (item) => {
         { key: item._uid }
     );
 };
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+}

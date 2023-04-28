@@ -1,64 +1,71 @@
 import React, { useState, useEffect } from "react";
 import { Components, constructComponent } from "./ComponentFactory";
 import uuid from "react-uuid";
-import { useDroppable } from "@dnd-kit/core";
 import Droppable from "./Droppable";
-import PlacementPreview from "./PlacementPreview";
+import DefaultDroppable from "./DefaultDroppable";
 
 const Grid = ({
     items,
     onGridItemClick,
     dropTargetIndex,
     placementPreviewRef,
+    relativeHoverPosition,
 }) => {
-    const { isOver, setNodeRef } = useDroppable({
-        id: "initial-droppable",
-    });
+    function getItemStyle(itemIndex) {
+        let style = {};
+
+        if (
+            relativeHoverPosition === "center" &&
+            itemIndex === dropTargetIndex
+        ) {
+            style.border = "1px solid red";
+        } else {
+            if (
+                dropTargetIndex !== null &&
+                itemIndex >= dropTargetIndex &&
+                placementPreviewRef.current &&
+                relativeHoverPosition !== "center"
+            ) {
+                style.transition = "transform 150ms ease 0s";
+                style.transform = `translate3d(0px, ${placementPreviewRef
+                    .current.clientHeight + 16}px, 0px)`;
+            } else if (
+                dropTargetIndex !== null &&
+                itemIndex < dropTargetIndex
+            ) {
+                style.transition = "transform 150ms ease 0s";
+            }
+        }
+
+        return style;
+    }
 
     return (
         <div className="grid-wrapper">
             <div className="grid">
-                {items.length === 0 && (
-                    <div
-                        id="initial-droppable"
-                        ref={setNodeRef}
-                        style={{
-                            height: "100px",
-                            background: isOver ? "#cae4ff" : "#FFF",
-                            borderStyle: "dashed",
-                            borderColor: "#A2A2A2",
-                        }}
-                    ></div>
-                )}
+                {items.length === 0 && <DefaultDroppable />}
                 {items.length > 0 &&
-                    items.map((item, i) => {
-                        let style = {};
-                        if (
-                            dropTargetIndex !== null &&
-                            i >= dropTargetIndex &&
-                            placementPreviewRef.current
-                        ) {
-                            style["transition"] = "transform 150ms ease 0s";
-                            style[
-                                "transform"
-                            ] = `translate3d(0px, ${placementPreviewRef.current
-                                .clientHeight + 12}px, 0px)`;
-                        } else if (
-                            dropTargetIndex !== null &&
-                            i < dropTargetIndex
-                        ) {
-                            style["transition"] = "transform 150ms ease 0s";
-                        }
-
+                    items.map((row, i) => {
                         return (
-                            <Droppable id={item._uid} key={item._uid}>
+                            <Droppable id={row._uid} key={row._uid}>
                                 <div
-                                    onClick={() => onGridItemClick(item)}
-                                    className={`grid-item`}
-                                    id={item._uid}
-                                    style={style}
+                                    className="grid-row"
+                                    style={getItemStyle(i)}
                                 >
-                                    {constructComponent(item)}
+                                    {row.columns.map((item, itemIndex) => {
+                                        return (
+                                            <div
+                                                onClick={() =>
+                                                    onGridItemClick(item)
+                                                }
+                                                className={`grid-column`}
+                                                id={item._uid}
+                                                key={item._uid}
+                                            >
+                                                {constructComponent(item)}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </Droppable>
                         );

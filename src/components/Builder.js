@@ -24,6 +24,7 @@ const PageBuilder = () => {
 
     // Keep a reference to the placement preview, for measuring its height
     const placementPreviewRef = useRef(null);
+    const lessonContentRef = useRef(null);
 
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
         position: "absolute",
@@ -32,7 +33,7 @@ const PageBuilder = () => {
 
     const [itemToEdit, setItemToEdit] = useState(null);
 
-    const [hoverSide, setHoverSide] = useState(null);
+    const [relativeHoverPosition, setRelativeHoverPosition] = useState(null);
     const [dropTargetIndex, setDropTargetIndex] = useState(null);
 
     const handleGridItemClick = (item) => {
@@ -58,15 +59,19 @@ const PageBuilder = () => {
         const { active, over } = event;
         if (over) {
             if (items.length === 0) {
-                setItems(addElement(0, active.data.current.type));
+                setItems(addElement(0, active.data.current.type, false));
             } else {
                 let dropTargetIndex = items.map((i) => i._uid).indexOf(over.id);
                 if (dropTargetIndex !== -1) {
-                    if (hoverSide === "bottom") {
+                    if (relativeHoverPosition === "bottom") {
                         dropTargetIndex += 1;
                     }
                     setItems(
-                        addElement(dropTargetIndex, active.data.current.type)
+                        addElement(
+                            dropTargetIndex,
+                            active.data.current.type,
+                            relativeHoverPosition === "center"
+                        )
                     );
                 }
             }
@@ -74,7 +79,7 @@ const PageBuilder = () => {
 
         setDraggingElement(null);
         setDropTargetIndex(null);
-        setHoverSide(null);
+        setRelativeHoverPosition(null);
         setPlacementPreviewStyle({
             position: "absolute",
             display: "none",
@@ -83,83 +88,140 @@ const PageBuilder = () => {
 
     function handleDragMove(event) {
         const { active, over, collisions } = event;
-        //console.log(event);
+
+        const clientOffset = mousePosition.current;
+        console.log(lessonContentRef.current);
+        let isWithinLessonContent =
+            clientOffset.y >= lessonContentRef.current.top &&
+            clientOffset.y <= lessonContentRef.current.bottom &&
+            clientOffset.x >= lessonContentRef.current.left &&
+            clientOffset.x <= lessonContentRef.current.right;
+
         if (over) {
             // The coordinates of the element we're hovering over
-            const hoverBoundingRect = over.rect;
+            const hoverRect = over.rect;
 
-            // Get the vertical middle of the element
-            const hoverMiddleY =
-                (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+            // Determine mouse position relative to dndkit's closest match
+            const elementHeight = over.rect.height;
+            const borderTop = hoverRect.top;
+            const borderBottom = hoverRect.bottom;
+            const topRange = borderTop + elementHeight / 5;
+            const bottomRange = borderBottom - elementHeight / 5;
 
-            // Determine mouse position
-            const clientOffset = mousePosition.current;
+            const hoveringWithinElement =
+                clientOffset.y >= hoverRect.top &&
+                clientOffset.y <= hoverRect.bottom &&
+                clientOffset.x >= hoverRect.left &&
+                clientOffset.x <= hoverRect.right;
 
-            // Get pixels to the top
-            const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+            const insideTop =
+                hoveringWithinElement &&
+                clientOffset.y <= topRange &&
+                clientOffset.y >= borderTop;
+
+            const insideBottom =
+                hoveringWithinElement &&
+                clientOffset.y >= bottomRange &&
+                clientOffset.y <= borderBottom;
+
+            const insideCenter =
+                hoveringWithinElement && !insideTop && !insideBottom;
+
+            const aboveElement =
+                !hoveringWithinElement &&
+                clientOffset.y < hoverRect.top + elementHeight / 2;
+
+            const belowElement =
+                !hoveringWithinElement &&
+                clientOffset.y > hoverRect.top + elementHeight / 2;
 
             // Determine position of element if it were dropped
             let dropTarget = items.map((i) => i._uid).indexOf(over.id);
-
+            let hoverPosition = null;
             if (dropTarget !== -1) {
-                // Hovering top or bottom
-                if (hoverClientY < hoverMiddleY) {
-                    setHoverSide("top");
-                } else {
-                    setHoverSide("bottom");
+                // Where are we hovering near
+                if (insideTop || aboveElement) {
+                    hoverPosition = "top";
+                } else if (insideBottom || belowElement) {
+                    hoverPosition = "bottom";
                     dropTarget += 1;
+                } else if (insideCenter) {
+                    hoverPosition = "center";
                 }
 
+                setRelativeHoverPosition(hoverPosition);
                 setDropTargetIndex(dropTarget);
-
-                // get the dimensions of the element that matches the droptarget
-                let item = items[dropTarget];
-                let additional = 0;
-                if (dropTarget === items.length) {
-                    item = items[items.length - 1];
-                }
-
-                let c = collisions.find((c) => c.id === item._uid);
-
-                if (c) {
-                    c = c.data.droppableContainer.rect.current;
-
+                setPlacementPreviewStyle({
+                    position: "absolute",
+                    display: "none",
+                });
+                if (hoverPosition !== "center") {
+                    // get the dimensions of the element that matches the droptarget
+                    let item = items[dropTarget];
+                    let additional = 0;
                     if (dropTarget === items.length) {
-                        additional += c.height + 10;
+                        item = items[items.length - 1];
                     }
 
-                    // Render the placement preview
-                    setPlacementPreviewStyle({
-                        position: "absolute",
-                        background: "#cae4ff",
-                        width: c.width,
-                        top: 0,
-                        left: c.left,
-                        transition: "transform 150ms ease 0s",
-                        transform: `translate3d(0px, ${c.top +
-                            additional}px, 0px)`,
-                    });
-                } else {
-                    setPlacementPreviewStyle({
-                        position: "absolute",
-                        display: "none",
-                    });
+                    let c = collisions.find((c) => c.id === item._uid);
+
+                    if (c) {
+                        c = c.data.droppableContainer.rect.current;
+
+                        if (dropTarget === items.length) {
+                            additional += c.height + 16;
+                        }
+
+                        // Render the placement preview
+                        setPlacementPreviewStyle({
+                            position: "absolute",
+                            background: "#cae4ff",
+                            width: c.width,
+                            top: 0,
+                            left: c.left,
+                            transition: "transform 150ms ease 0s",
+                            transform: `translate3d(0px, ${c.top +
+                                additional}px, 0px)`,
+                        });
+                    } else {
+                        setPlacementPreviewStyle({
+                            position: "absolute",
+                            display: "none",
+                        });
+                    }
                 }
             }
         }
     }
 
-    function handleDragOver(event) {
-        const { over } = event;
-    }
-
-    function addElement(index, elementType) {
+    function addElement(index, elementType, within) {
         const newItems = [...items];
-        newItems.splice(index, 0, {
-            _uid: uuid(),
-            component: elementType,
-            props: { ...Components[elementType].props },
-        });
+
+        if (!within) {
+            // Add a whole new row
+            const newOb = {
+                _uid: uuid(),
+                columns: [
+                    {
+                        _uid: uuid(),
+                        component: elementType,
+                        props: { ...Components[elementType].props },
+                    },
+                ],
+            };
+
+            newItems.splice(index, 0, newOb);
+        } else {
+            // Add a column to an existing row
+            let row = newItems[index];
+            if (row) {
+                row.columns.push({
+                    _uid: uuid(),
+                    component: elementType,
+                    props: { ...Components[elementType].props },
+                });
+            }
+        }
         return newItems;
     }
 
@@ -168,14 +230,13 @@ const PageBuilder = () => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}
-            onDragOver={handleDragOver}
             collisionDetection={closestCenter}
             modifiers={[snapCenterToCursor]}
         >
             <div className="builder">
                 <BuilderNavbar />
                 <div className="lessons">lessons</div>
-                <div className="lesson-content">
+                <div className="lesson-content" ref={lessonContentRef}>
                     <Grid
                         items={items}
                         setItems={setItems}
@@ -184,6 +245,7 @@ const PageBuilder = () => {
                         placementPreviewStyle={placementPreviewStyle}
                         draggingElement={draggingElement}
                         placementPreviewRef={placementPreviewRef}
+                        relativeHoverPosition={relativeHoverPosition}
                     />
                 </div>
                 <div className="sidebar">
