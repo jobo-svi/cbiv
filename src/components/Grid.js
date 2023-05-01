@@ -9,30 +9,22 @@ const Grid = ({
     onGridItemClick,
     dropTargetIndex,
     placementPreviewRef,
-    closestElement,
+    relativeHoverPosition,
 }) => {
     function getItemStyle(itemIndex) {
         let style = {};
+
         if (
-            closestElement.current &&
-            closestElement.current.hoveringWithinCenter &&
+            relativeHoverPosition === "center" &&
             itemIndex === dropTargetIndex
         ) {
             style.border = "1px solid red";
-            style.transition = "transform 150ms ease 0s";
-
-            console.log(closestElement.current.relativePositionY);
-            if (closestElement.current.relativePositionY === "top") {
-                style.transform = `translate3d(0px, ${placementPreviewRef
-                    .current.clientHeight + 16}px, 0px)`;
-            }
         } else {
             if (
                 dropTargetIndex !== null &&
                 itemIndex >= dropTargetIndex &&
                 placementPreviewRef.current &&
-                closestElement &&
-                !closestElement.hoveringWithinCenter
+                relativeHoverPosition !== "center"
             ) {
                 style.transition = "transform 150ms ease 0s";
                 style.transform = `translate3d(0px, ${placementPreviewRef
@@ -41,7 +33,6 @@ const Grid = ({
                 dropTargetIndex !== null &&
                 itemIndex < dropTargetIndex
             ) {
-                console.log(3);
                 style.transition = "transform 150ms ease 0s";
             }
         }

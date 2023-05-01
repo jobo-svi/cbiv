@@ -13,8 +13,6 @@ import uuid from "react-uuid";
 import "../css/App.css";
 import { data } from "../data";
 import useMousePosition from "../hooks/useMousePosition";
-import useDebounce from "../hooks/useDebounce";
-import useTimeout from "../hooks/useTimeout";
 import Grid from "./Grid";
 import BuilderElementsMenu from "./BuilderElementsMenu";
 import ItemEditor from "./ItemEditor";
@@ -23,8 +21,6 @@ import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
 
 const PageBuilder = () => {
-    const closestElement = useRef(null);
-
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
 
@@ -37,8 +33,6 @@ const PageBuilder = () => {
     // Keep a reference to the placement preview, for measuring its height
     const placementPreviewRef = useRef(null);
     const lessonContentRef = useRef(null);
-    const [relativeHoverPosition, setRelativeHoverPosition] = useState(null);
-    const [dropTargetIndex, setDropTargetIndex] = useState(null);
 
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
         position: "absolute",
@@ -46,8 +40,10 @@ const PageBuilder = () => {
     });
 
     const [itemToEdit, setItemToEdit] = useState(null);
+    const [relativeHoverPosition, setRelativeHoverPosition] = useState(null);
+    const [dropTargetIndex, setDropTargetIndex] = useState(null);
 
-    // dndkit sensors for mouse and touch
+    // dndkit sensors
     const mouseSensor = useSensor(MouseSensor, {
         // Require the mouse to move by 1 pixel before activating, so we can differentiate between drag and click
         activationConstraint: {
@@ -58,21 +54,11 @@ const PageBuilder = () => {
     const touchSensor = useSensor(TouchSensor, {
         // Press, with tolerance of 5px of movement
         activationConstraint: {
-            delay: 25,
             tolerance: 5,
         },
     });
 
     const sensors = useSensors(mouseSensor, touchSensor);
-
-    const [hoverTimeout, setHoverTimeout] = useState(null);
-    // useTimeout(() => {
-    //     // setPlacementPreviewStyle({
-    //     //     position: "absolute",
-    //     //     display: "none",
-    //     // });
-    //     setHoverTimeout(null);
-    // }, hoverTimeout);
 
     const handleGridItemClick = (item) => {
         //setItemToEdit(item);
@@ -94,26 +80,20 @@ const PageBuilder = () => {
 
     function handleDragEnd(event) {
         const { active, over } = event;
-        if (closestElement.current) {
+        if (over) {
             if (items.length === 0) {
                 setItems(addElement(0, active.data.current.type, false));
             } else {
-                let dropTargetIndex = items
-                    .map((i) => i._uid)
-                    .indexOf(closestElement.current.id);
+                let dropTargetIndex = items.map((i) => i._uid).indexOf(over.id);
                 if (dropTargetIndex !== -1) {
-                    if (
-                        !closestElement.current.hoveringWithinCenter &&
-                        closestElement.current.relativePositionY === "bottom"
-                    ) {
+                    if (relativeHoverPosition === "bottom") {
                         dropTargetIndex += 1;
                     }
-
                     setItems(
                         addElement(
                             dropTargetIndex,
                             active.data.current.type,
-                            closestElement.current.hoveringWithinCenter
+                            relativeHoverPosition === "center"
                         )
                     );
                 }
@@ -133,6 +113,11 @@ const PageBuilder = () => {
         const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
+        let isWithinLessonContent =
+            clientOffset.y >= lessonContentRef.current.top &&
+            clientOffset.y <= lessonContentRef.current.bottom &&
+            clientOffset.x >= lessonContentRef.current.left &&
+            clientOffset.x <= lessonContentRef.current.right;
 
         if (over) {
             // The coordinates of the element we're hovering over
@@ -140,7 +125,6 @@ const PageBuilder = () => {
 
             // Determine mouse position relative to dndkit's closest match
             const elementHeight = over.rect.height;
-            const elementWidth = over.rect.width;
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
             const topRange = borderTop + elementHeight / 5;
@@ -151,20 +135,7 @@ const PageBuilder = () => {
                 clientOffset.y <= hoverRect.bottom &&
                 clientOffset.x >= hoverRect.left &&
                 clientOffset.x <= hoverRect.right;
-
-            let relativePositionY = null;
-            if (clientOffset.y < hoverRect.top + elementHeight / 2) {
-                relativePositionY = "top";
-            } else {
-                relativePositionY = "bottom";
-            }
-
-            let relativePositionX = null;
-            if (clientOffset.x < hoverRect.left + elementWidth / 2) {
-                relativePositionX = "left";
-            } else {
-                relativePositionX = "right";
-            }
+            console.log(clientOffset);
 
             const insideTop =
                 hoveringWithinElement &&
@@ -187,14 +158,6 @@ const PageBuilder = () => {
                 !hoveringWithinElement &&
                 clientOffset.y > hoverRect.top + elementHeight / 2;
 
-            closestElement.current = {
-                id: over.id,
-                hoveringWithin: hoveringWithinElement,
-                hoveringWithinCenter: insideCenter,
-                relativePositionY: relativePositionY,
-                relativePositionX: relativePositionX,
-            };
-
             // Determine position of element if it were dropped
             let dropTarget = items.map((i) => i._uid).indexOf(over.id);
             let hoverPosition = null;
@@ -211,13 +174,11 @@ const PageBuilder = () => {
 
                 setRelativeHoverPosition(hoverPosition);
                 setDropTargetIndex(dropTarget);
-                // setPlacementPreviewStyle({
-                //     position: "absolute",
-                //     display: "none",
-                // });
+                setPlacementPreviewStyle({
+                    position: "absolute",
+                    display: "none",
+                });
                 if (hoverPosition !== "center") {
-                    setHoverTimeout(null);
-
                     // get the dimensions of the element that matches the droptarget
                     let item = items[dropTarget];
                     let additional = 0;
@@ -251,8 +212,6 @@ const PageBuilder = () => {
                             display: "none",
                         });
                     }
-                } else {
-                    setHoverTimeout(2000);
                 }
             }
         }
@@ -310,7 +269,7 @@ const PageBuilder = () => {
                         placementPreviewStyle={placementPreviewStyle}
                         draggingElement={draggingElement}
                         placementPreviewRef={placementPreviewRef}
-                        closestElement={closestElement}
+                        relativeHoverPosition={relativeHoverPosition}
                     />
                 </div>
                 <div className="sidebar">
