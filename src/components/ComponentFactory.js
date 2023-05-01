@@ -26,7 +26,7 @@ export const Components = {
         type: Image,
         component: "image",
         props: {
-            src: `img/image-${getRandomInt(1, 3)}.jpg`,
+            src: `img/image-2.jpg`,
             alt: "Alt Text",
         },
     },

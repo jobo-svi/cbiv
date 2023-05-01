@@ -10,9 +10,9 @@ const useMousePosition = () => {
         const updateMousePosition = (ev) => {
             mousePosition.current = { x: ev.clientX, y: ev.clientY };
         };
-        window.addEventListener("mousemove", updateMousePosition);
+        window.addEventListener("pointermove", updateMousePosition);
         return () => {
-            window.removeEventListener("mousemove", updateMousePosition);
+            window.removeEventListener("pointermove", updateMousePosition);
         };
     }, []);
     return mousePosition;

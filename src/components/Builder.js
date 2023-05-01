@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
+import {
+    DndContext,
+    closestCenter,
+    DragOverlay,
+    MouseSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import uuid from "react-uuid";
 import "../css/App.css";
@@ -32,9 +40,25 @@ const PageBuilder = () => {
     });
 
     const [itemToEdit, setItemToEdit] = useState(null);
-
     const [relativeHoverPosition, setRelativeHoverPosition] = useState(null);
     const [dropTargetIndex, setDropTargetIndex] = useState(null);
+
+    // dndkit sensors
+    const mouseSensor = useSensor(MouseSensor, {
+        // Require the mouse to move by 1 pixel before activating, so we can differentiate between drag and click
+        activationConstraint: {
+            distance: 1,
+        },
+    });
+
+    const touchSensor = useSensor(TouchSensor, {
+        // Press, with tolerance of 5px of movement
+        activationConstraint: {
+            tolerance: 5,
+        },
+    });
+
+    const sensors = useSensors(mouseSensor, touchSensor);
 
     const handleGridItemClick = (item) => {
         //setItemToEdit(item);
@@ -51,7 +75,6 @@ const PageBuilder = () => {
 
     function handleDragStart(event) {
         const { active } = event;
-
         setDraggingElement(active);
     }
 
@@ -90,7 +113,6 @@ const PageBuilder = () => {
         const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
-        console.log(lessonContentRef.current);
         let isWithinLessonContent =
             clientOffset.y >= lessonContentRef.current.top &&
             clientOffset.y <= lessonContentRef.current.bottom &&
@@ -113,6 +135,7 @@ const PageBuilder = () => {
                 clientOffset.y <= hoverRect.bottom &&
                 clientOffset.x >= hoverRect.left &&
                 clientOffset.x <= hoverRect.right;
+            console.log(clientOffset);
 
             const insideTop =
                 hoveringWithinElement &&
@@ -232,6 +255,7 @@ const PageBuilder = () => {
             onDragMove={handleDragMove}
             collisionDetection={closestCenter}
             modifiers={[snapCenterToCursor]}
+            sensors={sensors}
         >
             <div className="builder">
                 <BuilderNavbar />
@@ -258,20 +282,20 @@ const PageBuilder = () => {
                         <BuilderElementsMenu />
                     )}
                 </div>
+                <DragOverlay dropAnimation={null}>
+                    <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
+                </DragOverlay>
+                <PlacementPreview
+                    ref={placementPreviewRef}
+                    style={placementPreviewStyle}
+                >
+                    {draggingElement
+                        ? constructComponent(
+                              Components[draggingElement.data.current.type]
+                          )
+                        : null}
+                </PlacementPreview>
             </div>
-            <DragOverlay dropAnimation={null}>
-                <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
-            </DragOverlay>
-            <PlacementPreview
-                ref={placementPreviewRef}
-                style={placementPreviewStyle}
-            >
-                {draggingElement
-                    ? constructComponent(
-                          Components[draggingElement.data.current.type]
-                      )
-                    : null}
-            </PlacementPreview>
         </DndContext>
     );
 };
