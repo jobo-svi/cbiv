@@ -31,6 +31,25 @@ export const data = {
                     // },
                 ],
             },
+            {
+                _uid: uuid(),
+                columns: [
+                    {
+                        _uid: uuid(),
+                        component: "header",
+                        props: {
+                            text: "Item 2",
+                        },
+                    },
+                    // {
+                    //     _uid: uuid(),
+                    //     component: "header",
+                    //     props: {
+                    //         text: "Item 2",
+                    //     },
+                    // },
+                ],
+            },
 
             //   {
             //     _uid: uuid(),
