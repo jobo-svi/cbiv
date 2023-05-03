@@ -3,7 +3,6 @@ import { Components, constructComponent } from "./ComponentFactory";
 import uuid from "react-uuid";
 import Droppable from "./Droppable";
 import DefaultDroppable from "./DefaultDroppable";
-import SortableItem from "./SortableItem";
 
 const Grid = ({
     items,
@@ -15,28 +14,28 @@ const Grid = ({
     function getItemStyle(itemIndex) {
         let style = {};
 
-        // if (
-        //     relativeHoverPosition === "center" &&
-        //     itemIndex === dropTargetIndex
-        // ) {
-        //     style.border = "1px solid red";
-        // } else {
-        //     if (
-        //         dropTargetIndex !== null &&
-        //         itemIndex >= dropTargetIndex &&
-        //         placementPreviewRef.current &&
-        //         relativeHoverPosition !== "center"
-        //     ) {
-        //         style.transition = "transform 150ms ease 0s";
-        //         style.transform = `translate3d(0px, ${placementPreviewRef
-        //             .current.clientHeight + 16}px, 0px)`;
-        //     } else if (
-        //         dropTargetIndex !== null &&
-        //         itemIndex < dropTargetIndex
-        //     ) {
-        //         style.transition = "transform 150ms ease 0s";
-        //     }
-        // }
+        if (
+            relativeHoverPosition === "center" &&
+            itemIndex === dropTargetIndex
+        ) {
+            style.border = "1px solid red";
+        } else {
+            if (
+                dropTargetIndex !== null &&
+                itemIndex >= dropTargetIndex &&
+                placementPreviewRef.current &&
+                relativeHoverPosition !== "center"
+            ) {
+                style.transition = "transform 150ms ease 0s";
+                style.transform = `translate3d(0px, ${placementPreviewRef
+                    .current.clientHeight + 16}px, 0px)`;
+            } else if (
+                dropTargetIndex !== null &&
+                itemIndex < dropTargetIndex
+            ) {
+                style.transition = "transform 150ms ease 0s";
+            }
+        }
 
         return style;
     }
@@ -48,15 +47,10 @@ const Grid = ({
                 {items.length > 0 &&
                     items.map((row, i) => {
                         return (
-                            <SortableItem
-                                id={row._uid}
-                                key={row._uid}
-                                dropTargetIndex={dropTargetIndex}
-                            >
+                            <Droppable id={row._uid} key={row._uid}>
                                 <div
                                     className="grid-row"
                                     style={getItemStyle(i)}
-                                    id={row._uid}
                                 >
                                     {row.columns.map((item, itemIndex) => {
                                         return (
@@ -73,7 +67,7 @@ const Grid = ({
                                         );
                                     })}
                                 </div>
-                            </SortableItem>
+                            </Droppable>
                         );
                     })}
             </div>

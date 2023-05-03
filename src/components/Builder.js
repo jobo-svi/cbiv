@@ -1,38 +1,13 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-    Announcements,
-    CollisionDetection,
-    DragOverlay,
     DndContext,
-    DropAnimation,
-    defaultDropAnimation,
-    KeyboardSensor,
-    Modifiers,
+    closestCenter,
+    DragOverlay,
     MouseSensor,
-    PointerSensor,
-    MeasuringConfiguration,
-    PointerActivationConstraint,
-    ScreenReaderInstructions,
     TouchSensor,
-    UniqueIdentifier,
     useSensor,
-    MeasuringStrategy,
     useSensors,
-    Collision,
-    Active,
-    rectIntersection,
 } from "@dnd-kit/core";
-import {
-    arrayMove,
-    useSortable,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    SortingStrategy,
-    rectSortingStrategy,
-    verticalListSortingStrategy,
-    defaultAnimateLayoutChanges,
-    defaultNewIndexGetter,
-} from "@dnd-kit/sortable";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import uuid from "react-uuid";
 import "../css/App.css";
@@ -44,26 +19,10 @@ import ItemEditor from "./ItemEditor";
 import BuilderNavbar from "./BuilderNavbar";
 import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
-import SortableItem from "./SortableItem";
 
 const PageBuilder = () => {
-    const measuringConfig = {
-        droppable: {
-            strategy: MeasuringStrategy.Always,
-        },
-    };
-
-    const [activeId, setActiveId] = useState(null);
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
-    const itemIds = useMemo(() => items.map((item) => item._uid), [items]);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
 
     // What element we're currently dragging
     const [draggingElement, setDraggingElement] = useState(null);
@@ -73,6 +32,7 @@ const PageBuilder = () => {
 
     // Keep a reference to the placement preview, for measuring its height
     const placementPreviewRef = useRef(null);
+    const lessonContentRef = useRef(null);
 
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
         position: "absolute",
@@ -98,7 +58,7 @@ const PageBuilder = () => {
         },
     });
 
-    //const sensors = useSensors(mouseSensor, touchSensor);
+    const sensors = useSensors(mouseSensor, touchSensor);
 
     const handleGridItemClick = (item) => {
         //setItemToEdit(item);
@@ -115,32 +75,12 @@ const PageBuilder = () => {
 
     function handleDragStart(event) {
         const { active } = event;
-
-        setActiveId(active.id);
-    }
-
-    function handleReorder(event) {
-        const { active, over } = event;
-
-        if (active && over && active.id !== over.id) {
-            setItems((items) => {
-                const oldIndex = items.findIndex((i) => i._uid === active.id);
-                const newIndex = items.findIndex((i) => i._uid === over.id);
-
-                return arrayMove(items, oldIndex, newIndex);
-            });
-        }
-
-        setActiveId(null);
+        setDraggingElement(active);
     }
 
     function handleDragEnd(event) {
         const { active, over } = event;
-        if (!active && !over) {
-            return;
-        }
-
-        if (active.id.includes("menu-item")) {
+        if (over) {
             if (items.length === 0) {
                 setItems(addElement(0, active.data.current.type, false));
             } else {
@@ -158,8 +98,6 @@ const PageBuilder = () => {
                     );
                 }
             }
-        } else {
-            handleReorder(event);
         }
 
         setDraggingElement(null);
@@ -175,6 +113,11 @@ const PageBuilder = () => {
         const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
+        let isWithinLessonContent =
+            clientOffset.y >= lessonContentRef.current.top &&
+            clientOffset.y <= lessonContentRef.current.bottom &&
+            clientOffset.x >= lessonContentRef.current.left &&
+            clientOffset.x <= lessonContentRef.current.right;
 
         if (over) {
             // The coordinates of the element we're hovering over
@@ -184,14 +127,15 @@ const PageBuilder = () => {
             const elementHeight = over.rect.height;
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
-            const topRange = borderTop + 5; //borderTop + elementHeight / 4;
-            const bottomRange = borderBottom - 5; //borderBottom - elementHeight / 4;
+            const topRange = borderTop + elementHeight / 5;
+            const bottomRange = borderBottom - elementHeight / 5;
 
             const hoveringWithinElement =
                 clientOffset.y >= hoverRect.top &&
                 clientOffset.y <= hoverRect.bottom &&
                 clientOffset.x >= hoverRect.left &&
                 clientOffset.x <= hoverRect.right;
+            console.log(clientOffset);
 
             const insideTop =
                 hoveringWithinElement &&
@@ -304,202 +248,54 @@ const PageBuilder = () => {
         return newItems;
     }
 
-    const zeroCoordinates = { x: 0, y: 0 };
-
-    function distanceBetween(p1, p2) {
-        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-    }
-
-    function sortCollisionsAsc({ data: { value: a } }, { data: { value: b } }) {
-        return a - b;
-    }
-
-    function centerOfRectangle(rect, left = rect.left, top = rect.top) {
-        return {
-            x: left + rect.width * 0.5,
-            y: top + rect.height * 0.5,
-        };
-    }
-
-    function isHovered(pointer, clientRect) {
-        if (!pointer || !clientRect) {
-            return false;
-        }
-
-        return (
-            pointer.x > clientRect.x &&
-            pointer.x < clientRect.x + clientRect.width &&
-            pointer.y > clientRect.y &&
-            pointer.y < clientRect.y + clientRect.height
-        );
-    }
-
-    let previosValue = [];
-    let initialValue = [];
-
-    const closestCenterr = ({
-        collisionRect,
-        droppableRects,
-        droppableContainers,
-        active,
-        pointerCoordinates,
-    }) => {
-        const centerRect = centerOfRectangle(
-            collisionRect,
-            collisionRect.left,
-            collisionRect.top
-        );
-
-        const currentIndex = initialValue.findIndex((v) => v.id === active.id);
-        const currentId = previosValue[currentIndex]
-            ? previosValue[currentIndex].id
-            : null || active.id;
-        let collisions = [];
-
-        const currentRect = droppableRects.get(currentId);
-
-        const centerCurrectRect = currentRect
-            ? centerOfRectangle(currentRect)
-            : zeroCoordinates;
-
-        const spaceSize = 16;
-        const isEnabled =
-            Math.abs(centerCurrectRect.x - centerRect.x) >
-                collisionRect.width + spaceSize ||
-            Math.abs(centerCurrectRect.y - centerRect.y) >
-                collisionRect.height + spaceSize;
-
-        for (const droppableContainer of droppableContainers) {
-            const { id } = droppableContainer;
-            const rect = droppableRects.get(id);
-            const clientRect = droppableContainer.node.current
-                ? droppableContainer.node.current.getBoundingClientRect()
-                : null;
-
-            if (rect) {
-                let distBetween = distanceBetween(
-                    centerOfRectangle(rect),
-                    isEnabled ? centerRect : centerCurrectRect
-                );
-
-                collisions.push({
-                    id,
-                    data: {
-                        droppableContainer,
-                        value: distBetween,
-                        hovered:
-                            active.id !== id
-                                ? isHovered(pointerCoordinates, clientRect)
-                                : false,
-                    },
-                });
-            }
-        }
-
-        previosValue = collisions.sort(sortCollisionsAsc);
-
-        if (initialValue.length === 0) {
-            initialValue = previosValue;
-        }
-
-        return previosValue;
-    };
-
     return (
-        // <DndContext
-        //     sensors={sensors}
-        //     collisionDetection={rectIntersection}
-        //     onDragStart={({ active }) => {
-        //         if (!active) {
-        //             return;
-        //         }
-
-        //         setActiveId(active.id);
-        //     }}
-        //     onDragEnd={handleDragEnd}
-        //     onDragCancel={() => setActiveId(null)}
-        // >
-        //     <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-        //         {items.map((id, index) => (
-        //             <SortableItem
-        //                 key={id}
-        //                 id={id}
-        //                 handle={false}
-        //                 index={index}
-        //                 style={() => ({})}
-        //                 wrapperStyle={() => ({})}
-        //                 disabled={false}
-        //                 //renderItem={renderItem}
-        //                 //onRemove={handleRemove}
-        //                 animateLayoutChanges={defaultAnimateLayoutChanges}
-        //                 useDragOverlay={true}
-        //                 getNewIndex={defaultNewIndexGetter}
-        //             >
-        //                 <div
-        //                     style={{
-        //                         border: "1px solid black",
-        //                         height: "50px",
-        //                     }}
-        //                 >
-        //                     {id}
-        //                 </div>
-        //             </SortableItem>
-        //         ))}
-        //     </SortableContext>
-        // </DndContext>
         <DndContext
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}
+            collisionDetection={closestCenter}
             modifiers={[snapCenterToCursor]}
             sensors={sensors}
-            collisionDetection={closestCenterr}
-            measuring={measuringConfig}
         >
-            <SortableContext
-                items={itemIds}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="builder">
-                    <BuilderNavbar />
-                    <div className="lessons">lessons</div>
-                    <div className="lesson-content">
-                        <Grid
-                            items={items}
-                            setItems={setItems}
-                            onGridItemClick={handleGridItemClick}
-                            dropTargetIndex={dropTargetIndex}
-                            placementPreviewStyle={placementPreviewStyle}
-                            draggingElement={draggingElement}
-                            placementPreviewRef={placementPreviewRef}
-                            relativeHoverPosition={relativeHoverPosition}
-                        />
-                    </div>
-                    <div className="sidebar">
-                        {itemToEdit !== null ? (
-                            <ItemEditor
-                                item={itemToEdit}
-                                onSaveChanges={handleSaveChanges}
-                            />
-                        ) : (
-                            <BuilderElementsMenu />
-                        )}
-                    </div>
-                    <DragOverlay dropAnimation={null}>
-                        <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
-                    </DragOverlay>
-                    <PlacementPreview
-                        ref={placementPreviewRef}
-                        style={placementPreviewStyle}
-                    >
-                        {draggingElement
-                            ? constructComponent(
-                                  Components[draggingElement.data.current.type]
-                              )
-                            : null}
-                    </PlacementPreview>
+            <div className="builder">
+                <BuilderNavbar />
+                <div className="lessons">lessons</div>
+                <div className="lesson-content" ref={lessonContentRef}>
+                    <Grid
+                        items={items}
+                        setItems={setItems}
+                        onGridItemClick={handleGridItemClick}
+                        dropTargetIndex={dropTargetIndex}
+                        placementPreviewStyle={placementPreviewStyle}
+                        draggingElement={draggingElement}
+                        placementPreviewRef={placementPreviewRef}
+                        relativeHoverPosition={relativeHoverPosition}
+                    />
                 </div>
-            </SortableContext>
+                <div className="sidebar">
+                    {itemToEdit !== null ? (
+                        <ItemEditor
+                            item={itemToEdit}
+                            onSaveChanges={handleSaveChanges}
+                        />
+                    ) : (
+                        <BuilderElementsMenu />
+                    )}
+                </div>
+                <DragOverlay dropAnimation={null}>
+                    <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
+                </DragOverlay>
+                <PlacementPreview
+                    ref={placementPreviewRef}
+                    style={placementPreviewStyle}
+                >
+                    {draggingElement
+                        ? constructComponent(
+                              Components[draggingElement.data.current.type]
+                          )
+                        : null}
+                </PlacementPreview>
+            </div>
         </DndContext>
     );
 };

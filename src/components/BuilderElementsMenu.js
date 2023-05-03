@@ -5,7 +5,7 @@ import { ComponentsList } from "./ComponentFactory";
 import uuid from "react-uuid";
 import { useDraggable, DragOverEvent, DragOverlay } from "@dnd-kit/core";
 import "../css/App.css";
-import SortableItem from "./SortableItem";
+import SortableItem from "../SortableItem";
 
 const BuilderElementsMenu = (props) => {
     return (
