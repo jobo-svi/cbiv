@@ -6,9 +6,16 @@ import {
     faHeading,
     faParagraph,
     faTriangleExclamation,
+    faUpDownLeftRight,
 } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faImage, faHeading, faParagraph, faTriangleExclamation);
+library.add(
+    faImage,
+    faHeading,
+    faParagraph,
+    faTriangleExclamation,
+    faUpDownLeftRight
+);
 
 function App() {
     return <Builder />;

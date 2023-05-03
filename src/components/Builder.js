@@ -68,8 +68,73 @@ const PageBuilder = () => {
 
     const sensors = useSensors(mouseSensor, touchSensor);
 
+    // Position the placement preview
+    useEffect(() => {
+        if (!closestElement || !items.length) {
+            return;
+        }
+
+        if (relativeHoverPosition === "center") {
+            const columnCount = items.find((i) => i._uid === closestElement.id)
+                .columns.length;
+            const columnWidth = closestElement.rect.width / (columnCount + 1);
+            const columnXOffset =
+                closestElement.rect.left + columnWidth * columnCount;
+            setPlacementPreviewStyle({
+                top: 0,
+                left: columnXOffset,
+                width: closestElement.rect.width / (columnCount + 1),
+                transition: "transform 150ms ease 0s",
+                transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
+            });
+        } else {
+            // get the dimensions of the element that matches the droptarget
+            let item = items[dropTargetIndex];
+            if (dropTargetIndex === items.length) {
+                item = items[items.length - 1];
+            }
+
+            let additional = 0;
+            if (dropTargetIndex === items.length) {
+                additional += closestElement.rect.height + 16;
+            }
+
+            // Render the placement preview
+            setPlacementPreviewStyle({
+                width: closestElement.rect.width,
+                left: closestElement.rect.left,
+                transition: "transform 150ms ease 0s",
+                transform: `translate3d(0px, ${closestElement.rect.top +
+                    additional}px, 0px)`,
+            });
+
+            if (collisions) {
+                let c = collisions.find((c) => c.id === item._uid);
+
+                if (c) {
+                    c = c.data.droppableContainer.rect.current;
+
+                    let additional = 0;
+                    if (dropTargetIndex === items.length) {
+                        additional += c.height + 16;
+                    }
+
+                    // Render the placement preview
+                    setPlacementPreviewStyle({
+                        width: c.width,
+                        left: c.left,
+                        transition: "transform 150ms ease 0s",
+                        transform: `translate3d(0px, ${c.top +
+                            additional}px, 0px)`,
+                    });
+                }
+            }
+        }
+    }, [relativeHoverPosition, closestElement, dropTargetIndex, collisions]);
+
     const handleGridItemClick = (item) => {
         //setItemToEdit(item);
+        console.log("clicked grid item", item);
     };
 
     const handleSaveChanges = (updatedItem) => {
@@ -84,14 +149,8 @@ const PageBuilder = () => {
     function handleDragStart(event) {
         const { active, over, collisions } = event;
         setDraggingElement(active);
-
-        if (over) {
-            setClosestElement(over);
-        }
-
-        if (collisions) {
-            setCollisions(collisions);
-        }
+        setClosestElement(over);
+        setCollisions(collisions);
     }
 
     function handleDragEnd(event) {
@@ -100,18 +159,31 @@ const PageBuilder = () => {
             if (items.length === 0) {
                 setItems(addElement(0, active.data.current.type, false));
             } else {
-                let dropTargetIndex = items.map((i) => i._uid).indexOf(over.id);
-                if (dropTargetIndex !== -1) {
+                let dropIndex = items.map((i) => i._uid).indexOf(over.id);
+                if (dropIndex !== -1) {
+                    // If hovering below the object, drop target index will be 1 more than current index
                     if (relativeHoverPosition === "bottom") {
-                        dropTargetIndex += 1;
+                        dropIndex += 1;
                     }
-                    setItems(
-                        addElement(
-                            dropTargetIndex,
-                            active.data.current.type,
-                            relativeHoverPosition === "center"
-                        )
-                    );
+
+                    const item = getElementById(draggingElement.id);
+                    if (!item) {
+                        setItems(
+                            addElement(
+                                dropIndex,
+                                active.data.current.type,
+                                relativeHoverPosition === "center"
+                            )
+                        );
+                    } else {
+                        setItems(
+                            moveElement(
+                                item,
+                                dropIndex,
+                                relativeHoverPosition === "center"
+                            )
+                        );
+                    }
                 }
             }
         }
@@ -192,73 +264,6 @@ const PageBuilder = () => {
         }
     }
 
-    // Position the placement preview
-    useEffect(() => {
-        if (!closestElement || !items.length) {
-            return;
-        }
-
-        //console.log(closestElement);
-        if (relativeHoverPosition === "center") {
-            //console.log(closestElement);
-
-            const columnCount = items.find((i) => i._uid === closestElement.id)
-                .columns.length;
-            const columnWidth = closestElement.rect.width / (columnCount + 1);
-            const columnXOffset =
-                closestElement.rect.left + columnWidth * columnCount;
-            setPlacementPreviewStyle({
-                top: 0,
-                left: columnXOffset,
-                width: closestElement.rect.width / (columnCount + 1),
-                transition: "transform 150ms ease 0s",
-                transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
-            });
-        } else {
-            // get the dimensions of the element that matches the droptarget
-            let item = items[dropTargetIndex];
-            if (dropTargetIndex === items.length) {
-                item = items[items.length - 1];
-            }
-
-            let additional = 0;
-            if (dropTargetIndex === items.length) {
-                additional += closestElement.rect.height + 16;
-            }
-
-            // Render the placement preview
-            setPlacementPreviewStyle({
-                width: closestElement.rect.width,
-                left: closestElement.rect.left,
-                transition: "transform 150ms ease 0s",
-                transform: `translate3d(0px, ${closestElement.rect.top +
-                    additional}px, 0px)`,
-            });
-
-            if (collisions) {
-                let c = collisions.find((c) => c.id === item._uid);
-
-                if (c) {
-                    c = c.data.droppableContainer.rect.current;
-
-                    let additional = 0;
-                    if (dropTargetIndex === items.length) {
-                        additional += c.height + 16;
-                    }
-
-                    // Render the placement preview
-                    setPlacementPreviewStyle({
-                        width: c.width,
-                        left: c.left,
-                        transition: "transform 150ms ease 0s",
-                        transform: `translate3d(0px, ${c.top +
-                            additional}px, 0px)`,
-                    });
-                }
-            }
-        }
-    }, [relativeHoverPosition, closestElement, dropTargetIndex, collisions]);
-
     function addElement(index, elementType, within) {
         const newItems = [...items];
 
@@ -289,6 +294,56 @@ const PageBuilder = () => {
         }
         return newItems;
     }
+
+    function moveElement(item, rowIndex, within) {
+        let newItems = [...items];
+
+        // Find the row where the item currently lives
+        newItems.map((row) => {
+            let column = row.columns.find((col) => col._uid === item._uid);
+            if (column) {
+                row.columns = row.columns.filter((c) => c._uid != column._uid);
+            }
+        });
+
+        if (!within) {
+            const newOb = {
+                _uid: uuid(),
+                columns: [item],
+            };
+            newItems.splice(rowIndex, 0, newOb);
+        } else {
+            // Add a column to an existing row
+            let row = newItems[rowIndex];
+            if (row) {
+                row.columns.push(item);
+            }
+        }
+
+        newItems = newItems.filter((row) => row.columns.length > 0);
+
+        return newItems;
+    }
+
+    const getComponentForPreview = () => {
+        if (draggingElement) {
+            const item = getElementById(draggingElement.id);
+            if (item) {
+                // if dragged ele exists in items array, it's an existing element being dragged
+                return constructComponent(Components[item.component]);
+            } else {
+                // new element being dragged
+                console.log("dragging new");
+                return constructComponent(
+                    Components[draggingElement.data.current.type]
+                );
+            }
+        }
+    };
+
+    const getElementById = (id) => {
+        return items.flatMap((row) => row.columns).find((c) => c._uid === id);
+    };
 
     return (
         <DndContext
@@ -330,11 +385,7 @@ const PageBuilder = () => {
                     ref={placementPreviewRef}
                     style={placementPreviewStyle}
                 >
-                    {draggingElement
-                        ? constructComponent(
-                              Components[draggingElement.data.current.type]
-                          )
-                        : null}
+                    {getComponentForPreview()}
                 </PlacementPreview>
             </div>
         </DndContext>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Components, constructComponent } from "./ComponentFactory";
 import uuid from "react-uuid";
 import Droppable from "./Droppable";
+import Draggable from "./Draggable";
 import DefaultDroppable from "./DefaultDroppable";
 
 const Grid = ({
@@ -74,20 +75,21 @@ const Grid = ({
                                 >
                                     {row.columns.map((item, itemIndex) => {
                                         return (
-                                            <div
+                                            <Draggable
+                                                id={item._uid}
+                                                key={item._uid}
+                                                className={`grid-column`}
+                                                dragHandleEnabled={true}
                                                 onClick={() =>
                                                     onGridItemClick(item)
                                                 }
-                                                className={`grid-column`}
-                                                id={item._uid}
-                                                key={item._uid}
                                                 style={getColumnStyle(
                                                     i,
                                                     row.columns.length
                                                 )}
                                             >
                                                 {constructComponent(item)}
-                                            </div>
+                                            </Draggable>
                                         );
                                     })}
                                 </div>
