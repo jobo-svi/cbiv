@@ -9,16 +9,20 @@ const Grid = ({
     onGridItemClick,
     dropTargetIndex,
     placementPreviewRef,
+    setPlacementPreviewStyle,
     relativeHoverPosition,
 }) => {
-    function getItemStyle(itemIndex) {
+    // When within element, we should remove flex: 1 from columns, and remove justify content from grid row, measure the width of the row, then set each column width to (row width) / (# of columns + 1)
+    function getRowStyle(itemIndex) {
         let style = {};
 
-        if (
-            relativeHoverPosition === "center" &&
-            itemIndex === dropTargetIndex
-        ) {
+        const isWithinElement =
+            relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
+
+        if (isWithinElement) {
             style.border = "1px solid red";
+            style.justifyContent = "unset";
+            style.transition = "transform 150ms ease 0s";
         } else {
             if (
                 dropTargetIndex !== null &&
@@ -40,6 +44,21 @@ const Grid = ({
         return style;
     }
 
+    function getColumnStyle(itemIndex, noOfColumns) {
+        let style = {};
+        const isWithinElement =
+            relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
+
+        if (isWithinElement) {
+            style.flex = "unset";
+
+            const gap = 16 * noOfColumns;
+            const columnWidth = (1280 - gap) / (noOfColumns + 1);
+            style.width = `${columnWidth}px`;
+        }
+        return style;
+    }
+
     return (
         <div className="grid-wrapper">
             <div className="grid">
@@ -50,7 +69,8 @@ const Grid = ({
                             <Droppable id={row._uid} key={row._uid}>
                                 <div
                                     className="grid-row"
-                                    style={getItemStyle(i)}
+                                    style={getRowStyle(i)}
+                                    id={row._uid}
                                 >
                                     {row.columns.map((item, itemIndex) => {
                                         return (
@@ -61,6 +81,10 @@ const Grid = ({
                                                 className={`grid-column`}
                                                 id={item._uid}
                                                 key={item._uid}
+                                                style={getColumnStyle(
+                                                    i,
+                                                    row.columns.length
+                                                )}
                                             >
                                                 {constructComponent(item)}
                                             </div>

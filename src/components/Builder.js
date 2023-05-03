@@ -24,23 +24,31 @@ const PageBuilder = () => {
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
 
-    // What element we're currently dragging
+    // What element we're currently dragging, needed so we can measure it and show a placeholder in the dom
     const [draggingElement, setDraggingElement] = useState(null);
+
+    // Closest element to your cursor when dragging, as determined by dnd-kit
+    const [closestElement, setClosestElement] = useState(null);
+
+    // Elements your drag element is intersecting with while dragging
+    const [collisions, setCollisions] = useState(null);
 
     // Track the position of the mouse for positioning the drag preview
     const mousePosition = useMousePosition();
 
     // Keep a reference to the placement preview, for measuring its height
     const placementPreviewRef = useRef(null);
-    const lessonContentRef = useRef(null);
 
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
-        position: "absolute",
         display: "none",
     });
 
     const [itemToEdit, setItemToEdit] = useState(null);
+
+    // Position of the dragged element relative to the element being hovered over (above, below, center)
     const [relativeHoverPosition, setRelativeHoverPosition] = useState(null);
+
+    // Where a new element will be inserted into the item array
     const [dropTargetIndex, setDropTargetIndex] = useState(null);
 
     // dndkit sensors
@@ -74,8 +82,16 @@ const PageBuilder = () => {
     };
 
     function handleDragStart(event) {
-        const { active } = event;
+        const { active, over, collisions } = event;
         setDraggingElement(active);
+
+        if (over) {
+            setClosestElement(over);
+        }
+
+        if (collisions) {
+            setCollisions(collisions);
+        }
     }
 
     function handleDragEnd(event) {
@@ -101,10 +117,11 @@ const PageBuilder = () => {
         }
 
         setDraggingElement(null);
+        setClosestElement(null);
+        setCollisions(null);
         setDropTargetIndex(null);
         setRelativeHoverPosition(null);
         setPlacementPreviewStyle({
-            position: "absolute",
             display: "none",
         });
     }
@@ -113,13 +130,11 @@ const PageBuilder = () => {
         const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
-        let isWithinLessonContent =
-            clientOffset.y >= lessonContentRef.current.top &&
-            clientOffset.y <= lessonContentRef.current.bottom &&
-            clientOffset.x >= lessonContentRef.current.left &&
-            clientOffset.x <= lessonContentRef.current.right;
 
         if (over) {
+            setClosestElement(over);
+            setCollisions(collisions);
+
             // The coordinates of the element we're hovering over
             const hoverRect = over.rect;
 
@@ -135,7 +150,6 @@ const PageBuilder = () => {
                 clientOffset.y <= hoverRect.bottom &&
                 clientOffset.x >= hoverRect.left &&
                 clientOffset.x <= hoverRect.right;
-            console.log(clientOffset);
 
             const insideTop =
                 hoveringWithinElement &&
@@ -174,48 +188,76 @@ const PageBuilder = () => {
 
                 setRelativeHoverPosition(hoverPosition);
                 setDropTargetIndex(dropTarget);
-                setPlacementPreviewStyle({
-                    position: "absolute",
-                    display: "none",
-                });
-                if (hoverPosition !== "center") {
-                    // get the dimensions of the element that matches the droptarget
-                    let item = items[dropTarget];
-                    let additional = 0;
-                    if (dropTarget === items.length) {
-                        item = items[items.length - 1];
-                    }
-
-                    let c = collisions.find((c) => c.id === item._uid);
-
-                    if (c) {
-                        c = c.data.droppableContainer.rect.current;
-
-                        if (dropTarget === items.length) {
-                            additional += c.height + 16;
-                        }
-
-                        // Render the placement preview
-                        setPlacementPreviewStyle({
-                            position: "absolute",
-                            background: "#cae4ff",
-                            width: c.width,
-                            top: 0,
-                            left: c.left,
-                            transition: "transform 150ms ease 0s",
-                            transform: `translate3d(0px, ${c.top +
-                                additional}px, 0px)`,
-                        });
-                    } else {
-                        setPlacementPreviewStyle({
-                            position: "absolute",
-                            display: "none",
-                        });
-                    }
-                }
             }
         }
     }
+
+    // Position the placement preview
+    useEffect(() => {
+        if (!closestElement || !items.length) {
+            return;
+        }
+
+        //console.log(closestElement);
+        if (relativeHoverPosition === "center") {
+            //console.log(closestElement);
+
+            const columnCount = items.find((i) => i._uid === closestElement.id)
+                .columns.length;
+            const columnWidth = closestElement.rect.width / (columnCount + 1);
+            const columnXOffset =
+                closestElement.rect.left + columnWidth * columnCount;
+            setPlacementPreviewStyle({
+                top: 0,
+                left: columnXOffset,
+                width: closestElement.rect.width / (columnCount + 1),
+                transition: "transform 150ms ease 0s",
+                transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
+            });
+        } else {
+            // get the dimensions of the element that matches the droptarget
+            let item = items[dropTargetIndex];
+            if (dropTargetIndex === items.length) {
+                item = items[items.length - 1];
+            }
+
+            let additional = 0;
+            if (dropTargetIndex === items.length) {
+                additional += closestElement.rect.height + 16;
+            }
+
+            // Render the placement preview
+            setPlacementPreviewStyle({
+                width: closestElement.rect.width,
+                left: closestElement.rect.left,
+                transition: "transform 150ms ease 0s",
+                transform: `translate3d(0px, ${closestElement.rect.top +
+                    additional}px, 0px)`,
+            });
+
+            if (collisions) {
+                let c = collisions.find((c) => c.id === item._uid);
+
+                if (c) {
+                    c = c.data.droppableContainer.rect.current;
+
+                    let additional = 0;
+                    if (dropTargetIndex === items.length) {
+                        additional += c.height + 16;
+                    }
+
+                    // Render the placement preview
+                    setPlacementPreviewStyle({
+                        width: c.width,
+                        left: c.left,
+                        transition: "transform 150ms ease 0s",
+                        transform: `translate3d(0px, ${c.top +
+                            additional}px, 0px)`,
+                    });
+                }
+            }
+        }
+    }, [relativeHoverPosition, closestElement, dropTargetIndex, collisions]);
 
     function addElement(index, elementType, within) {
         const newItems = [...items];
@@ -260,14 +302,13 @@ const PageBuilder = () => {
             <div className="builder">
                 <BuilderNavbar />
                 <div className="lessons">lessons</div>
-                <div className="lesson-content" ref={lessonContentRef}>
+                <div className="lesson-content">
                     <Grid
                         items={items}
                         setItems={setItems}
                         onGridItemClick={handleGridItemClick}
                         dropTargetIndex={dropTargetIndex}
-                        placementPreviewStyle={placementPreviewStyle}
-                        draggingElement={draggingElement}
+                        setPlacementPreviewStyle={setPlacementPreviewStyle}
                         placementPreviewRef={placementPreviewRef}
                         relativeHoverPosition={relativeHoverPosition}
                     />

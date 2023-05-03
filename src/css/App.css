@@ -322,3 +322,16 @@
     /* border: 1px solid #A2A2A2; */
     flex: 1;
 }
+
+#placement-preview {
+    position: absolute;
+}
+
+#placement-preview .overlay {
+    position: absolute;
+    background: #cae4ff;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
