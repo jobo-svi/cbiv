@@ -363,7 +363,6 @@ const PageBuilder = () => {
                         setItems={setItems}
                         onGridItemClick={handleGridItemClick}
                         dropTargetIndex={dropTargetIndex}
-                        setPlacementPreviewStyle={setPlacementPreviewStyle}
                         placementPreviewRef={placementPreviewRef}
                         relativeHoverPosition={relativeHoverPosition}
                     />

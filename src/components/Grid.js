@@ -10,7 +10,6 @@ const Grid = ({
     onGridItemClick,
     dropTargetIndex,
     placementPreviewRef,
-    setPlacementPreviewStyle,
     relativeHoverPosition,
 }) => {
     // When within element, we should remove flex: 1 from columns, and remove justify content from grid row, measure the width of the row, then set each column width to (row width) / (# of columns + 1)
@@ -21,7 +20,7 @@ const Grid = ({
             relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
 
         if (isWithinElement) {
-            style.border = "1px solid red";
+            style.border = "1px solid #343536";
             style.justifyContent = "unset";
             style.transition = "transform 150ms ease 0s";
         } else {
@@ -54,7 +53,12 @@ const Grid = ({
             style.flex = "unset";
 
             const gap = 16 * noOfColumns;
-            const columnWidth = (1280 - gap) / (noOfColumns + 1);
+
+            // There's definitely a better way to get row width, but this will do for now.
+            const rowWidth = document
+                .getElementById(items[itemIndex]._uid)
+                .getBoundingClientRect().width;
+            const columnWidth = (rowWidth - gap) / (noOfColumns + 1);
             style.width = `${columnWidth}px`;
         }
         return style;
