@@ -442,6 +442,7 @@ const PageBuilder = () => {
                         <label>
                             <div>Column hover time (ms)</div>
                             <input
+                                type="number"
                                 value={columnDelayTiming}
                                 onChange={(event) =>
                                     setColumnDelayTiming(event.target.value)
