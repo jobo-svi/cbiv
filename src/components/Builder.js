@@ -72,20 +72,29 @@ const PageBuilder = () => {
 
     // Configurables
     const [translateTiming, setTranslateTiming] = useState(
-        localStorage.getItem("translateTiming") || 300
+        +localStorage.getItem("translateTiming") || 300
+    );
+
+    const [columnDelayTiming, setColumnDelayTiming] = useState(
+        +localStorage.getItem("columnDelayTiming") || 1000
     );
 
     useEffect(() => {
         localStorage.setItem("translateTiming", translateTiming);
-    }, [translateTiming]);
+        localStorage.setItem("columnDelayTiming", columnDelayTiming);
+    }, [translateTiming, columnDelayTiming]);
 
-    // Hover timeout
-    const [columnDelay, setColumnDelay] = useState(null);
-    useTimeout(() => {
-        setDropTargetIndex(dropTargetIndex);
-        setRelativeHoverPosition("center");
-        setColumnDelay(null);
-    }, columnDelay);
+    // Timeout for column hovering
+    const [columnTimerActive, setColumnTimerActive] = useState(false);
+
+    useTimeout(
+        () => {
+            setDropTargetIndex(dropTargetIndex);
+            setRelativeHoverPosition("center");
+            setColumnTimerActive(false);
+        },
+        !columnTimerActive ? null : columnDelayTiming
+    );
 
     // Position the placement preview
     useEffect(() => {
@@ -93,13 +102,13 @@ const PageBuilder = () => {
             return;
         }
 
-        if (columnDelay) {
+        if (columnTimerActive) {
             setPlacementPreviewStyle({
                 display: "none",
             });
         }
 
-        if (relativeHoverPosition === "center" && !columnDelay) {
+        if (relativeHoverPosition === "center" && !columnTimerActive) {
             const columnCount = items.find((i) => i._uid === closestElement.id)
                 .columns.length;
             const columnWidth = closestElement.rect.width / (columnCount + 1);
@@ -112,7 +121,7 @@ const PageBuilder = () => {
                 transition: `transform ${translateTiming}ms ease 0s`,
                 transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
             });
-        } else if (!columnDelay) {
+        } else if (!columnTimerActive) {
             // get the dimensions of the element that matches the droptarget
             let item = items[dropTargetIndex];
             if (dropTargetIndex === items.length) {
@@ -160,7 +169,7 @@ const PageBuilder = () => {
         closestElement,
         dropTargetIndex,
         collisions,
-        columnDelay,
+        columnTimerActive,
     ]);
 
     const handleGridItemClick = (item) => {
@@ -209,7 +218,7 @@ const PageBuilder = () => {
                                 dropIndex,
                                 active.data.current.type,
                                 relativeHoverPosition === "center" &&
-                                    !columnDelay
+                                    !columnTimerActive
                             )
                         );
                     } else {
@@ -300,7 +309,7 @@ const PageBuilder = () => {
 
                 // Cancel the column timer if we ever hover outside the center of the element
                 if (hoverPosition !== "center") {
-                    setColumnDelay(null);
+                    setColumnTimerActive(false);
                 }
 
                 // Start the column timer if we're hovering within an element and weren't already hovering
@@ -308,7 +317,7 @@ const PageBuilder = () => {
                     hoverPosition === "center" &&
                     relativeHoverPosition !== "center"
                 ) {
-                    setColumnDelay(1000);
+                    setColumnTimerActive(true);
                 }
             }
         }
@@ -421,12 +430,21 @@ const PageBuilder = () => {
                         }}
                     >
                         <label>
-                            <div>Translate speed</div>
+                            <div>Translate speed (ms)</div>
                             <input
                                 type="number"
                                 value={translateTiming}
                                 onChange={(event) =>
                                     setTranslateTiming(event.target.value)
+                                }
+                            />
+                        </label>
+                        <label>
+                            <div>Column hover time (ms)</div>
+                            <input
+                                value={columnDelayTiming}
+                                onChange={(event) =>
+                                    setColumnDelayTiming(event.target.value)
                                 }
                             />
                         </label>
@@ -439,7 +457,7 @@ const PageBuilder = () => {
                         placementPreviewRef={placementPreviewRef}
                         relativeHoverPosition={relativeHoverPosition}
                         translateTiming={translateTiming}
-                        columnDelay={columnDelay}
+                        columnTimerActive={columnTimerActive}
                     />
                 </div>
                 <div className="sidebar">

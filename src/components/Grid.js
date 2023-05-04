@@ -12,7 +12,7 @@ const Grid = ({
     placementPreviewRef,
     relativeHoverPosition,
     translateTiming,
-    columnDelay,
+    columnTimerActive,
 }) => {
     function getRowStyle(itemIndex) {
         let style = {};
@@ -21,7 +21,7 @@ const Grid = ({
             relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
 
         // Hovering within the element and we've waited long enough to combine columns
-        if (isWithinElement && !columnDelay) {
+        if (isWithinElement && !columnTimerActive) {
             style.border = "1px solid #343536";
             style.justifyContent = "unset";
             style.transition = `transform ${translateTiming}ms ease 0s`;
@@ -49,7 +49,7 @@ const Grid = ({
         const isWithinElement =
             relativeHoverPosition === "center" && rowIndex === dropTargetIndex;
 
-        if (isWithinElement && !columnDelay) {
+        if (isWithinElement && !columnTimerActive) {
             style.flex = "unset";
             const gap = 16 * noOfColumns;
             // There's definitely a better way to get row width, but this will do for now.
