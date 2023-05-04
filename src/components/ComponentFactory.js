@@ -1,5 +1,4 @@
 import React from "react";
-import ColumnLayout from "./ColumnLayout";
 import FlipCard from "./FlipCard";
 import Image from "./Image";
 import Header from "./Header";

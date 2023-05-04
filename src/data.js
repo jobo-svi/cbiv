@@ -12,27 +12,39 @@ export const data = {
             //     },
             // },
             {
-                _uid: uuid(),
+                _uid: "Row 1",
                 columns: [
                     {
-                        _uid: uuid(),
+                        _uid: "Item 1",
                         component: "header",
                         props: {
                             text: "Item 1",
                         },
                     },
                     {
-                        _uid: uuid(),
+                        _uid: "Item 2",
                         component: "header",
                         props: {
                             text: "Item 2",
                         },
                     },
+                ],
+            },
+            {
+                _uid: "Row 2",
+                columns: [
                     {
-                        _uid: uuid(),
+                        _uid: "Item 3",
                         component: "header",
                         props: {
                             text: "Item 3",
+                        },
+                    },
+                    {
+                        _uid: "Item 4",
+                        component: "header",
+                        props: {
+                            text: "Item 4",
                         },
                     },
                 ],

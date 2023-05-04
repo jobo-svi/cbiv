@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
     DndContext,
     closestCenter,
+    pointerWithin,
     DragOverlay,
     MouseSensor,
     TouchSensor,
@@ -19,6 +20,7 @@ import ItemEditor from "./ItemEditor";
 import BuilderNavbar from "./BuilderNavbar";
 import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
+import useTimeout from "../hooks/useTimeout";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -69,7 +71,21 @@ const PageBuilder = () => {
     const sensors = useSensors(mouseSensor, touchSensor);
 
     // Configurables
-    const [translateTiming, setTranslateTiming] = useState(250);
+    const [translateTiming, setTranslateTiming] = useState(
+        localStorage.getItem("translateTiming") || 300
+    );
+
+    useEffect(() => {
+        localStorage.setItem("translateTiming", translateTiming);
+    }, [translateTiming]);
+
+    // Hover timeout
+    const [columnDelay, setColumnDelay] = useState(null);
+    useTimeout(() => {
+        setDropTargetIndex(dropTargetIndex);
+        setRelativeHoverPosition("center");
+        setColumnDelay(null);
+    }, columnDelay);
 
     // Position the placement preview
     useEffect(() => {
@@ -77,7 +93,13 @@ const PageBuilder = () => {
             return;
         }
 
-        if (relativeHoverPosition === "center") {
+        if (columnDelay) {
+            setPlacementPreviewStyle({
+                display: "none",
+            });
+        }
+
+        if (relativeHoverPosition === "center" && !columnDelay) {
             const columnCount = items.find((i) => i._uid === closestElement.id)
                 .columns.length;
             const columnWidth = closestElement.rect.width / (columnCount + 1);
@@ -90,7 +112,7 @@ const PageBuilder = () => {
                 transition: `transform ${translateTiming}ms ease 0s`,
                 transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
             });
-        } else {
+        } else if (!columnDelay) {
             // get the dimensions of the element that matches the droptarget
             let item = items[dropTargetIndex];
             if (dropTargetIndex === items.length) {
@@ -133,7 +155,13 @@ const PageBuilder = () => {
                 }
             }
         }
-    }, [relativeHoverPosition, closestElement, dropTargetIndex, collisions]);
+    }, [
+        relativeHoverPosition,
+        closestElement,
+        dropTargetIndex,
+        collisions,
+        columnDelay,
+    ]);
 
     const handleGridItemClick = (item) => {
         //setItemToEdit(item);
@@ -156,6 +184,11 @@ const PageBuilder = () => {
         setCollisions(collisions);
     }
 
+    function handleDragOver(event) {
+        const { active, over, collisions } = event;
+        //console.log("over");
+    }
+
     function handleDragEnd(event) {
         const { active, over } = event;
         if (over) {
@@ -175,7 +208,8 @@ const PageBuilder = () => {
                             addElement(
                                 dropIndex,
                                 active.data.current.type,
-                                relativeHoverPosition === "center"
+                                relativeHoverPosition === "center" &&
+                                    !columnDelay
                             )
                         );
                     } else {
@@ -218,7 +252,7 @@ const PageBuilder = () => {
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
             const topRange = borderTop + elementHeight / 5;
-            const bottomRange = borderBottom - elementHeight / 5;
+            const bottomRange = borderBottom + elementHeight / 5;
 
             const hoveringWithinElement =
                 clientOffset.y >= hoverRect.top &&
@@ -252,17 +286,30 @@ const PageBuilder = () => {
             let hoverPosition = null;
             if (dropTarget !== -1) {
                 // Where are we hovering near
-                if (insideTop || aboveElement) {
+                if (aboveElement) {
                     hoverPosition = "top";
-                } else if (insideBottom || belowElement) {
+                } else if (belowElement) {
                     hoverPosition = "bottom";
                     dropTarget += 1;
                 } else if (insideCenter) {
                     hoverPosition = "center";
                 }
 
-                setRelativeHoverPosition(hoverPosition);
                 setDropTargetIndex(dropTarget);
+                setRelativeHoverPosition(hoverPosition);
+
+                // Cancel the column timer if we ever hover outside the center of the element
+                if (hoverPosition !== "center") {
+                    setColumnDelay(null);
+                }
+
+                // Start the column timer if we're hovering within an element and weren't already hovering
+                if (
+                    hoverPosition === "center" &&
+                    relativeHoverPosition !== "center"
+                ) {
+                    setColumnDelay(1000);
+                }
             }
         }
     }
@@ -352,12 +399,15 @@ const PageBuilder = () => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}
+            onDragOver={handleDragOver}
             collisionDetection={closestCenter}
             modifiers={[snapCenterToCursor]}
             sensors={sensors}
-            autoScroll={true}
         >
-            <div className="builder">
+            <div
+                className="builder"
+                style={{ cursor: draggingElement ? "grabbing" : "" }}
+            >
                 <BuilderNavbar />
                 <div className="lessons" style={{ height: "0" }}>
                     lessons
@@ -389,6 +439,7 @@ const PageBuilder = () => {
                         placementPreviewRef={placementPreviewRef}
                         relativeHoverPosition={relativeHoverPosition}
                         translateTiming={translateTiming}
+                        columnDelay={columnDelay}
                     />
                 </div>
                 <div className="sidebar">
