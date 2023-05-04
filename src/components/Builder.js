@@ -68,6 +68,9 @@ const PageBuilder = () => {
 
     const sensors = useSensors(mouseSensor, touchSensor);
 
+    // Configurables
+    const [translateTiming, setTranslateTiming] = useState(250);
+
     // Position the placement preview
     useEffect(() => {
         if (!closestElement || !items.length) {
@@ -84,7 +87,7 @@ const PageBuilder = () => {
                 top: 0,
                 left: columnXOffset,
                 width: closestElement.rect.width / (columnCount + 1),
-                transition: "transform 150ms ease 0s",
+                transition: `transform ${translateTiming}ms ease 0s`,
                 transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
             });
         } else {
@@ -103,7 +106,7 @@ const PageBuilder = () => {
             setPlacementPreviewStyle({
                 width: closestElement.rect.width,
                 left: closestElement.rect.left,
-                transition: "transform 150ms ease 0s",
+                transition: `transform ${translateTiming}ms ease 0s`,
                 transform: `translate3d(0px, ${closestElement.rect.top +
                     additional}px, 0px)`,
             });
@@ -123,7 +126,7 @@ const PageBuilder = () => {
                     setPlacementPreviewStyle({
                         width: c.width,
                         left: c.left,
-                        transition: "transform 150ms ease 0s",
+                        transition: `transform ${translateTiming}ms ease 0s`,
                         transform: `translate3d(0px, ${c.top +
                             additional}px, 0px)`,
                     });
@@ -333,7 +336,6 @@ const PageBuilder = () => {
                 return constructComponent(Components[item.component]);
             } else {
                 // new element being dragged
-                console.log("dragging new");
                 return constructComponent(
                     Components[draggingElement.data.current.type]
                 );
@@ -353,11 +355,32 @@ const PageBuilder = () => {
             collisionDetection={closestCenter}
             modifiers={[snapCenterToCursor]}
             sensors={sensors}
+            autoScroll={true}
         >
             <div className="builder">
                 <BuilderNavbar />
-                <div className="lessons">lessons</div>
+                <div className="lessons" style={{ height: "0" }}>
+                    lessons
+                </div>
                 <div className="lesson-content">
+                    <div
+                        style={{
+                            display: "flex",
+                            gap: "20px",
+                            marginBottom: "40px",
+                        }}
+                    >
+                        <label>
+                            <div>Translate speed</div>
+                            <input
+                                type="number"
+                                value={translateTiming}
+                                onChange={(event) =>
+                                    setTranslateTiming(event.target.value)
+                                }
+                            />
+                        </label>
+                    </div>
                     <Grid
                         items={items}
                         setItems={setItems}
@@ -365,6 +388,7 @@ const PageBuilder = () => {
                         dropTargetIndex={dropTargetIndex}
                         placementPreviewRef={placementPreviewRef}
                         relativeHoverPosition={relativeHoverPosition}
+                        translateTiming={translateTiming}
                     />
                 </div>
                 <div className="sidebar">

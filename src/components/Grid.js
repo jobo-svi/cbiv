@@ -11,6 +11,7 @@ const Grid = ({
     dropTargetIndex,
     placementPreviewRef,
     relativeHoverPosition,
+    translateTiming,
 }) => {
     // When within element, we should remove flex: 1 from columns, and remove justify content from grid row, measure the width of the row, then set each column width to (row width) / (# of columns + 1)
     function getRowStyle(itemIndex) {
@@ -20,9 +21,9 @@ const Grid = ({
             relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
 
         if (isWithinElement) {
-            style.border = "1px solid #343536";
+            //style.border = "1px solid #343536";
             style.justifyContent = "unset";
-            style.transition = "transform 150ms ease 0s";
+            style.transition = `transform ${translateTiming}ms ease 0s`;
         } else {
             if (
                 dropTargetIndex !== null &&
@@ -30,36 +31,42 @@ const Grid = ({
                 placementPreviewRef.current &&
                 relativeHoverPosition !== "center"
             ) {
-                style.transition = "transform 150ms ease 0s";
+                style.transition = `transform ${translateTiming}ms ease 0s`;
                 style.transform = `translate3d(0px, ${placementPreviewRef
                     .current.clientHeight + 16}px, 0px)`;
             } else if (
                 dropTargetIndex !== null &&
                 itemIndex < dropTargetIndex
             ) {
-                style.transition = "transform 150ms ease 0s";
+                style.transition = `transform ${translateTiming}ms ease 0s`;
             }
         }
 
         return style;
     }
 
-    function getColumnStyle(itemIndex, noOfColumns) {
+    function getColumnStyle(rowIndex, columnIndex, noOfColumns) {
         let style = {};
         const isWithinElement =
-            relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
+            relativeHoverPosition === "center" && rowIndex === dropTargetIndex;
 
         if (isWithinElement) {
             style.flex = "unset";
-
             const gap = 16 * noOfColumns;
-
             // There's definitely a better way to get row width, but this will do for now.
             const rowWidth = document
-                .getElementById(items[itemIndex]._uid)
+                .getElementById(items[rowIndex]._uid)
                 .getBoundingClientRect().width;
             const columnWidth = (rowWidth - gap) / (noOfColumns + 1);
             style.width = `${columnWidth}px`;
+
+            if (columnIndex != 0) {
+                //style.transition = `transform ${translateTiming}ms ease 0s`;
+                // At 1280 width
+                // 2 -> 3 = 216.5
+                // 3 -> 4 = 108.5
+                //style.transform = `translateX(-${108.5 * columnIndex}px)`;
+            }
         }
         return style;
     }
@@ -69,15 +76,15 @@ const Grid = ({
             <div className="grid">
                 {items.length === 0 && <DefaultDroppable />}
                 {items.length > 0 &&
-                    items.map((row, i) => {
+                    items.map((row, rowIndex) => {
                         return (
                             <Droppable id={row._uid} key={row._uid}>
                                 <div
                                     className="grid-row"
-                                    style={getRowStyle(i)}
+                                    style={getRowStyle(rowIndex)}
                                     id={row._uid}
                                 >
-                                    {row.columns.map((item, itemIndex) => {
+                                    {row.columns.map((item, columnIndex) => {
                                         return (
                                             <Draggable
                                                 id={item._uid}
@@ -88,7 +95,8 @@ const Grid = ({
                                                     onGridItemClick(item)
                                                 }
                                                 style={getColumnStyle(
-                                                    i,
+                                                    rowIndex,
+                                                    columnIndex,
                                                     row.columns.length
                                                 )}
                                             >
