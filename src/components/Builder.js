@@ -471,7 +471,15 @@ const PageBuilder = () => {
                     )}
                 </div>
                 <DragOverlay dropAnimation={null}>
-                    <h1 style={{ opacity: ".5" }}>Drag Preview</h1>
+                    <div
+                        style={{
+                            opacity: ".5",
+                            overflow: "hidden",
+                            maxHeight: "200px",
+                        }}
+                    >
+                        {getComponentForPreview()}
+                    </div>
                 </DragOverlay>
                 <PlacementPreview
                     ref={placementPreviewRef}
