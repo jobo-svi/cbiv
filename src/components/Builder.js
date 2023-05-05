@@ -476,6 +476,7 @@ const PageBuilder = () => {
                             opacity: ".5",
                             overflow: "hidden",
                             maxHeight: "200px",
+                            maxWidth: "200px",
                         }}
                     >
                         {getComponentForPreview()}
