@@ -14,31 +14,36 @@ const Grid = ({
     translateTiming,
     columnTimerActive,
 }) => {
-    function getRowStyle(itemIndex) {
+    function getRowStyle(rowIndex) {
         let style = {};
 
         const isWithinElement =
-            relativeHoverPosition === "center" && itemIndex === dropTargetIndex;
+            relativeHoverPosition === "center" && rowIndex === dropTargetIndex;
+
+        // Don't apply any transforms if we're not trying to drop anywhere
+        if (dropTargetIndex === null) {
+            return style;
+        }
 
         // Hovering within the element and we've waited long enough to combine columns
         if (isWithinElement && !columnTimerActive) {
             style.border = "1px solid #343536";
             style.justifyContent = "unset";
             style.transition = `transform ${translateTiming}ms ease 0s`;
-        } else {
-            if (
-                dropTargetIndex !== null &&
-                itemIndex >= dropTargetIndex &&
-                placementPreviewRef.current &&
-                relativeHoverPosition !== "center"
-            ) {
-                style.transition = `transform ${translateTiming}ms ease 0s`;
-                style.transform = `translate3d(0px, ${placementPreviewRef
-                    .current.clientHeight + 16}px, 0px)`;
-            } else {
-                style.transition = `transform ${translateTiming}ms ease 0s`;
-                style.transform = `translate3d(0px, 0px, 0px)`;
-            }
+        }
+        // Shift rows downward if they're below where we're trying to drop
+        else if (
+            rowIndex >= dropTargetIndex &&
+            relativeHoverPosition !== "center"
+        ) {
+            style.transition = `transform ${translateTiming}ms ease 0s`;
+            style.transform = `translate3d(0px, ${placementPreviewRef.current
+                .clientHeight + 24}px, 0px)`;
+        }
+        // We're waiting on column timer, or cursor is below all elements, so shift all elements back to original position
+        else {
+            style.transition = `transform ${translateTiming}ms ease 0s`;
+            style.transform = `translate3d(0px, 0px, 0px)`;
         }
 
         return style;
