@@ -12,6 +12,7 @@ const Grid = ({
     relativeHoverPosition,
     translateTiming,
     columnTimerActive,
+    gridGap,
 }) => {
     function getRowStyle(rowIndex) {
         let style = {};
@@ -36,7 +37,7 @@ const Grid = ({
         ) {
             style.transition = `transform ${translateTiming}ms ease 0s`;
             style.transform = `translate3d(0px, ${placementPreviewRef.current
-                .clientHeight + 24}px, 0px)`;
+                .clientHeight + gridGap}px, 0px)`;
         }
         // We're waiting on column timer, or cursor is below all elements, so shift all elements back to original position
         else {
@@ -75,7 +76,7 @@ const Grid = ({
 
     return (
         <div className="grid-wrapper">
-            <div className="grid">
+            <div className="grid" style={{ gap: gridGap }}>
                 {items.length === 0 && <DefaultDroppable />}
                 {items.length > 0 &&
                     items.map((row, rowIndex) => {
@@ -83,7 +84,10 @@ const Grid = ({
                             <Droppable id={row._uid} key={row._uid}>
                                 <div
                                     className="grid-row"
-                                    style={getRowStyle(rowIndex)}
+                                    style={{
+                                        ...getRowStyle(rowIndex),
+                                        gap: gridGap,
+                                    }}
                                     id={row._uid}
                                 >
                                     {row.columns.map((item, columnIndex) => {

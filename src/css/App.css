@@ -64,7 +64,6 @@
 }
 
 .builder .grid {
-    gap: 1.5rem;
     display: grid;
     grid-template-columns: 1fr;
     margin: 0 auto;
@@ -79,7 +78,6 @@
 .builder .grid .grid-row {
     display: flex;
     justify-content: space-evenly;
-    gap: 1rem;
 }
 
 .builder .grid .grid-column {
@@ -268,4 +266,33 @@
     bottom: 0;
     left: 0;
     right: 0;
+}
+
+@keyframes slide-down {
+    from {
+        transform: translateY(-100%);
+    }
+
+    to {
+        transform: translateY(0%);
+    }
+}
+
+/* ...and then apply it: */
+.slide-down {
+    animation: slide-down 300ms;
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fade-in 200ms, slide-down 300ms;
 }

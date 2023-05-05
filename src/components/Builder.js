@@ -40,9 +40,12 @@ const PageBuilder = () => {
     // Keep a reference to the placement preview, for measuring its height
     const placementPreviewRef = useRef(null);
 
-    const [placementPreviewStyle, setPlacementPreviewStyle] = useState({
+    const defaultPlacementPreviewStyle = {
         display: "none",
-    });
+    };
+    const [placementPreviewStyle, setPlacementPreviewStyle] = useState(
+        defaultPlacementPreviewStyle
+    );
 
     const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -62,6 +65,10 @@ const PageBuilder = () => {
 
     const [columnDelayTiming, setColumnDelayTiming] = useState(
         +localStorage.getItem("columnDelayTiming") || 1000
+    );
+
+    const [gridGap, setGridGap] = useState(
+        +localStorage.getItem("gridGap") || 24
     );
 
     // dndkit sensors
@@ -85,6 +92,7 @@ const PageBuilder = () => {
     useEffect(() => {
         localStorage.setItem("translateTiming", translateTiming);
         localStorage.setItem("columnDelayTiming", columnDelayTiming);
+        localStorage.setItem("gridGap", gridGap);
     }, [translateTiming, columnDelayTiming]);
 
     // Timer for how long to hover before combining elements into multicolumn
@@ -104,9 +112,7 @@ const PageBuilder = () => {
         }
 
         if (columnTimerActive) {
-            setPlacementPreviewStyle({
-                display: "none",
-            });
+            setPlacementPreviewStyle(defaultPlacementPreviewStyle);
         }
 
         if (relativeHoverPosition === "center" && !columnTimerActive) {
@@ -131,7 +137,7 @@ const PageBuilder = () => {
 
             let additional = 0;
             if (dropTargetIndex === items.length) {
-                additional += closestElement.rect.height + 16;
+                additional += closestElement.rect.height + gridGap;
             }
 
             // Render the placement preview
@@ -151,7 +157,7 @@ const PageBuilder = () => {
 
                     let additional = 0;
                     if (dropTargetIndex === items.length) {
-                        additional += c.height + 24; // TODO: the 24 represents the grid gap so it should be a variable
+                        additional += c.height + gridGap;
                     }
 
                     // Render the placement preview
@@ -235,9 +241,7 @@ const PageBuilder = () => {
         setCollisions(null);
         setDropTargetIndex(null);
         setRelativeHoverPosition(null);
-        setPlacementPreviewStyle({
-            display: "none",
-        });
+        setPlacementPreviewStyle(defaultPlacementPreviewStyle);
     }
 
     function handleDragMove(event) {
@@ -414,7 +418,6 @@ const PageBuilder = () => {
                 collisionDetection={closestCenter}
                 modifiers={[snapCenterToCursor]}
                 sensors={sensors}
-                autoScroll={true}
             >
                 <div className="lesson-content">
                     <div
@@ -448,6 +451,16 @@ const PageBuilder = () => {
                                 }
                             />
                         </label>
+                        <label>
+                            <div>Space between rows/cols</div>
+                            <input
+                                type="number"
+                                value={gridGap}
+                                onChange={(event) =>
+                                    setGridGap(parseInt(event.target.value))
+                                }
+                            />
+                        </label>
                     </div>
                     <Grid
                         items={items}
@@ -458,6 +471,7 @@ const PageBuilder = () => {
                         relativeHoverPosition={relativeHoverPosition}
                         translateTiming={translateTiming}
                         columnTimerActive={columnTimerActive}
+                        gridGap={gridGap}
                     />
                 </div>
                 <div className="sidebar">
