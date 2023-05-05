@@ -1,11 +1,7 @@
 import React from "react";
 import Draggable from "./Draggable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ComponentsList } from "./ComponentFactory";
-import uuid from "react-uuid";
-import { useDraggable, DragOverEvent, DragOverlay } from "@dnd-kit/core";
 import "../css/App.css";
-import SortableItem from "../SortableItem";
 
 const BuilderElementsMenu = (props) => {
     return (
@@ -48,18 +44,6 @@ const BuilderElementsMenu = (props) => {
                     </button>
                 </Draggable>
             </div>
-            {/* <div className="element-wrapper">
-                <Draggable
-                    type="image-menu-item"
-                    data={{
-                        type: "image",
-                    }}
-                >
-                    <button className="element">
-                        <FontAwesomeIcon icon="image" /> IMAGE
-                    </button>
-                </Draggable>
-            </div> */}
         </div>
     );
 };

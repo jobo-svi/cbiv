@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Components, constructComponent } from "./ComponentFactory";
-import uuid from "react-uuid";
+import React from "react";
+import { constructComponent } from "./ComponentFactory";
 import Droppable from "./Droppable";
 import Draggable from "./Draggable";
 import DefaultDroppable from "./DefaultDroppable";
@@ -27,7 +26,6 @@ const Grid = ({
 
         // Hovering within the element and we've waited long enough to combine columns
         if (isWithinElement && !columnTimerActive) {
-            style.border = "1px solid #343536";
             style.justifyContent = "unset";
             style.transition = `transform ${translateTiming}ms ease 0s`;
         }

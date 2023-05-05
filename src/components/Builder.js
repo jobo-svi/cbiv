@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import {
     DndContext,
     closestCenter,
-    pointerWithin,
     DragOverlay,
     MouseSensor,
     TouchSensor,
@@ -11,9 +10,6 @@ import {
 } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import uuid from "react-uuid";
-import "../css/App.css";
-import { data } from "../data";
-import useMousePosition from "../hooks/useMousePosition";
 import Grid from "./Grid";
 import BuilderElementsMenu from "./BuilderElementsMenu";
 import ItemEditor from "./ItemEditor";
@@ -21,6 +17,9 @@ import BuilderNavbar from "./BuilderNavbar";
 import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
 import useTimeout from "../hooks/useTimeout";
+import useMousePosition from "../hooks/useMousePosition";
+import { data } from "../data";
+import "../css/App.css";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -53,6 +52,18 @@ const PageBuilder = () => {
     // Where a new element will be inserted into the item array
     const [dropTargetIndex, setDropTargetIndex] = useState(null);
 
+    // Whether or not the timer is active while hovering over an element while dragging
+    const [columnTimerActive, setColumnTimerActive] = useState(false);
+
+    // Configurable debug settings
+    const [translateTiming, setTranslateTiming] = useState(
+        +localStorage.getItem("translateTiming") || 300
+    );
+
+    const [columnDelayTiming, setColumnDelayTiming] = useState(
+        +localStorage.getItem("columnDelayTiming") || 1000
+    );
+
     // dndkit sensors
     const mouseSensor = useSensor(MouseSensor, {
         // Require the mouse to move by 1 pixel before activating, so we can differentiate between drag and click
@@ -70,23 +81,13 @@ const PageBuilder = () => {
 
     const sensors = useSensors(mouseSensor, touchSensor);
 
-    // Configurables
-    const [translateTiming, setTranslateTiming] = useState(
-        +localStorage.getItem("translateTiming") || 300
-    );
-
-    const [columnDelayTiming, setColumnDelayTiming] = useState(
-        +localStorage.getItem("columnDelayTiming") || 1000
-    );
-
+    // Persists debug settings across sessions
     useEffect(() => {
         localStorage.setItem("translateTiming", translateTiming);
         localStorage.setItem("columnDelayTiming", columnDelayTiming);
     }, [translateTiming, columnDelayTiming]);
 
-    // Timeout for column hovering
-    const [columnTimerActive, setColumnTimerActive] = useState(false);
-
+    // Timer for how long to hover before combining elements into multicolumn
     useTimeout(
         () => {
             setDropTargetIndex(dropTargetIndex);
@@ -150,7 +151,7 @@ const PageBuilder = () => {
 
                     let additional = 0;
                     if (dropTargetIndex === items.length) {
-                        additional += c.height + 16;
+                        additional += c.height + 24; // TODO: the 24 represents the grid gap so it should be a variable
                     }
 
                     // Render the placement preview
@@ -191,11 +192,6 @@ const PageBuilder = () => {
         setDraggingElement(active);
         setClosestElement(over);
         setCollisions(collisions);
-    }
-
-    function handleDragOver(event) {
-        const { active, over, collisions } = event;
-        //console.log("over");
     }
 
     function handleDragEnd(event) {
@@ -245,7 +241,7 @@ const PageBuilder = () => {
     }
 
     function handleDragMove(event) {
-        const { active, over, collisions } = event;
+        const { over, collisions } = event;
 
         const clientOffset = mousePosition.current;
 
@@ -379,6 +375,7 @@ const PageBuilder = () => {
             }
         }
 
+        // Rows without any columns are empty and should be removed
         newItems = newItems.filter((row) => row.columns.length > 0);
 
         return newItems;
@@ -404,23 +401,21 @@ const PageBuilder = () => {
     };
 
     return (
-        <DndContext
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragMove={handleDragMove}
-            onDragOver={handleDragOver}
-            collisionDetection={closestCenter}
-            modifiers={[snapCenterToCursor]}
-            sensors={sensors}
+        <div
+            className="builder"
+            style={{ cursor: draggingElement ? "grabbing" : "" }}
         >
-            <div
-                className="builder"
-                style={{ cursor: draggingElement ? "grabbing" : "" }}
+            <BuilderNavbar />
+            <div className="lessons">lessons</div>
+            <DndContext
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragMove={handleDragMove}
+                collisionDetection={closestCenter}
+                modifiers={[snapCenterToCursor]}
+                sensors={sensors}
+                autoScroll={true}
             >
-                <BuilderNavbar />
-                <div className="lessons" style={{ height: "0" }}>
-                    lessons
-                </div>
                 <div className="lesson-content">
                     <div
                         style={{
@@ -484,8 +479,8 @@ const PageBuilder = () => {
                 >
                     {getComponentForPreview()}
                 </PlacementPreview>
-            </div>
-        </DndContext>
+            </DndContext>
+        </div>
     );
 };
 
