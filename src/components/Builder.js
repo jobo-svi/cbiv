@@ -435,7 +435,9 @@ const PageBuilder = () => {
                                 type="number"
                                 value={translateTiming}
                                 onChange={(event) =>
-                                    setTranslateTiming(event.target.value)
+                                    setTranslateTiming(
+                                        parseInt(event.target.value)
+                                    )
                                 }
                             />
                         </label>
@@ -445,7 +447,9 @@ const PageBuilder = () => {
                                 type="number"
                                 value={columnDelayTiming}
                                 onChange={(event) =>
-                                    setColumnDelayTiming(event.target.value)
+                                    setColumnDelayTiming(
+                                        parseInt(event.target.value)
+                                    )
                                 }
                             />
                         </label>

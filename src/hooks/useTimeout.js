@@ -1,5 +1,6 @@
 import React from "react";
 export default function useTimeout(callback, delay) {
+    console.log("delay is", delay);
     const timeoutRef = React.useRef(null);
     const savedCallback = React.useRef(callback);
     React.useEffect(() => {
