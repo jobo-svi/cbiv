@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { useEffect, forwardRef } from "react";
 
 const PlacementPreview = forwardRef((props, ref) => {
     return (

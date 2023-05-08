@@ -278,7 +278,6 @@
     }
 }
 
-/* ...and then apply it: */
 .slide-down {
     animation: slide-down 300ms;
 }

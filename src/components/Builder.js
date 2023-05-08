@@ -112,7 +112,16 @@ const PageBuilder = () => {
         }
 
         if (columnTimerActive) {
-            setPlacementPreviewStyle(defaultPlacementPreviewStyle);
+            let newStyle = defaultPlacementPreviewStyle;
+
+            if (
+                shouldUpdatePlacementPreviewStyle(
+                    placementPreviewStyle,
+                    newStyle
+                )
+            ) {
+                setPlacementPreviewStyle(newStyle);
+            }
         }
 
         if (relativeHoverPosition === "center" && !columnTimerActive) {
@@ -121,13 +130,21 @@ const PageBuilder = () => {
             const columnWidth = closestElement.rect.width / (columnCount + 1);
             const columnXOffset =
                 closestElement.rect.left + columnWidth * columnCount;
-            setPlacementPreviewStyle({
-                top: 0,
+
+            let newStyle = {
                 left: columnXOffset,
                 width: closestElement.rect.width / (columnCount + 1),
                 transition: `transform ${translateTiming}ms ease 0s`,
                 transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
-            });
+            };
+            if (
+                shouldUpdatePlacementPreviewStyle(
+                    placementPreviewStyle,
+                    newStyle
+                )
+            ) {
+                setPlacementPreviewStyle(newStyle);
+            }
         } else if (!columnTimerActive) {
             // get the dimensions of the element that matches the droptarget
             let item = items[dropTargetIndex];
@@ -141,14 +158,6 @@ const PageBuilder = () => {
             }
 
             // Render the placement preview
-            setPlacementPreviewStyle({
-                width: closestElement.rect.width,
-                left: closestElement.rect.left,
-                transition: `transform ${translateTiming}ms ease 0s`,
-                transform: `translate3d(0px, ${closestElement.rect.top +
-                    additional}px, 0px)`,
-            });
-
             if (collisions) {
                 let c = collisions.find((c) => c.id === item._uid);
 
@@ -161,13 +170,23 @@ const PageBuilder = () => {
                     }
 
                     // Render the placement preview
-                    setPlacementPreviewStyle({
+                    let newStyle = {
+                        display: "block",
                         width: c.width,
                         left: c.left,
                         transition: `transform ${translateTiming}ms ease 0s`,
                         transform: `translate3d(0px, ${c.top +
                             additional}px, 0px)`,
-                    });
+                    };
+
+                    if (
+                        shouldUpdatePlacementPreviewStyle(
+                            placementPreviewStyle,
+                            newStyle
+                        )
+                    ) {
+                        setPlacementPreviewStyle(newStyle);
+                    }
                 }
             }
         }
@@ -228,7 +247,8 @@ const PageBuilder = () => {
                             moveElement(
                                 item,
                                 dropIndex,
-                                relativeHoverPosition === "center"
+                                relativeHoverPosition === "center" &&
+                                    !columnTimerActive
                             )
                         );
                     }
@@ -402,6 +422,17 @@ const PageBuilder = () => {
 
     const getElementById = (id) => {
         return items.flatMap((row) => row.columns).find((c) => c._uid === id);
+    };
+
+    // TODO: find a better way to do this. Poor man's usememo - only update state if the object has changed
+    const shouldUpdatePlacementPreviewStyle = (previewStyle, newStyle) => {
+        return (
+            previewStyle.display !== newStyle.display ||
+            previewStyle.width !== newStyle.width ||
+            previewStyle.left !== newStyle.left ||
+            previewStyle.transition !== newStyle.transition ||
+            previewStyle.transform !== newStyle.transform
+        );
     };
 
     return (
