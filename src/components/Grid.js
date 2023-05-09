@@ -8,7 +8,7 @@ const Grid = ({
     items,
     onGridItemClick,
     dropTargetIndex,
-    placementPreviewRef,
+    placementPreviewStyle,
     relativeHoverPosition,
     translateTiming,
     columnTimerActive,
@@ -36,8 +36,8 @@ const Grid = ({
             relativeHoverPosition !== "center"
         ) {
             style.transition = `transform ${translateTiming}ms ease 0s`;
-            style.transform = `translate3d(0px, ${placementPreviewRef.current
-                .clientHeight + gridGap}px, 0px)`;
+            style.transform = `translate3d(0px, ${placementPreviewStyle.height +
+                gridGap}px, 0px)`;
         }
         // We're waiting on column timer, or cursor is below all elements, so shift all elements back to original position
         else {
@@ -62,14 +62,6 @@ const Grid = ({
                 .getBoundingClientRect().width;
             const columnWidth = (rowWidth - gap) / (noOfColumns + 1);
             style.width = `${columnWidth}px`;
-
-            if (columnIndex != 0) {
-                //style.transition = `transform ${translateTiming}ms ease 0s`;
-                // At 1280 width
-                // 2 -> 3 = 216.5
-                // 3 -> 4 = 108.5
-                //style.transform = `translateX(-${108.5 * columnIndex}px)`;
-            }
         }
         return style;
     }

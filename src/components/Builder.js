@@ -41,7 +41,8 @@ const PageBuilder = () => {
     const placementPreviewRef = useRef(null);
 
     const defaultPlacementPreviewStyle = {
-        display: "none",
+        visibility: "hidden",
+        height: 0,
     };
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState(
         defaultPlacementPreviewStyle
@@ -105,26 +106,65 @@ const PageBuilder = () => {
         !columnTimerActive ? null : columnDelayTiming
     );
 
+    const getPreviewHeight = () => {
+        // Get the height that the preview should be - if dragging a new item, the drag data will have the height, else, look up the height from the dom
+        let previewHeight = 0;
+        if (
+            draggingElement &&
+            draggingElement.data.current &&
+            draggingElement.data.current.height
+        ) {
+            previewHeight = draggingElement.data.current.height;
+        } else {
+            // Get the height by querying the dom - better way to handle this?
+            const ele = document.getElementById(draggingElement.id);
+            previewHeight = ele.getBoundingClientRect().height;
+        }
+
+        return previewHeight;
+    };
+
     // Position the placement preview
     useEffect(() => {
-        if (!closestElement || !items.length) {
+        if (!draggingElement || !closestElement || !items.length) {
             return;
         }
 
-        if (columnTimerActive) {
-            let newStyle = defaultPlacementPreviewStyle;
+        // get the dimensions of the element that matches the droptarget
+        let item = items[dropTargetIndex];
+        if (dropTargetIndex === items.length) {
+            item = items[items.length - 1];
+        }
 
-            if (
-                shouldUpdatePlacementPreviewStyle(
-                    placementPreviewStyle,
-                    newStyle
-                )
-            ) {
-                setPlacementPreviewStyle(newStyle);
+        if (columnTimerActive) {
+            let c = collisions.find((c) => c.id === item._uid);
+            if (c) {
+                c = c.data.droppableContainer.rect.current;
+
+                // Transition the placement preview to height = 0 while we wait for the timer
+                let newStyle = {
+                    transition: `height 300ms ease 0s, top 300ms ease 0s`,
+                    top: placementPreviewRef.current.style.top,
+                    left: c.left,
+                    width: c.width,
+                    height: 0,
+                };
+
+                if (
+                    shouldUpdatePlacementPreviewStyle(
+                        placementPreviewStyle,
+                        newStyle
+                    )
+                ) {
+                    setPlacementPreviewStyle(newStyle);
+                }
             }
         }
 
+        let previewHeight = getPreviewHeight();
+
         if (relativeHoverPosition === "center" && !columnTimerActive) {
+            // We've been hovering long enough and can now show the preview
             const columnCount = items.find((i) => i._uid === closestElement.id)
                 .columns.length;
             const columnWidth = closestElement.rect.width / (columnCount + 1);
@@ -132,10 +172,11 @@ const PageBuilder = () => {
                 closestElement.rect.left + columnWidth * columnCount;
 
             let newStyle = {
+                top: closestElement.rect.top,
                 left: columnXOffset,
                 width: closestElement.rect.width / (columnCount + 1),
-                transition: `transform ${translateTiming}ms ease 0s`,
-                transform: `translate3d(0px, ${closestElement.rect.top}px, 0px)`,
+                height: previewHeight,
+                transition: `height 300ms ease 0s, top 300ms ease 0s`,
             };
             if (
                 shouldUpdatePlacementPreviewStyle(
@@ -146,17 +187,6 @@ const PageBuilder = () => {
                 setPlacementPreviewStyle(newStyle);
             }
         } else if (!columnTimerActive) {
-            // get the dimensions of the element that matches the droptarget
-            let item = items[dropTargetIndex];
-            if (dropTargetIndex === items.length) {
-                item = items[items.length - 1];
-            }
-
-            let additional = 0;
-            if (dropTargetIndex === items.length) {
-                additional += closestElement.rect.height + gridGap;
-            }
-
             // Render the placement preview
             if (collisions) {
                 let c = collisions.find((c) => c.id === item._uid);
@@ -171,12 +201,12 @@ const PageBuilder = () => {
 
                     // Render the placement preview
                     let newStyle = {
-                        display: "block",
+                        visibility: "visible",
                         width: c.width,
+                        height: previewHeight,
+                        top: c.top + additional,
                         left: c.left,
-                        transition: `transform ${translateTiming}ms ease 0s`,
-                        transform: `translate3d(0px, ${c.top +
-                            additional}px, 0px)`,
+                        transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
                     };
 
                     if (
@@ -424,11 +454,14 @@ const PageBuilder = () => {
         return items.flatMap((row) => row.columns).find((c) => c._uid === id);
     };
 
-    // TODO: find a better way to do this. Poor man's usememo - only update state if the object has changed
+    // TODO: Because this is an object, React will re-render every time we update it, even if no properties have changed.
+    // So for now, do a poor man's equality check on the object so we don't update it if it hasn't actually changed.
     const shouldUpdatePlacementPreviewStyle = (previewStyle, newStyle) => {
         return (
             previewStyle.display !== newStyle.display ||
             previewStyle.width !== newStyle.width ||
+            previewStyle.height !== newStyle.height ||
+            previewStyle.top !== newStyle.top ||
             previewStyle.left !== newStyle.left ||
             previewStyle.transition !== newStyle.transition ||
             previewStyle.transform !== newStyle.transform
@@ -498,7 +531,7 @@ const PageBuilder = () => {
                         setItems={setItems}
                         onGridItemClick={handleGridItemClick}
                         dropTargetIndex={dropTargetIndex}
-                        placementPreviewRef={placementPreviewRef}
+                        placementPreviewStyle={placementPreviewStyle}
                         relativeHoverPosition={relativeHoverPosition}
                         translateTiming={translateTiming}
                         columnTimerActive={columnTimerActive}

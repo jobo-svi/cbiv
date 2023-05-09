@@ -2,9 +2,9 @@ import React, { useEffect, forwardRef } from "react";
 
 const PlacementPreview = forwardRef((props, ref) => {
     return (
-        <div id="placement-preview" style={props.style} ref={ref}>
+        <div id="placement-preview" ref={ref} style={{ ...props.style }}>
             <div className="overlay"></div>
-            {props.children}
+            <div style={{ visibility: "hidden" }}>{props.children}</div>
         </div>
     );
 });

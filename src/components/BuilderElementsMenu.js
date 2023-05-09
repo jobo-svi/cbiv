@@ -11,6 +11,7 @@ const BuilderElementsMenu = (props) => {
                     id="header-menu-item"
                     data={{
                         type: "header",
+                        height: 48,
                     }}
                 >
                     <button className="element">
@@ -23,6 +24,7 @@ const BuilderElementsMenu = (props) => {
                     id="paragraph-menu-item"
                     data={{
                         type: "paragraph",
+                        height: 96,
                     }}
                 >
                     <button className="element">
@@ -36,6 +38,7 @@ const BuilderElementsMenu = (props) => {
                     id="image-menu-item"
                     data={{
                         type: "image",
+                        height: 826,
                     }}
                 >
                     <button className="element">
