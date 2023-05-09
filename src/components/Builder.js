@@ -304,7 +304,6 @@ const PageBuilder = () => {
         setDebouncedRelativeHoverPosition(null);
         setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
         uiTimerRef.current = null;
-        console.log("drag end");
     }
 
     function handleDragMove(event) {

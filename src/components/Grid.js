@@ -49,14 +49,24 @@ const Grid = ({
     }
 
     function getColumnStyle(rowIndex, columnIndex, noOfColumns) {
-        let style = {};
+        let style = {
+            transition: `width ${translateTiming}ms ease 0s`,
+        };
+
+        // // manually de-transitioning width may not be possible while using flex. Might need to disable flex...?
+        // const match = document.getElementById(items[rowIndex]._uid);
+        // if (match) {
+        //     const rowWidth = match.getBoundingClientRect().width;
+        //     console.log("col width", rowWidth / noOfColumns);
+        //     style.width = `${rowWidth / 2}px`;
+        // }
+
         const isWithinElement =
             relativeHoverPosition === "center" && rowIndex === dropTargetIndex;
-
         if (isWithinElement && !columnTimerActive) {
+            // There's definitely a better way to get row width, but this will do for now.
             style.flex = "unset";
             const gap = gridGap * noOfColumns;
-            // There's definitely a better way to get row width, but this will do for now.
             const rowWidth = document
                 .getElementById(items[rowIndex]._uid)
                 .getBoundingClientRect().width;
