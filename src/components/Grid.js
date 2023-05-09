@@ -88,11 +88,10 @@ const Grid = ({
                                                 id={item._uid}
                                                 key={item._uid}
                                                 className={`grid-column`}
-                                                dragHandleEnabled={true}
                                                 onClick={() =>
                                                     onGridItemClick(item)
                                                 }
-                                                style={getColumnStyle(
+                                                positionStyle={getColumnStyle(
                                                     rowIndex,
                                                     columnIndex,
                                                     row.columns.length

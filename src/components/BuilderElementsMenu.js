@@ -2,12 +2,13 @@ import React from "react";
 import Draggable from "./Draggable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../css/App.css";
+import BuilderElementsMenuItem from "./BuilderElementsMenuItem";
 
 const BuilderElementsMenu = (props) => {
     return (
         <div className="builder-elements-menu">
             <div className="element-wrapper">
-                <Draggable
+                <BuilderElementsMenuItem
                     id="header-menu-item"
                     data={{
                         type: "header",
@@ -17,10 +18,10 @@ const BuilderElementsMenu = (props) => {
                     <button className="element">
                         <FontAwesomeIcon icon="fa-solid fa-heading" /> HEADER
                     </button>
-                </Draggable>
+                </BuilderElementsMenuItem>
             </div>
             <div className="element-wrapper">
-                <Draggable
+                <BuilderElementsMenuItem
                     id="paragraph-menu-item"
                     data={{
                         type: "paragraph",
@@ -31,10 +32,10 @@ const BuilderElementsMenu = (props) => {
                         <FontAwesomeIcon icon="fa-solid fa-paragraph" />
                         PARAGRAPH
                     </button>
-                </Draggable>
+                </BuilderElementsMenuItem>
             </div>
             <div className="element-wrapper">
-                <Draggable
+                <BuilderElementsMenuItem
                     id="image-menu-item"
                     data={{
                         type: "image",
@@ -45,7 +46,7 @@ const BuilderElementsMenu = (props) => {
                         <FontAwesomeIcon icon="fa-solid fa-image" />
                         IMAGE
                     </button>
-                </Draggable>
+                </BuilderElementsMenuItem>
             </div>
         </div>
     );

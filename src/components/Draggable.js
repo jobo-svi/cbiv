@@ -8,14 +8,19 @@ const Draggable = (props) => {
         data: props.data,
     });
 
-    const dragHandleEnabled = props.dragHandleEnabled;
     const [showDragHandle, setShowDragHandle] = useState(false);
 
-    const parentStyles = {};
-    if (dragHandleEnabled && showDragHandle) {
-        parentStyles.position = "relative";
-        parentStyles.border = `1px solid #343536`;
+    const hoverStyle = {};
+    if (showDragHandle) {
+        hoverStyle.position = "relative";
+        hoverStyle.border = `1px solid #343536`;
     }
+
+    const draggingStyle = {};
+    if (isDragging) {
+        draggingStyle.opacity = ".5";
+    }
+
     return (
         <div
             ref={setNodeRef}
@@ -25,43 +30,37 @@ const Draggable = (props) => {
             id={props.id}
             className={props.className}
             style={{
-                opacity: isDragging ? 0.5 : 1,
-                ...props.style,
-                ...parentStyles,
+                ...draggingStyle,
+                ...props.positionStyle,
+                ...hoverStyle,
             }}
-            {...listeners}
-            {...attributes}
         >
             {props.children}
-            {dragHandleEnabled && showDragHandle && (
-                <div
-                    style={{
-                        position: "absolute",
-                        right: "0px",
-                        top: "50%",
-                        transform: "translate(50%, -50%)",
-                        background: "#343536",
-                        color: "#D7D7D7",
-                        zIndex: "1",
-                        height: 25,
-                        width: 25,
-                        borderRadius: "50%",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        fontSize: "18px",
-                        cursor: "grab",
-                    }}
-                >
-                    <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
-                </div>
-            )}
+            <div
+                {...listeners}
+                {...attributes}
+                style={{
+                    display: showDragHandle ? "flex" : "none",
+                    position: "absolute",
+                    right: "0px",
+                    top: "50%",
+                    transform: "translate(50%, -50%)",
+                    background: "#343536",
+                    color: "#D7D7D7",
+                    zIndex: "1",
+                    height: 25,
+                    width: 25,
+                    borderRadius: "50%",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    fontSize: "18px",
+                    cursor: "grab",
+                }}
+            >
+                <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
+            </div>
         </div>
     );
-};
-
-Draggable.defaultProps = {
-    dragHandleEnabled: false,
 };
 
 export default Draggable;

@@ -471,9 +471,9 @@ const PageBuilder = () => {
 
             // Dragging an existing item
         } else {
-            // Get the height by querying the dom - better way to handle this?
+            // Get the height by querying the dom for the element we're currently dragging- better way to handle this?
             previewHeight = document
-                .getElementById(closestElement.id)
+                .getElementById(draggingElement.id)
                 .getBoundingClientRect().height;
         }
 
