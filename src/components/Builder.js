@@ -48,18 +48,34 @@ const PageBuilder = () => {
         defaultPlacementPreviewStyle
     );
 
+    const [
+        debouncedPlacementPreviewStyle,
+        setDebouncedPlacementPreviewStyle,
+    ] = useState(placementPreviewStyle);
+
     const [itemToEdit, setItemToEdit] = useState(null);
 
     // Position of the dragged element relative to the element being hovered over (above, below, center)
     const [relativeHoverPosition, setRelativeHoverPosition] = useState(null);
+    const [
+        debouncedRelativeHoverPosition,
+        setDebouncedRelativeHoverPosition,
+    ] = useState(relativeHoverPosition);
 
     // Where a new element will be inserted into the item array
     const [dropTargetIndex, setDropTargetIndex] = useState(null);
+    const [debouncedDropTargetIndex, setDebouncedDropTargetIndex] = useState(
+        dropTargetIndex
+    );
 
     // Whether or not the timer is active while hovering over an element while dragging
     const [columnTimerActive, setColumnTimerActive] = useState(false);
 
     // Configurable debug settings
+    const [slopTiming, setSlopTiming] = useState(
+        +localStorage.getItem("slopTiming") || 150
+    );
+
     const [translateTiming, setTranslateTiming] = useState(
         +localStorage.getItem("translateTiming") || 300
     );
@@ -94,7 +110,8 @@ const PageBuilder = () => {
         localStorage.setItem("translateTiming", translateTiming);
         localStorage.setItem("columnDelayTiming", columnDelayTiming);
         localStorage.setItem("gridGap", gridGap);
-    }, [translateTiming, columnDelayTiming]);
+        localStorage.setItem("slopTiming", slopTiming);
+    }, [translateTiming, columnDelayTiming, gridGap, slopTiming]);
 
     // Timer for how long to hover before combining elements into multicolumn
     useTimeout(
@@ -105,6 +122,33 @@ const PageBuilder = () => {
         },
         !columnTimerActive ? null : columnDelayTiming
     );
+
+    const uiTimerRef = useRef(null);
+    useEffect(() => {
+        // Clear the interval when the component unmounts
+        return () => clearTimeout(uiTimerRef.current);
+    }, []);
+
+    useEffect(() => {
+        if (uiTimerRef.current) {
+            clearTimeout(uiTimerRef.current);
+        }
+
+        uiTimerRef.current = setTimeout(() => {
+            // If element was drag n dropped quickly, the timer could finish after drop is complete, in which case we should not do anything
+            if (uiTimerRef.current) {
+                setDebouncedPlacementPreviewStyle(placementPreviewStyle);
+                setDebouncedDropTargetIndex(dropTargetIndex);
+                setDebouncedRelativeHoverPosition(relativeHoverPosition);
+            }
+        }, slopTiming);
+    }, [placementPreviewStyle, dropTargetIndex, relativeHoverPosition]);
+
+    const updatePlacementPreviewStyle = (oldStyle, newStyle) => {
+        if (shouldUpdatePlacementPreviewStyle(oldStyle, newStyle)) {
+            setPlacementPreviewStyle(newStyle);
+        }
+    };
 
     // Position the placement preview
     useEffect(() => {
@@ -132,14 +176,7 @@ const PageBuilder = () => {
                     height: 0,
                 };
 
-                if (
-                    shouldUpdatePlacementPreviewStyle(
-                        placementPreviewStyle,
-                        newStyle
-                    )
-                ) {
-                    setPlacementPreviewStyle(newStyle);
-                }
+                updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
             }
         }
 
@@ -161,14 +198,7 @@ const PageBuilder = () => {
                 height: previewHeight,
                 transition: `height 300ms ease 0s, top 300ms ease 0s`,
             };
-            if (
-                shouldUpdatePlacementPreviewStyle(
-                    placementPreviewStyle,
-                    newStyle
-                )
-            ) {
-                setPlacementPreviewStyle(newStyle);
-            }
+            updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
         } else if (!columnTimerActive) {
             // Render the placement preview
             if (collisions) {
@@ -192,14 +222,10 @@ const PageBuilder = () => {
                         transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
                     };
 
-                    if (
-                        shouldUpdatePlacementPreviewStyle(
-                            placementPreviewStyle,
-                            newStyle
-                        )
-                    ) {
-                        setPlacementPreviewStyle(newStyle);
-                    }
+                    updatePlacementPreviewStyle(
+                        placementPreviewStyle,
+                        newStyle
+                    );
                 }
             }
         }
@@ -272,9 +298,13 @@ const PageBuilder = () => {
         setDraggingElement(null);
         setClosestElement(null);
         setCollisions(null);
-        setDropTargetIndex(null);
-        setRelativeHoverPosition(null);
-        setPlacementPreviewStyle(defaultPlacementPreviewStyle);
+
+        // We want dropped elements to appear immediately, so update the debounced values directly
+        setDebouncedDropTargetIndex(null);
+        setDebouncedRelativeHoverPosition(null);
+        setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
+        uiTimerRef.current = null;
+        console.log("drag end");
     }
 
     function handleDragMove(event) {
@@ -394,7 +424,7 @@ const PageBuilder = () => {
         newItems.map((row) => {
             let column = row.columns.find((col) => col._uid === item._uid);
             if (column) {
-                row.columns = row.columns.filter((c) => c._uid != column._uid);
+                row.columns = row.columns.filter((c) => c._uid !== column._uid);
             }
         });
 
@@ -469,9 +499,9 @@ const PageBuilder = () => {
             } else {
                 previewHeight = draggingElement.data.current.height;
             }
-
-            // Dragging an existing item
-        } else {
+        }
+        // Dragging an existing item
+        else {
             // Get the height by querying the dom for the element we're currently dragging- better way to handle this?
             previewHeight = document
                 .getElementById(draggingElement.id)
@@ -529,6 +559,16 @@ const PageBuilder = () => {
                             />
                         </label>
                         <label>
+                            <div>Slop time (ms)</div>
+                            <input
+                                type="number"
+                                value={slopTiming}
+                                onChange={(event) =>
+                                    setSlopTiming(parseInt(event.target.value))
+                                }
+                            />
+                        </label>
+                        <label>
                             <div>Space between rows/cols</div>
                             <input
                                 type="number"
@@ -543,9 +583,9 @@ const PageBuilder = () => {
                         items={items}
                         setItems={setItems}
                         onGridItemClick={handleGridItemClick}
-                        dropTargetIndex={dropTargetIndex}
-                        placementPreviewStyle={placementPreviewStyle}
-                        relativeHoverPosition={relativeHoverPosition}
+                        dropTargetIndex={debouncedDropTargetIndex}
+                        placementPreviewStyle={debouncedPlacementPreviewStyle}
+                        relativeHoverPosition={debouncedRelativeHoverPosition}
                         translateTiming={translateTiming}
                         columnTimerActive={columnTimerActive}
                         gridGap={gridGap}
@@ -575,7 +615,7 @@ const PageBuilder = () => {
                 </DragOverlay>
                 <PlacementPreview
                     ref={placementPreviewRef}
-                    style={placementPreviewStyle}
+                    style={debouncedPlacementPreviewStyle}
                 >
                     {getComponentForPreview()}
                 </PlacementPreview>

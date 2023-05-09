@@ -25,7 +25,7 @@ const Draggable = (props) => {
         <div
             ref={setNodeRef}
             onClick={props.onClick}
-            onMouseOver={() => setShowDragHandle(true)}
+            onMouseOver={() => setShowDragHandle(!isDragging)}
             onMouseOut={() => setShowDragHandle(false)}
             id={props.id}
             className={props.className}
