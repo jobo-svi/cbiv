@@ -55,7 +55,7 @@ const Grid = ({
 
         if (isWithinElement && !columnTimerActive) {
             style.flex = "unset";
-            const gap = 16 * noOfColumns;
+            const gap = gridGap * noOfColumns;
             // There's definitely a better way to get row width, but this will do for now.
             const rowWidth = document
                 .getElementById(items[rowIndex]._uid)

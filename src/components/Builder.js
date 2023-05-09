@@ -149,7 +149,8 @@ const PageBuilder = () => {
             // We've been hovering long enough and can now show the preview
             const columnCount = items.find((i) => i._uid === closestElement.id)
                 .columns.length;
-            const columnWidth = closestElement.rect.width / (columnCount + 1);
+            const columnWidth =
+                (closestElement.rect.width + gridGap) / (columnCount + 1);
             const columnXOffset =
                 closestElement.rect.left + columnWidth * columnCount;
 
