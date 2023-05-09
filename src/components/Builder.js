@@ -106,24 +106,6 @@ const PageBuilder = () => {
         !columnTimerActive ? null : columnDelayTiming
     );
 
-    const getPreviewHeight = () => {
-        // Get the height that the preview should be - if dragging a new item, the drag data will have the height, else, look up the height from the dom
-        let previewHeight = 0;
-        if (
-            draggingElement &&
-            draggingElement.data.current &&
-            draggingElement.data.current.height
-        ) {
-            previewHeight = draggingElement.data.current.height;
-        } else {
-            // Get the height by querying the dom - better way to handle this?
-            const ele = document.getElementById(draggingElement.id);
-            previewHeight = ele.getBoundingClientRect().height;
-        }
-
-        return previewHeight;
-    };
-
     // Position the placement preview
     useEffect(() => {
         if (!draggingElement || !closestElement || !items.length) {
@@ -466,6 +448,36 @@ const PageBuilder = () => {
             previewStyle.transition !== newStyle.transition ||
             previewStyle.transform !== newStyle.transform
         );
+    };
+
+    const getPreviewHeight = () => {
+        // Get the height that the preview should be
+        let previewHeight = 0;
+
+        // Dragging a new item, so the height will be included in its data
+        if (
+            draggingElement &&
+            draggingElement.data.current &&
+            draggingElement.data.current.height
+        ) {
+            // If combining into columns, use the height of the row instead
+            if (relativeHoverPosition === "center") {
+                previewHeight = document
+                    .getElementById(closestElement.id)
+                    .parentElement.getBoundingClientRect().height;
+            } else {
+                previewHeight = draggingElement.data.current.height;
+            }
+
+            // Dragging an existing item
+        } else {
+            // Get the height by querying the dom - better way to handle this?
+            previewHeight = document
+                .getElementById(closestElement.id)
+                .getBoundingClientRect().height;
+        }
+
+        return previewHeight;
     };
 
     return (

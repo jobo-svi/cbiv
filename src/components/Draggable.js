@@ -3,10 +3,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useDraggable } from "@dnd-kit/core";
 
 const Draggable = (props) => {
-    const { attributes, listeners, setNodeRef } = useDraggable({
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: props.id,
         data: props.data,
     });
+
     const dragHandleEnabled = props.dragHandleEnabled;
     const [showDragHandle, setShowDragHandle] = useState(false);
 
@@ -23,7 +24,11 @@ const Draggable = (props) => {
             onMouseOut={() => setShowDragHandle(false)}
             id={props.id}
             className={props.className}
-            style={{ ...props.style, ...parentStyles }}
+            style={{
+                opacity: isDragging ? 0.5 : 1,
+                ...props.style,
+                ...parentStyles,
+            }}
             {...listeners}
             {...attributes}
         >
@@ -45,6 +50,7 @@ const Draggable = (props) => {
                         justifyContent: "center",
                         alignItems: "center",
                         fontSize: "18px",
+                        cursor: "grab",
                     }}
                 >
                     <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
