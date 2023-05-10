@@ -14,6 +14,7 @@ const Draggable = (props) => {
     if (showDragHandle) {
         hoverStyle.position = "relative";
         hoverStyle.border = `1px solid #343536`;
+        hoverStyle.margin = "-1px";
     }
 
     const draggingStyle = {};

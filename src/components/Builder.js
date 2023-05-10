@@ -322,8 +322,8 @@ const PageBuilder = () => {
             const elementHeight = over.rect.height;
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
-            const topRange = borderTop + elementHeight / 3;
-            const bottomRange = borderBottom - elementHeight / 3;
+            const topRange = borderTop + elementHeight / 3.5;
+            const bottomRange = borderBottom - elementHeight / 3.5;
 
             const hoveringWithinElement =
                 clientOffset.y >= hoverRect.top &&
