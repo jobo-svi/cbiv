@@ -32,10 +32,11 @@ export const Components = {
         },
         defaultHeight: 826,
     },
-    // flipcard: {
-    //     type: FlipCard,
-    //     validChildComponents: [Image],
-    // },
+    flipcard: {
+        type: FlipCard,
+        component: "flipcard",
+        defaultHeight: 300,
+    },
     // columnlayout: {
     //     type: ColumnLayout,
     // },

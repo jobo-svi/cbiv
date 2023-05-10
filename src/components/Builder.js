@@ -124,6 +124,7 @@ const PageBuilder = () => {
     );
 
     const uiTimerRef = useRef(null);
+    const ignoreUITimer = useRef(false);
     useEffect(() => {
         // Clear the interval when the component unmounts
         return () => clearTimeout(uiTimerRef.current);
@@ -134,13 +135,14 @@ const PageBuilder = () => {
             clearTimeout(uiTimerRef.current);
         }
 
+        // In some cases it's useful to cancel the timer immediately
         uiTimerRef.current = setTimeout(() => {
-            // If element was drag n dropped quickly, the timer could finish after drop is complete, in which case we should not do anything
-            if (uiTimerRef.current) {
+            if (ignoreUITimer.current === false) {
                 setDebouncedPlacementPreviewStyle(placementPreviewStyle);
                 setDebouncedDropTargetIndex(dropTargetIndex);
                 setDebouncedRelativeHoverPosition(relativeHoverPosition);
             }
+            ignoreUITimer.current = false;
         }, slopTiming);
     }, [placementPreviewStyle, dropTargetIndex, relativeHoverPosition]);
 
@@ -210,27 +212,54 @@ const PageBuilder = () => {
                 let c = collisions.find((c) => c.id === item._uid);
 
                 if (c) {
-                    c = c.data.droppableContainer.rect.current;
+                    const rect = c.data.droppableContainer.rect.current;
 
                     let additional = 0;
                     if (dropTargetIndex === items.length) {
-                        additional += c.height + gridGap;
+                        additional += rect.height + gridGap;
                     }
 
-                    // Render the placement preview
-                    let newStyle = {
-                        visibility: "visible",
-                        width: c.width,
-                        height: previewHeight,
-                        top: c.top + additional,
-                        left: c.left,
-                        transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
-                    };
+                    // Moving an existing element
+                    // Some rules for where you can move things
+                    let validPlacement = true;
+                    if (draggingElement.data.current.rowId) {
+                        //console.log(draggingElement);
+                        const rowIndex = items.findIndex(
+                            (i) => i._uid === draggingElement.data.current.rowId
+                        );
+                        const columnCount = items[rowIndex].columns.length;
+                        if (
+                            columnCount === 1 &&
+                            (dropTargetIndex === rowIndex ||
+                                dropTargetIndex === rowIndex + 1)
+                        ) {
+                            validPlacement = false;
+                        }
+                    }
 
-                    updatePlacementPreviewStyle(
-                        placementPreviewStyle,
-                        newStyle
-                    );
+                    if (validPlacement) {
+                        // Render the placement preview
+                        let newStyle = {
+                            visibility: "visible",
+                            width: rect.width,
+                            height: previewHeight,
+                            top: rect.top + additional,
+                            left: rect.left,
+                            transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
+                        };
+                        updatePlacementPreviewStyle(
+                            placementPreviewStyle,
+                            newStyle
+                        );
+                        ignoreUITimer.current = false;
+                    } else {
+                        setDebouncedDropTargetIndex(null);
+                        setDebouncedRelativeHoverPosition(null);
+                        setDebouncedPlacementPreviewStyle(
+                            defaultPlacementPreviewStyle
+                        );
+                        ignoreUITimer.current = true;
+                    }
                 }
             }
         }
@@ -309,7 +338,7 @@ const PageBuilder = () => {
         setDebouncedDropTargetIndex(null);
         setDebouncedRelativeHoverPosition(null);
         setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
-        uiTimerRef.current = null;
+        ignoreUITimer.current = true;
     }
 
     const getClosestRow = (collisions) => {

@@ -96,6 +96,7 @@ const Grid = ({
                                     return (
                                         <DnDGridColumn
                                             id={item._uid}
+                                            rowId={row._uid}
                                             key={item._uid}
                                             column={item}
                                             onClick={() =>

@@ -9,6 +9,7 @@ const DnDGridColumn = (props) => {
         id: props.id,
         data: {
             type: "column",
+            rowId: props.rowId,
         },
     });
 
@@ -19,7 +20,7 @@ const DnDGridColumn = (props) => {
         isDragging,
     } = useDraggable({
         id: props.id,
-        data: props.data,
+        data: { rowId: props.rowId, ...props.data },
     });
 
     const setNodeRef = useCombinedRefs(
