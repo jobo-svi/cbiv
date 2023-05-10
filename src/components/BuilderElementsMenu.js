@@ -1,5 +1,4 @@
 import React from "react";
-import Draggable from "./Draggable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../css/App.css";
 import BuilderElementsMenuItem from "./BuilderElementsMenuItem";

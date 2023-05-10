@@ -1,9 +1,7 @@
 import React from "react";
 import { constructComponent } from "./ComponentFactory";
-import Draggable from "./Draggable";
 import DefaultDroppable from "./DefaultDroppable";
 import GridRow from "./GridRow";
-import DroppableGridColumn from "./DnDGridColumn";
 import DnDGridColumn from "./DnDGridColumn";
 
 const Grid = ({
