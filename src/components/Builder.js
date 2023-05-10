@@ -322,8 +322,8 @@ const PageBuilder = () => {
             const elementHeight = over.rect.height;
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
-            const topRange = borderTop + elementHeight / 5;
-            const bottomRange = borderBottom + elementHeight / 5;
+            const topRange = borderTop + elementHeight / 3;
+            const bottomRange = borderBottom - elementHeight / 3;
 
             const hoveringWithinElement =
                 clientOffset.y >= hoverRect.top &&
@@ -357,9 +357,9 @@ const PageBuilder = () => {
             let hoverPosition = null;
             if (dropTarget !== -1) {
                 // Where are we hovering near
-                if (aboveElement) {
+                if (aboveElement || insideTop) {
                     hoverPosition = "top";
-                } else if (belowElement) {
+                } else if (belowElement || insideBottom) {
                     hoverPosition = "bottom";
                     dropTarget += 1;
                 } else if (insideCenter) {
