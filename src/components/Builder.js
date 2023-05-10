@@ -29,7 +29,7 @@ const PageBuilder = () => {
     const [draggingElement, setDraggingElement] = useState(null);
 
     // Closest element to your cursor when dragging, as determined by dnd-kit
-    const [closestElement, setClosestElement] = useState(null);
+    const [closestRow, setClosestRow] = useState(null);
 
     // Elements your drag element is intersecting with while dragging
     const [collisions, setCollisions] = useState(null);
@@ -152,7 +152,7 @@ const PageBuilder = () => {
 
     // Position the placement preview
     useEffect(() => {
-        if (!draggingElement || !closestElement || !items.length) {
+        if (!draggingElement || !closestRow || !items.length) {
             return;
         }
 
@@ -184,17 +184,22 @@ const PageBuilder = () => {
 
         if (relativeHoverPosition === "center" && !columnTimerActive) {
             // We've been hovering long enough and can now show the preview
-            const columnCount = items.find((i) => i._uid === closestElement.id)
+            const columnCount = items.find((i) => i._uid === closestRow.id)
                 .columns.length;
             const columnWidth =
-                (closestElement.rect.width + gridGap) / (columnCount + 1);
+                (closestRow.data.droppableContainer.rect.current.width +
+                    gridGap) /
+                (columnCount + 1);
             const columnXOffset =
-                closestElement.rect.left + columnWidth * columnCount;
+                closestRow.data.droppableContainer.rect.current.left +
+                columnWidth * columnCount;
 
             let newStyle = {
-                top: closestElement.rect.top,
+                top: closestRow.data.droppableContainer.rect.current.top,
                 left: columnXOffset,
-                width: closestElement.rect.width / (columnCount + 1),
+                width:
+                    closestRow.data.droppableContainer.rect.current.width /
+                    (columnCount + 1),
                 height: previewHeight,
                 transition: `height 300ms ease 0s, top 300ms ease 0s`,
             };
@@ -231,7 +236,7 @@ const PageBuilder = () => {
         }
     }, [
         relativeHoverPosition,
-        closestElement,
+        closestRow,
         dropTargetIndex,
         collisions,
         columnTimerActive,
@@ -254,17 +259,18 @@ const PageBuilder = () => {
     function handleDragStart(event) {
         const { active, over, collisions } = event;
         setDraggingElement(active);
-        setClosestElement(over);
+        setClosestRow(getClosestRow(collisions));
         setCollisions(collisions);
     }
 
     function handleDragEnd(event) {
-        const { active, over } = event;
-        if (over) {
+        const { active, collisions } = event;
+        const closestRow = getClosestRow(collisions);
+        if (closestRow) {
             if (items.length === 0) {
                 setItems(addElement(0, active.data.current.type, false));
             } else {
-                let dropIndex = items.map((i) => i._uid).indexOf(over.id);
+                let dropIndex = items.map((i) => i._uid).indexOf(closestRow.id);
                 if (dropIndex !== -1) {
                     // If hovering below the object, drop target index will be 1 more than current index
                     if (relativeHoverPosition === "bottom") {
@@ -296,7 +302,7 @@ const PageBuilder = () => {
         }
 
         setDraggingElement(null);
-        setClosestElement(null);
+        setClosestRow(null);
         setCollisions(null);
 
         // We want dropped elements to appear immediately, so update the debounced values directly
@@ -306,20 +312,35 @@ const PageBuilder = () => {
         uiTimerRef.current = null;
     }
 
+    const getClosestRow = (collisions) => {
+        if (!collisions || !collisions.length) {
+            return null;
+        }
+
+        return collisions.filter(
+            (c) =>
+                c.data.droppableContainer.data.current &&
+                c.data.droppableContainer.data.current.type === "row"
+        )[0];
+    };
+
     function handleDragMove(event) {
-        const { over, collisions } = event;
+        const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
 
-        if (over) {
-            setClosestElement(over);
+        const closestRow = getClosestRow(collisions);
+
+        if (closestRow) {
+            setClosestRow(closestRow);
             setCollisions(collisions);
 
             // The coordinates of the element we're hovering over
-            const hoverRect = over.rect;
+            const hoverRect = closestRow.data.droppableContainer.rect.current;
 
             // Determine mouse position relative to dndkit's closest match
-            const elementHeight = over.rect.height;
+            const elementHeight =
+                closestRow.data.droppableContainer.rect.current.height;
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
             const topRange = borderTop + elementHeight / 3.5;
@@ -353,7 +374,7 @@ const PageBuilder = () => {
                 clientOffset.y > hoverRect.top + elementHeight / 2;
 
             // Determine position of element if it were dropped
-            let dropTarget = items.map((i) => i._uid).indexOf(over.id);
+            let dropTarget = items.map((i) => i._uid).indexOf(closestRow.id);
             let hoverPosition = null;
             if (dropTarget !== -1) {
                 // Where are we hovering near
@@ -492,9 +513,8 @@ const PageBuilder = () => {
         ) {
             // If combining into columns, use the height of the row instead
             if (relativeHoverPosition === "center") {
-                previewHeight = document
-                    .getElementById(closestElement.id)
-                    .parentElement.getBoundingClientRect().height;
+                previewHeight =
+                    closestRow.data.droppableContainer.rect.current.height;
             } else {
                 previewHeight = draggingElement.data.current.height;
             }

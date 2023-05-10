@@ -29,7 +29,6 @@ const Draggable = (props) => {
             onMouseOver={() => setShowDragHandle(!isDragging)}
             onMouseOut={() => setShowDragHandle(false)}
             id={props.id}
-            className={props.className}
             style={{
                 ...draggingStyle,
                 ...props.positionStyle,

@@ -1,8 +1,10 @@
 import React from "react";
 import { constructComponent } from "./ComponentFactory";
-import Droppable from "./Droppable";
 import Draggable from "./Draggable";
 import DefaultDroppable from "./DefaultDroppable";
+import GridRow from "./GridRow";
+import DroppableGridColumn from "./DnDGridColumn";
+import DnDGridColumn from "./DnDGridColumn";
 
 const Grid = ({
     items,
@@ -83,36 +85,35 @@ const Grid = ({
                 {items.length > 0 &&
                     items.map((row, rowIndex) => {
                         return (
-                            <Droppable id={row._uid} key={row._uid}>
-                                <div
-                                    className="grid-row"
-                                    style={{
-                                        ...getRowStyle(rowIndex),
-                                        gap: gridGap,
-                                    }}
-                                    id={row._uid}
-                                >
-                                    {row.columns.map((item, columnIndex) => {
-                                        return (
-                                            <Draggable
-                                                id={item._uid}
-                                                key={item._uid}
-                                                className={`grid-column`}
-                                                onClick={() =>
-                                                    onGridItemClick(item)
-                                                }
-                                                positionStyle={getColumnStyle(
-                                                    rowIndex,
-                                                    columnIndex,
-                                                    row.columns.length
-                                                )}
-                                            >
-                                                {constructComponent(item)}
-                                            </Draggable>
-                                        );
-                                    })}
-                                </div>
-                            </Droppable>
+                            <GridRow
+                                id={row._uid}
+                                key={row._uid}
+                                row={row}
+                                style={{
+                                    ...getRowStyle(rowIndex),
+                                    gap: gridGap,
+                                }}
+                            >
+                                {row.columns.map((item, columnIndex) => {
+                                    return (
+                                        <DnDGridColumn
+                                            id={item._uid}
+                                            key={item._uid}
+                                            column={item}
+                                            onClick={() =>
+                                                onGridItemClick(item)
+                                            }
+                                            positionStyle={getColumnStyle(
+                                                rowIndex,
+                                                columnIndex,
+                                                row.columns.length
+                                            )}
+                                        >
+                                            {constructComponent(item)}
+                                        </DnDGridColumn>
+                                    );
+                                })}
+                            </GridRow>
                         );
                     })}
             </div>
