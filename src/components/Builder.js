@@ -123,8 +123,17 @@ const PageBuilder = () => {
         !columnTimerActive ? null : columnDelayTiming
     );
 
+    const [uiTimerActive, setUITimerActive] = useState(false);
+    // useTimeout(
+    //     () => {
+    //         setDropTargetIndex(dropTargetIndex);
+    //         setRelativeHoverPosition("center");
+    //         setColumnTimerActive(false);
+    //     },
+    //     !columnTimerActive ? null : columnDelayTiming
+    // );
+
     const uiTimerRef = useRef(null);
-    const ignoreUITimer = useRef(false);
     useEffect(() => {
         // Clear the interval when the component unmounts
         return () => clearTimeout(uiTimerRef.current);
@@ -135,14 +144,11 @@ const PageBuilder = () => {
             clearTimeout(uiTimerRef.current);
         }
 
-        // In some cases it's useful to cancel the timer immediately
         uiTimerRef.current = setTimeout(() => {
-            if (ignoreUITimer.current === false) {
-                setDebouncedPlacementPreviewStyle(placementPreviewStyle);
-                setDebouncedDropTargetIndex(dropTargetIndex);
-                setDebouncedRelativeHoverPosition(relativeHoverPosition);
-            }
-            ignoreUITimer.current = false;
+            console.log("time!");
+            setDebouncedPlacementPreviewStyle(placementPreviewStyle);
+            setDebouncedDropTargetIndex(dropTargetIndex);
+            setDebouncedRelativeHoverPosition(relativeHoverPosition);
         }, slopTiming);
     }, [placementPreviewStyle, dropTargetIndex, relativeHoverPosition]);
 
@@ -218,7 +224,6 @@ const PageBuilder = () => {
                 setDebouncedDropTargetIndex(null);
                 setDebouncedRelativeHoverPosition(null);
                 setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
-                ignoreUITimer.current = true;
             }
         } else if (!columnTimerActive) {
             // Render the placement preview
@@ -254,14 +259,12 @@ const PageBuilder = () => {
                             placementPreviewStyle,
                             newStyle
                         );
-                        ignoreUITimer.current = false;
                     } else {
                         setDebouncedDropTargetIndex(null);
                         setDebouncedRelativeHoverPosition(null);
                         setDebouncedPlacementPreviewStyle(
                             defaultPlacementPreviewStyle
                         );
-                        ignoreUITimer.current = true;
                     }
                 }
             }
@@ -296,6 +299,7 @@ const PageBuilder = () => {
     }
 
     function handleDragEnd(event) {
+        console.log("drag end");
         const { active, collisions } = event;
         const closestRow = getClosestRow(collisions);
         if (closestRow) {
@@ -341,7 +345,9 @@ const PageBuilder = () => {
         setDebouncedDropTargetIndex(null);
         setDebouncedRelativeHoverPosition(null);
         setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
-        ignoreUITimer.current = true;
+
+        console.log("clearing timeout");
+        clearTimeout(uiTimerRef.current);
     }
 
     const getClosestRow = (collisions) => {
@@ -357,6 +363,7 @@ const PageBuilder = () => {
     };
 
     function handleDragMove(event) {
+        console.log("drag move");
         const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
