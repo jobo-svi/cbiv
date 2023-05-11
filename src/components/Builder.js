@@ -196,16 +196,30 @@ const PageBuilder = () => {
                 closestRow.data.droppableContainer.rect.current.left +
                 columnWidth * columnCount;
 
-            let newStyle = {
-                top: closestRow.data.droppableContainer.rect.current.top,
-                left: columnXOffset,
-                width:
-                    closestRow.data.droppableContainer.rect.current.width /
-                    (columnCount + 1),
-                height: previewHeight,
-                transition: `height 300ms ease 0s, top 300ms ease 0s`,
-            };
-            updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
+            // There are certain invalid states where we don't want to show a drag preview
+            const validPlacement = isValidPlacement(
+                draggingElement,
+                items,
+                dropTargetIndex
+            );
+
+            if (validPlacement) {
+                let newStyle = {
+                    top: closestRow.data.droppableContainer.rect.current.top,
+                    left: columnXOffset,
+                    width:
+                        closestRow.data.droppableContainer.rect.current.width /
+                        (columnCount + 1),
+                    height: previewHeight,
+                    transition: `height 300ms ease 0s, top 300ms ease 0s`,
+                };
+                updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
+            } else {
+                setDebouncedDropTargetIndex(null);
+                setDebouncedRelativeHoverPosition(null);
+                setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
+                ignoreUITimer.current = true;
+            }
         } else if (!columnTimerActive) {
             // Render the placement preview
             if (collisions) {
@@ -219,23 +233,12 @@ const PageBuilder = () => {
                         additional += rect.height + gridGap;
                     }
 
-                    // Moving an existing element
-                    // Some rules for where you can move things
-                    let validPlacement = true;
-                    if (draggingElement.data.current.rowId) {
-                        //console.log(draggingElement);
-                        const rowIndex = items.findIndex(
-                            (i) => i._uid === draggingElement.data.current.rowId
-                        );
-                        const columnCount = items[rowIndex].columns.length;
-                        if (
-                            columnCount === 1 &&
-                            (dropTargetIndex === rowIndex ||
-                                dropTargetIndex === rowIndex + 1)
-                        ) {
-                            validPlacement = false;
-                        }
-                    }
+                    // There are certain invalid states where we don't want to show a drag preview
+                    const validPlacement = isValidPlacement(
+                        draggingElement,
+                        items,
+                        dropTargetIndex
+                    );
 
                     if (validPlacement) {
                         // Render the placement preview
@@ -557,6 +560,37 @@ const PageBuilder = () => {
         }
 
         return previewHeight;
+    };
+
+    const isValidPlacement = (draggingElement, items, dropTargetIndex) => {
+        let validPlacement = true;
+        if (draggingElement.data.current.rowId) {
+            const rowIndex = items.findIndex(
+                (i) => i._uid === draggingElement.data.current.rowId
+            );
+            const columnCount = items[rowIndex].columns.length;
+
+            // Can't drop an element on itself or directly adjacent to itself
+            if (
+                columnCount === 1 &&
+                (dropTargetIndex === rowIndex ||
+                    dropTargetIndex === rowIndex + 1) &&
+                relativeHoverPosition !== "center"
+            ) {
+                validPlacement = false;
+            }
+
+            // If item is already in a column, don't show drag preview.
+            // This will change once we implement column reordering.
+            if (
+                relativeHoverPosition === "center" &&
+                dropTargetIndex === rowIndex
+            ) {
+                validPlacement = false;
+            }
+        }
+
+        return validPlacement;
     };
 
     return (
