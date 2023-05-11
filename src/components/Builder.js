@@ -22,6 +22,23 @@ import { data } from "../data";
 import "../css/App.css";
 
 const PageBuilder = () => {
+    // dndkit sensors
+    const mouseSensor = useSensor(MouseSensor, {
+        // Require the mouse to move by 1 pixel before activating, so we can differentiate between drag and click
+        activationConstraint: {
+            distance: 1,
+        },
+    });
+
+    const touchSensor = useSensor(TouchSensor, {
+        // Press, with tolerance of 5px of movement
+        activationConstraint: {
+            tolerance: 5,
+        },
+    });
+
+    const sensors = useSensors(mouseSensor, touchSensor);
+
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
 
@@ -87,23 +104,6 @@ const PageBuilder = () => {
     const [gridGap, setGridGap] = useState(
         +localStorage.getItem("gridGap") || 24
     );
-
-    // dndkit sensors
-    const mouseSensor = useSensor(MouseSensor, {
-        // Require the mouse to move by 1 pixel before activating, so we can differentiate between drag and click
-        activationConstraint: {
-            distance: 1,
-        },
-    });
-
-    const touchSensor = useSensor(TouchSensor, {
-        // Press, with tolerance of 5px of movement
-        activationConstraint: {
-            tolerance: 5,
-        },
-    });
-
-    const sensors = useSensors(mouseSensor, touchSensor);
 
     // Persists debug settings across sessions
     useEffect(() => {
@@ -612,6 +612,7 @@ const PageBuilder = () => {
                     <div
                         style={{
                             display: "flex",
+                            flexWrap: "wrap",
                             gap: "20px",
                             marginBottom: "40px",
                         }}
@@ -673,7 +674,7 @@ const PageBuilder = () => {
                         gridGap={gridGap}
                     />
                 </div>
-                <div className="sidebar">
+                <div className="sidebar" style={{ overflow: "auto" }}>
                     {itemToEdit !== null ? (
                         <ItemEditor
                             item={itemToEdit}
