@@ -58,7 +58,6 @@ const PageBuilder = () => {
     const placementPreviewRef = useRef(null);
 
     const defaultPlacementPreviewStyle = {
-        visibility: "hidden",
         height: 0,
     };
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState(
@@ -251,9 +250,10 @@ const PageBuilder = () => {
                     } else {
                         setDebouncedDropTargetIndex(null);
                         setDebouncedRelativeHoverPosition(null);
-                        setDebouncedPlacementPreviewStyle(
-                            defaultPlacementPreviewStyle
-                        );
+                        setDebouncedPlacementPreviewStyle({
+                            ...placementPreviewStyle,
+                            height: 0,
+                        });
                         setUITimerActive(false);
                     }
                 }
