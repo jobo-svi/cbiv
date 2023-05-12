@@ -78,6 +78,7 @@
 .builder .grid .grid-row {
     display: flex;
     justify-content: space-evenly;
+    background: gray
 }
 
 .builder .grid .grid-column {

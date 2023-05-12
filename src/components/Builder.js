@@ -145,12 +145,6 @@ const PageBuilder = () => {
         }
     }, [placementPreviewStyle, dropTargetIndex, relativeHoverPosition]);
 
-    const updatePlacementPreviewStyle = (oldStyle, newStyle) => {
-        if (shouldUpdatePlacementPreviewStyle(oldStyle, newStyle)) {
-            setPlacementPreviewStyle(newStyle);
-        }
-    };
-
     // Position the placement preview
     useEffect(() => {
         if (!draggingElement || !closestRow || !items.length) {
@@ -187,13 +181,16 @@ const PageBuilder = () => {
             // We've been hovering long enough and can now show the preview
             const columnCount = items.find((i) => i._uid === closestRow.id)
                 .columns.length;
+
             const columnWidth =
-                (closestRow.data.droppableContainer.rect.current.width +
-                    gridGap) /
+                (closestRow.data.droppableContainer.rect.current.width -
+                    gridGap * columnCount) /
                 (columnCount + 1);
+
             const columnXOffset =
                 closestRow.data.droppableContainer.rect.current.left +
-                columnWidth * columnCount;
+                columnWidth * columnCount +
+                gridGap * columnCount;
 
             // There are certain invalid states where we don't want to show a drag preview
             const validPlacement = isValidPlacement(
@@ -206,9 +203,7 @@ const PageBuilder = () => {
                 let newStyle = {
                     top: closestRow.data.droppableContainer.rect.current.top,
                     left: columnXOffset,
-                    width:
-                        closestRow.data.droppableContainer.rect.current.width /
-                        (columnCount + 1),
+                    width: columnWidth,
                     height: previewHeight,
                     transition: `height 300ms ease 0s, top 300ms ease 0s`,
                 };
@@ -589,6 +584,12 @@ const PageBuilder = () => {
         }
 
         return validPlacement;
+    };
+
+    const updatePlacementPreviewStyle = (oldStyle, newStyle) => {
+        if (shouldUpdatePlacementPreviewStyle(oldStyle, newStyle)) {
+            setPlacementPreviewStyle(newStyle);
+        }
     };
 
     return (
