@@ -49,7 +49,7 @@ const PageBuilder = () => {
     const [closestRow, setClosestRow] = useState(null);
 
     // Elements your drag element is intersecting with while dragging
-    const [collisions, setCollisions] = useState(null);
+    const dragCollisions = useRef(null);
 
     // Track the position of the mouse for positioning the drag preview
     const mousePosition = useMousePosition();
@@ -163,7 +163,7 @@ const PageBuilder = () => {
         }
 
         if (columnTimerActive) {
-            let c = collisions.find((c) => c.id === item._uid);
+            let c = dragCollisions.current.find((c) => c.id === item._uid);
             if (c) {
                 c = c.data.droppableContainer.rect.current;
 
@@ -221,8 +221,8 @@ const PageBuilder = () => {
             }
         } else if (!columnTimerActive) {
             // Render the placement preview
-            if (collisions) {
-                let c = collisions.find((c) => c.id === item._uid);
+            if (dragCollisions.current) {
+                let c = dragCollisions.current.find((c) => c.id === item._uid);
 
                 if (c) {
                     const rect = c.data.droppableContainer.rect.current;
@@ -249,6 +249,7 @@ const PageBuilder = () => {
                             left: rect.left,
                             transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
                         };
+
                         updatePlacementPreviewStyle(
                             placementPreviewStyle,
                             newStyle
@@ -265,13 +266,7 @@ const PageBuilder = () => {
                 }
             }
         }
-    }, [
-        relativeHoverPosition,
-        closestRow,
-        dropTargetIndex,
-        collisions,
-        columnTimerActive,
-    ]);
+    }, [relativeHoverPosition, closestRow, dropTargetIndex, columnTimerActive]);
 
     const handleGridItemClick = (item) => {
         //setItemToEdit(item);
@@ -291,7 +286,7 @@ const PageBuilder = () => {
         const { active, over, collisions } = event;
         setDraggingElement(active);
         setClosestRow(getClosestRow(collisions));
-        setCollisions(collisions);
+        dragCollisions.current = collisions;
     }
 
     function handleDragEnd(event) {
@@ -334,12 +329,13 @@ const PageBuilder = () => {
 
         setDraggingElement(null);
         setClosestRow(null);
-        setCollisions(null);
+        dragCollisions.current = null;
 
-        // We want dropped elements to appear immediately, so update the debounced values directly
+        // We want dropped elements to appear immediately on drag end, so update the debounced values directly
         setDebouncedDropTargetIndex(null);
         setDebouncedRelativeHoverPosition(null);
         setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
+        setPlacementPreviewStyle(defaultPlacementPreviewStyle);
         setUITimerActive(false);
     }
 
@@ -352,7 +348,7 @@ const PageBuilder = () => {
 
         if (closestRow) {
             setClosestRow(closestRow);
-            setCollisions(collisions);
+            dragCollisions.current = collisions;
 
             // The coordinates of the element we're hovering over
             const hoverRect = closestRow.data.droppableContainer.rect.current;
