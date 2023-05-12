@@ -1,11 +1,11 @@
 self.__precacheManifest = [
   {
-    "revision": "a932f8d90a0547c5ef64",
+    "revision": "57b4707beaa8d3e0c750",
     "url": "/cbiv/static/css/main.648975f3.chunk.css"
   },
   {
-    "revision": "a932f8d90a0547c5ef64",
-    "url": "/cbiv/static/js/main.a932f8d9.chunk.js"
+    "revision": "57b4707beaa8d3e0c750",
+    "url": "/cbiv/static/js/main.57b4707b.chunk.js"
   },
   {
     "revision": "8c98aab82769540efb62",
@@ -20,7 +20,7 @@ self.__precacheManifest = [
     "url": "/cbiv/static/js/runtime~main.cb9ef3bc.js"
   },
   {
-    "revision": "8f990cd75819a20527ef739303a363a8",
+    "revision": "fe5b98e3b42e0fea9798e650854b13f1",
     "url": "/cbiv/index.html"
   }
 ];
