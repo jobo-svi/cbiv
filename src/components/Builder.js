@@ -283,73 +283,18 @@ const PageBuilder = () => {
     };
 
     function handleDragStart(event) {
-        const { active, over, collisions } = event;
+        const { active } = event;
         setDraggingElement(active);
-        setClosestRow(getClosestRow(collisions));
-        dragCollisions.current = collisions;
-    }
-
-    function handleDragEnd(event) {
-        const { active, collisions } = event;
-        const closestRow = getClosestRow(collisions);
-        if (closestRow) {
-            if (items.length === 0) {
-                setItems(addElement(0, active.data.current.type, false));
-            } else {
-                let dropIndex = items.map((i) => i._uid).indexOf(closestRow.id);
-                if (dropIndex !== -1) {
-                    // If hovering below the object, drop target index will be 1 more than current index
-                    if (relativeHoverPosition === "bottom") {
-                        dropIndex += 1;
-                    }
-
-                    const item = getElementById(draggingElement.id);
-                    if (!item) {
-                        setItems(
-                            addElement(
-                                dropIndex,
-                                active.data.current.type,
-                                relativeHoverPosition === "center" &&
-                                    !columnTimerActive
-                            )
-                        );
-                    } else {
-                        setItems(
-                            moveElement(
-                                item,
-                                dropIndex,
-                                relativeHoverPosition === "center" &&
-                                    !columnTimerActive
-                            )
-                        );
-                    }
-                }
-            }
-        }
-
-        setDraggingElement(null);
-        setClosestRow(null);
-        dragCollisions.current = null;
-
-        // We want dropped elements to appear immediately on drag end, so update the debounced values directly
-        setDebouncedDropTargetIndex(null);
-        setDebouncedRelativeHoverPosition(null);
-        setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
-        setPlacementPreviewStyle(defaultPlacementPreviewStyle);
-        setUITimerActive(false);
     }
 
     function handleDragMove(event) {
-        const { active, over, collisions } = event;
-
-        const clientOffset = mousePosition.current;
+        const { collisions } = event;
+        dragCollisions.current = collisions;
 
         const closestRow = getClosestRow(collisions);
+        setClosestRow(closestRow);
 
         if (closestRow) {
-            setClosestRow(closestRow);
-            dragCollisions.current = collisions;
-
             // The coordinates of the element we're hovering over
             const hoverRect = closestRow.data.droppableContainer.rect.current;
 
@@ -361,6 +306,7 @@ const PageBuilder = () => {
             const topRange = borderTop + elementHeight / 3.5;
             const bottomRange = borderBottom - elementHeight / 3.5;
 
+            const clientOffset = mousePosition.current;
             const hoveringWithinElement =
                 clientOffset.y >= hoverRect.top &&
                 clientOffset.y <= hoverRect.bottom &&
@@ -419,6 +365,56 @@ const PageBuilder = () => {
                 }
             }
         }
+    }
+
+    function handleDragEnd(event) {
+        const { active, collisions } = event;
+        const closestRow = getClosestRow(collisions);
+        if (closestRow) {
+            if (items.length === 0) {
+                setItems(addElement(0, active.data.current.type, false));
+            } else {
+                let dropIndex = items.map((i) => i._uid).indexOf(closestRow.id);
+                if (dropIndex !== -1) {
+                    // If hovering below the object, drop target index will be 1 more than current index
+                    if (relativeHoverPosition === "bottom") {
+                        dropIndex += 1;
+                    }
+
+                    const item = getElementById(draggingElement.id);
+                    if (!item) {
+                        setItems(
+                            addElement(
+                                dropIndex,
+                                active.data.current.type,
+                                relativeHoverPosition === "center" &&
+                                    !columnTimerActive
+                            )
+                        );
+                    } else {
+                        setItems(
+                            moveElement(
+                                item,
+                                dropIndex,
+                                relativeHoverPosition === "center" &&
+                                    !columnTimerActive
+                            )
+                        );
+                    }
+                }
+            }
+        }
+
+        setDraggingElement(null);
+        setClosestRow(null);
+        dragCollisions.current = null;
+
+        // We want dropped elements to appear immediately on drag end, so update the debounced values directly
+        setDebouncedDropTargetIndex(null);
+        setDebouncedRelativeHoverPosition(null);
+        setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
+        setPlacementPreviewStyle(defaultPlacementPreviewStyle);
+        setUITimerActive(false);
     }
 
     const getClosestRow = (collisions) => {
