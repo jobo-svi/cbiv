@@ -58,6 +58,7 @@ const PageBuilder = () => {
     const placementPreviewRef = useRef(null);
 
     const defaultPlacementPreviewStyle = {
+        visibility: "hidden",
         height: 0,
     };
     const [placementPreviewStyle, setPlacementPreviewStyle] = useState(
@@ -128,18 +129,23 @@ const PageBuilder = () => {
     const [uiTimerActive, setUITimerActive] = useState(false);
     useTimeout(
         () => {
+            // Double make sure that we're actually dragging.
             if (draggingElement !== null) {
                 setDebouncedPlacementPreviewStyle(placementPreviewStyle);
                 setDebouncedDropTargetIndex(dropTargetIndex);
                 setDebouncedRelativeHoverPosition(relativeHoverPosition);
+            } else {
+                console.log("timer triggered but dragging element was null");
             }
+
             setUITimerActive(false);
         },
         !uiTimerActive ? null : slopTiming
     );
 
     useEffect(() => {
-        if (draggingElement !== null) {
+        // Make sure we're actually dragging and that a timer isn't already running
+        if (draggingElement !== null && !uiTimerActive) {
             setUITimerActive(true);
         }
     }, [placementPreviewStyle, dropTargetIndex, relativeHoverPosition]);
@@ -516,7 +522,7 @@ const PageBuilder = () => {
     // So for now, do a poor man's equality check on the object so we don't update it if it hasn't actually changed.
     const shouldUpdatePlacementPreviewStyle = (previewStyle, newStyle) => {
         return (
-            previewStyle.display !== newStyle.display ||
+            previewStyle.visibility !== newStyle.visibility ||
             previewStyle.width !== newStyle.width ||
             previewStyle.height !== newStyle.height ||
             previewStyle.top !== newStyle.top ||
