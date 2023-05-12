@@ -123,33 +123,26 @@ const PageBuilder = () => {
         !columnTimerActive ? null : columnDelayTiming
     );
 
+    // Timer for how long to wait before UI updates aka "slop for the code piggies."
+    // For some reason, dndkit fires ondragmove AFTER ondragend if you drag and drop very quickly,
+    // so we have to check if we're actually dragging before applying UI updates.
     const [uiTimerActive, setUITimerActive] = useState(false);
-    // useTimeout(
-    //     () => {
-    //         setDropTargetIndex(dropTargetIndex);
-    //         setRelativeHoverPosition("center");
-    //         setColumnTimerActive(false);
-    //     },
-    //     !columnTimerActive ? null : columnDelayTiming
-    // );
-
-    const uiTimerRef = useRef(null);
-    useEffect(() => {
-        // Clear the interval when the component unmounts
-        return () => clearTimeout(uiTimerRef.current);
-    }, []);
+    useTimeout(
+        () => {
+            if (draggingElement !== null) {
+                setDebouncedPlacementPreviewStyle(placementPreviewStyle);
+                setDebouncedDropTargetIndex(dropTargetIndex);
+                setDebouncedRelativeHoverPosition(relativeHoverPosition);
+            }
+            setUITimerActive(false);
+        },
+        !uiTimerActive ? null : slopTiming
+    );
 
     useEffect(() => {
-        if (uiTimerRef.current) {
-            clearTimeout(uiTimerRef.current);
+        if (draggingElement !== null) {
+            setUITimerActive(true);
         }
-
-        uiTimerRef.current = setTimeout(() => {
-            console.log("time!");
-            setDebouncedPlacementPreviewStyle(placementPreviewStyle);
-            setDebouncedDropTargetIndex(dropTargetIndex);
-            setDebouncedRelativeHoverPosition(relativeHoverPosition);
-        }, slopTiming);
     }, [placementPreviewStyle, dropTargetIndex, relativeHoverPosition]);
 
     const updatePlacementPreviewStyle = (oldStyle, newStyle) => {
@@ -224,6 +217,7 @@ const PageBuilder = () => {
                 setDebouncedDropTargetIndex(null);
                 setDebouncedRelativeHoverPosition(null);
                 setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
+                setUITimerActive(false);
             }
         } else if (!columnTimerActive) {
             // Render the placement preview
@@ -265,6 +259,7 @@ const PageBuilder = () => {
                         setDebouncedPlacementPreviewStyle(
                             defaultPlacementPreviewStyle
                         );
+                        setUITimerActive(false);
                     }
                 }
             }
@@ -299,7 +294,6 @@ const PageBuilder = () => {
     }
 
     function handleDragEnd(event) {
-        console.log("drag end");
         const { active, collisions } = event;
         const closestRow = getClosestRow(collisions);
         if (closestRow) {
@@ -345,25 +339,10 @@ const PageBuilder = () => {
         setDebouncedDropTargetIndex(null);
         setDebouncedRelativeHoverPosition(null);
         setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
-
-        console.log("clearing timeout");
-        clearTimeout(uiTimerRef.current);
+        setUITimerActive(false);
     }
 
-    const getClosestRow = (collisions) => {
-        if (!collisions || !collisions.length) {
-            return null;
-        }
-
-        return collisions.filter(
-            (c) =>
-                c.data.droppableContainer.data.current &&
-                c.data.droppableContainer.data.current.type === "row"
-        )[0];
-    };
-
     function handleDragMove(event) {
-        console.log("drag move");
         const { active, over, collisions } = event;
 
         const clientOffset = mousePosition.current;
@@ -444,6 +423,18 @@ const PageBuilder = () => {
             }
         }
     }
+
+    const getClosestRow = (collisions) => {
+        if (!collisions || !collisions.length) {
+            return null;
+        }
+
+        return collisions.filter(
+            (c) =>
+                c.data.droppableContainer.data.current &&
+                c.data.droppableContainer.data.current.type === "row"
+        )[0];
+    };
 
     function addElement(index, elementType, within) {
         const newItems = [...items];
