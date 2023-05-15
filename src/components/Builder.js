@@ -8,7 +8,6 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import uuid from "react-uuid";
 import Grid from "./Grid";
 import BuilderElementsMenu from "./BuilderElementsMenu";
@@ -20,6 +19,8 @@ import useTimeout from "../hooks/useTimeout";
 import useMousePosition from "../hooks/useMousePosition";
 import { data } from "../data";
 import "../css/App.css";
+import { snapDragHandleToCursor } from "../modifiers/snapDragHandleToCursor";
+import DebugValues from "./DebugValues";
 
 const PageBuilder = () => {
     // dndkit sensors
@@ -108,14 +109,6 @@ const PageBuilder = () => {
         +localStorage.getItem("gridGap") || 24
     );
 
-    // Persists debug settings across sessions
-    useEffect(() => {
-        localStorage.setItem("translateTiming", translateTiming);
-        localStorage.setItem("columnDelayTiming", columnDelayTiming);
-        localStorage.setItem("gridGap", gridGap);
-        localStorage.setItem("slopTiming", slopTiming);
-    }, [translateTiming, columnDelayTiming, gridGap, slopTiming]);
-
     // Timer for how long to hover before combining elements into multicolumn
     useTimeout(
         () => {
@@ -163,7 +156,7 @@ const PageBuilder = () => {
             item = items[items.length - 1];
         }
 
-        if (columnTimerActive) {
+        if (columnTimerActive && dragCollisions.current) {
             let c = dragCollisions.current.find((c) => c.id === item.id);
             if (c) {
                 c = c.data.droppableContainer.rect.current;
@@ -288,11 +281,8 @@ const PageBuilder = () => {
         setDraggingElement(active);
 
         // While dragging, increase the height of the content area to account for the drag preview dimensions.
-        //
         gridWrapperRef.current.style.height = `${gridWrapperRef.current
-            .clientHeight +
-            active.data.current.height +
-            1000}px`;
+            .clientHeight + active.data.current.height}px`;
     }
 
     function handleDragMove(event) {
@@ -421,7 +411,7 @@ const PageBuilder = () => {
         setClosestRow(null);
         dragCollisions.current = null;
 
-        gridWrapperRef.current.style.height = null;
+        //gridWrapperRef.current.style.height = null;
 
         // We want dropped elements to appear immediately on drag end, so update the debounced values directly
         setDebouncedDropTargetIndex(null);
@@ -616,64 +606,21 @@ const PageBuilder = () => {
                 onDragEnd={handleDragEnd}
                 onDragMove={handleDragMove}
                 collisionDetection={closestCenter}
-                modifiers={[snapCenterToCursor]}
                 sensors={sensors}
-                autoScroll={true}
+                autoScroll={false}
+                modifiers={[snapDragHandleToCursor]}
             >
                 <div className="lesson-content">
-                    <div
-                        style={{
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "20px",
-                            marginBottom: "40px",
-                        }}
-                    >
-                        <label>
-                            <div>Translate speed (ms)</div>
-                            <input
-                                type="number"
-                                value={translateTiming}
-                                onChange={(event) =>
-                                    setTranslateTiming(
-                                        parseInt(event.target.value)
-                                    )
-                                }
-                            />
-                        </label>
-                        <label>
-                            <div>Column hover time (ms)</div>
-                            <input
-                                type="number"
-                                value={columnDelayTiming}
-                                onChange={(event) =>
-                                    setColumnDelayTiming(
-                                        parseInt(event.target.value)
-                                    )
-                                }
-                            />
-                        </label>
-                        <label>
-                            <div>Slop time (ms)</div>
-                            <input
-                                type="number"
-                                value={slopTiming}
-                                onChange={(event) =>
-                                    setSlopTiming(parseInt(event.target.value))
-                                }
-                            />
-                        </label>
-                        <label>
-                            <div>Space between rows/cols</div>
-                            <input
-                                type="number"
-                                value={gridGap}
-                                onChange={(event) =>
-                                    setGridGap(parseInt(event.target.value))
-                                }
-                            />
-                        </label>
-                    </div>
+                    <DebugValues
+                        translateTiming={translateTiming}
+                        setTranslateTiming={setTranslateTiming}
+                        columnDelayTiming={columnDelayTiming}
+                        setColumnDelayTiming={setColumnDelayTiming}
+                        slopTiming={slopTiming}
+                        setSlopTiming={setSlopTiming}
+                        gridGap={gridGap}
+                        setGridGap={setGridGap}
+                    />
                     <Grid
                         items={items}
                         setItems={setItems}
@@ -703,6 +650,8 @@ const PageBuilder = () => {
                         style={{
                             opacity: ".5",
                             border: "1px solid #343536",
+                            maxHeight: "150px",
+                            overflow: "hidden",
                         }}
                     >
                         {getComponentForPreview()}
