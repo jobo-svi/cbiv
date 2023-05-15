@@ -55,7 +55,7 @@
 .builder .lesson-content {
     background-color: #F8F8F8;
     overflow: auto;
-    padding: 1rem 2rem 2rem 2rem;
+    padding: 1rem 2rem 5rem 2rem;
 }
 
 .builder .grid-wrapper {

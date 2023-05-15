@@ -3,8 +3,8 @@ import React, { forwardRef } from "react";
 const GridColumn = forwardRef((props, ref) => {
     return (
         <div
-            id={props.column._uid}
-            key={props.column._uid}
+            id={props.column.id}
+            key={props.column.id}
             ref={ref}
             className="grid-column"
             onMouseOver={() => props.setShowDragHandle(true)}

@@ -54,6 +54,9 @@ const PageBuilder = () => {
     // Track the position of the mouse for positioning the drag preview
     const mousePosition = useMousePosition();
 
+    // Measure the height of the grid content
+    const gridWrapperRef = useRef(null);
+
     // Keep a reference to the placement preview, for measuring its height
     const placementPreviewRef = useRef(null);
 
@@ -163,7 +166,7 @@ const PageBuilder = () => {
         }
 
         if (columnTimerActive) {
-            let c = dragCollisions.current.find((c) => c.id === item._uid);
+            let c = dragCollisions.current.find((c) => c.id === item.id);
             if (c) {
                 c = c.data.droppableContainer.rect.current;
 
@@ -184,7 +187,7 @@ const PageBuilder = () => {
 
         if (relativeHoverPosition === "center" && !columnTimerActive) {
             // We've been hovering long enough and can now show the preview
-            const columnCount = items.find((i) => i._uid === closestRow.id)
+            const columnCount = items.find((i) => i.id === closestRow.id)
                 .columns.length;
 
             const columnWidth =
@@ -222,7 +225,7 @@ const PageBuilder = () => {
         } else if (!columnTimerActive) {
             // Render the placement preview
             if (dragCollisions.current) {
-                let c = dragCollisions.current.find((c) => c.id === item._uid);
+                let c = dragCollisions.current.find((c) => c.id === item.id);
 
                 if (c) {
                     const rect = c.data.droppableContainer.rect.current;
@@ -276,7 +279,7 @@ const PageBuilder = () => {
     const handleSaveChanges = (updatedItem) => {
         setItems(
             items.map((item) =>
-                item._uid === updatedItem._uid ? updatedItem : item
+                item.id === updatedItem.id ? updatedItem : item
             )
         );
         setItemToEdit(null);
@@ -285,6 +288,13 @@ const PageBuilder = () => {
     function handleDragStart(event) {
         const { active } = event;
         setDraggingElement(active);
+
+        console.log("grid wrapper height", gridWrapperRef.current.clientHeight);
+        console.log(active.data.current.height);
+        gridWrapperRef.current.style.height = `${gridWrapperRef.current
+            .clientHeight +
+            active.data.current.height +
+            100}px`;
     }
 
     function handleDragMove(event) {
@@ -303,8 +313,8 @@ const PageBuilder = () => {
                 closestRow.data.droppableContainer.rect.current.height;
             const borderTop = hoverRect.top;
             const borderBottom = hoverRect.bottom;
-            const topRange = borderTop + elementHeight / 3.5;
-            const bottomRange = borderBottom - elementHeight / 3.5;
+            const topRange = borderTop + elementHeight / 10;
+            const bottomRange = borderBottom - elementHeight / 10;
 
             const clientOffset = mousePosition.current;
             const hoveringWithinElement =
@@ -335,7 +345,7 @@ const PageBuilder = () => {
                 clientOffset.y > hoverRect.top + elementHeight / 2;
 
             // Determine position of element if it were dropped
-            let dropTarget = items.map((i) => i._uid).indexOf(closestRow.id);
+            let dropTarget = items.map((i) => i.id).indexOf(closestRow.id);
             let hoverPosition = null;
             if (dropTarget !== -1) {
                 // Where are we hovering near
@@ -374,7 +384,7 @@ const PageBuilder = () => {
             if (items.length === 0) {
                 setItems(addElement(0, active.data.current.type, false));
             } else {
-                let dropIndex = items.map((i) => i._uid).indexOf(closestRow.id);
+                let dropIndex = items.map((i) => i.id).indexOf(closestRow.id);
                 if (dropIndex !== -1) {
                     // If hovering below the object, drop target index will be 1 more than current index
                     if (relativeHoverPosition === "bottom") {
@@ -409,6 +419,8 @@ const PageBuilder = () => {
         setClosestRow(null);
         dragCollisions.current = null;
 
+        gridWrapperRef.current.style.height = null;
+
         // We want dropped elements to appear immediately on drag end, so update the debounced values directly
         setDebouncedDropTargetIndex(null);
         setDebouncedRelativeHoverPosition(null);
@@ -435,10 +447,10 @@ const PageBuilder = () => {
         if (!within) {
             // Add a whole new row
             const newOb = {
-                _uid: uuid(),
+                id: uuid(),
                 columns: [
                     {
-                        _uid: uuid(),
+                        id: uuid(),
                         component: elementType,
                         props: { ...Components[elementType].props },
                     },
@@ -451,7 +463,7 @@ const PageBuilder = () => {
             let row = newItems[index];
             if (row) {
                 row.columns.push({
-                    _uid: uuid(),
+                    id: uuid(),
                     component: elementType,
                     props: { ...Components[elementType].props },
                 });
@@ -465,15 +477,15 @@ const PageBuilder = () => {
 
         // Find the row where the item currently lives
         newItems.map((row) => {
-            let column = row.columns.find((col) => col._uid === item._uid);
+            let column = row.columns.find((col) => col.id === item.id);
             if (column) {
-                row.columns = row.columns.filter((c) => c._uid !== column._uid);
+                row.columns = row.columns.filter((c) => c.id !== column.id);
             }
         });
 
         if (!within) {
             const newOb = {
-                _uid: uuid(),
+                id: uuid(),
                 columns: [item],
             };
             newItems.splice(rowIndex, 0, newOb);
@@ -507,7 +519,7 @@ const PageBuilder = () => {
     };
 
     const getElementById = (id) => {
-        return items.flatMap((row) => row.columns).find((c) => c._uid === id);
+        return items.flatMap((row) => row.columns).find((c) => c.id === id);
     };
 
     // TODO: Because this is an object, React will re-render every time we update it, even if no properties have changed.
@@ -557,7 +569,7 @@ const PageBuilder = () => {
         let validPlacement = true;
         if (draggingElement.data.current.rowId) {
             const rowIndex = items.findIndex(
-                (i) => i._uid === draggingElement.data.current.rowId
+                (i) => i.id === draggingElement.data.current.rowId
             );
             const columnCount = items[rowIndex].columns.length;
 
@@ -604,6 +616,7 @@ const PageBuilder = () => {
                 collisionDetection={closestCenter}
                 modifiers={[snapCenterToCursor]}
                 sensors={sensors}
+                autoScroll={true}
             >
                 <div className="lesson-content">
                     <div
@@ -670,6 +683,7 @@ const PageBuilder = () => {
                         columnTimerActive={columnTimerActive}
                         gridGap={gridGap}
                         draggingElement={draggingElement}
+                        ref={gridWrapperRef}
                     />
                 </div>
                 <div className="sidebar" style={{ overflow: "auto" }}>
@@ -687,8 +701,9 @@ const PageBuilder = () => {
                         style={{
                             opacity: ".5",
                             overflow: "hidden",
-                            maxHeight: "200px",
-                            maxWidth: "200px",
+                            // maxHeight: "200px",
+                            // maxWidth: "200px",
+                            border: "1px solid #343536",
                         }}
                     >
                         {getComponentForPreview()}

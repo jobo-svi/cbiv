@@ -48,7 +48,7 @@ export const Components = {
 // Get the props for a component. Recursively handle nested sub-components
 const getProps = (item) => {
     const props = {
-        key: item._uid,
+        key: item.id,
     };
 
     if (!item.props) {
@@ -86,7 +86,7 @@ export const constructComponent = (item) => {
 
     return React.createElement(
         () => <UndefinedElement element={item.component} />,
-        { key: item._uid }
+        { key: item.id }
     );
 };
 

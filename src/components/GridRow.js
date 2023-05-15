@@ -11,8 +11,8 @@ const GridRow = (props) => {
 
     return (
         <div
-            id={props.row._uid}
-            key={props.row._uid}
+            id={props.row.id}
+            key={props.row.id}
             ref={setNodeRef}
             className="grid-row"
             style={props.style}
