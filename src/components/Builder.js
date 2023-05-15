@@ -9,6 +9,7 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import uuid from "react-uuid";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Grid from "./Grid";
 import BuilderElementsMenu from "./BuilderElementsMenu";
 import ItemEditor from "./ItemEditor";
@@ -410,8 +411,7 @@ const PageBuilder = () => {
         setDraggingElement(null);
         setClosestRow(null);
         dragCollisions.current = null;
-
-        //gridWrapperRef.current.style.height = null;
+        gridWrapperRef.current.style.height = null;
 
         // We want dropped elements to appear immediately on drag end, so update the debounced values directly
         setDebouncedDropTargetIndex(null);
@@ -646,15 +646,13 @@ const PageBuilder = () => {
                     )}
                 </div>
                 <DragOverlay dropAnimation={null}>
-                    <div
-                        style={{
-                            opacity: ".5",
-                            border: "1px solid #343536",
-                            maxHeight: "150px",
-                            overflow: "hidden",
-                        }}
-                    >
-                        {getComponentForPreview()}
+                    <div className="drag-handle-visible">
+                        <div className="dragging drag-overlay">
+                            {getComponentForPreview()}
+                        </div>
+                        <div className="drag-handle">
+                            <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
+                        </div>
                     </div>
                 </DragOverlay>
                 <PlacementPreview

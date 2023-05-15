@@ -301,3 +301,37 @@
 .fade-in {
     animation: fade-in 200ms, slide-down 300ms;
 }
+
+.builder .drag-handle {
+    display: flex;
+    position: absolute;
+    right: 0px;
+    top: 50%;
+    transform: translate(50%, -50%);
+    background: #343536;
+    color: #D7D7D7;
+    z-index: 1;
+    height: 25;
+    width: 25;
+    border-radius: 50%;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    cursor: grab;
+    padding: .4rem;
+}
+
+.builder .drag-handle-visible {
+    position: relative;
+    border: 1px solid #343536;
+    margin: -1px;
+}
+
+.builder .dragging {
+    opacity: .5;
+}
+
+.builder .drag-overlay {
+    max-height: 150px;
+    overflow: hidden;
+}

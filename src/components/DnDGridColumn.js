@@ -4,6 +4,8 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { useCombinedRefs } from "@dnd-kit/utilities";
 import GridColumn from "./GridColumn";
 
+// Wrapper component for GridColumn where we wire up all the drag and drop stuff and forward the ref to GridColumn.
+// This way, we don't have to generate extra wrapper elements.
 const DnDGridColumn = (props) => {
     const { setNodeRef: setDroppableNodeRef } = useDroppable({
         id: props.id,
@@ -23,6 +25,7 @@ const DnDGridColumn = (props) => {
         data: { rowId: props.rowId, ...props.data },
     });
 
+    // This component is both draggable and droppable, so we have to combine the refs into one.
     const setNodeRef = useCombinedRefs(
         setDroppableNodeRef,
         setDraggableNodeRef
@@ -30,16 +33,15 @@ const DnDGridColumn = (props) => {
 
     const [showDragHandle, setShowDragHandle] = useState(false);
 
-    const hoverStyle = {};
+    const classes = [];
+
     if (showDragHandle) {
-        hoverStyle.position = "relative";
-        hoverStyle.border = `1px solid #343536`;
-        hoverStyle.margin = "-1px";
+        classes.push("drag-handle-visible");
     }
 
-    const draggingStyle = {};
+    // Leave the component in its original location, but grayed-out, while moving it.
     if (isDragging) {
-        draggingStyle.opacity = ".5";
+        classes.push("dragging");
     }
 
     return (
@@ -47,30 +49,16 @@ const DnDGridColumn = (props) => {
             ref={setNodeRef}
             showDragHandle={showDragHandle}
             setShowDragHandle={setShowDragHandle}
-            hoverStyle={hoverStyle}
-            draggingStyle={draggingStyle}
+            className={classes.join(" ")}
             {...props}
         >
             {props.children}
             <div
                 {...listeners}
                 {...attributes}
+                className="drag-handle"
                 style={{
-                    display: showDragHandle ? "flex" : "none",
-                    position: "absolute",
-                    right: "0px",
-                    top: "50%",
-                    transform: "translate(50%, -50%)",
-                    background: "#343536",
-                    color: "#D7D7D7",
-                    zIndex: "1",
-                    height: 25,
-                    width: 25,
-                    borderRadius: "50%",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "18px",
-                    cursor: "grab",
+                    display: showDragHandle ? "" : "none",
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />

@@ -6,13 +6,11 @@ const GridColumn = forwardRef((props, ref) => {
             id={props.column.id}
             key={props.column.id}
             ref={ref}
-            className="grid-column"
+            className={`grid-column ${props.className}`}
             onMouseOver={() => props.setShowDragHandle(true)}
             onMouseOut={() => props.setShowDragHandle(false)}
             style={{
-                ...props.draggingStyle,
                 ...props.positionStyle,
-                ...props.hoverStyle,
             }}
         >
             {props.children}
