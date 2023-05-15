@@ -8,6 +8,18 @@ export const data = {
                 columns: [
                     {
                         id: uuid(),
+                        component: "header",
+                        props: {
+                            text: "Lorem ipsum.",
+                        },
+                    },
+                ],
+            },
+            {
+                id: uuid(),
+                columns: [
+                    {
+                        id: uuid(),
                         component: "paragraph",
                         props: {
                             text:

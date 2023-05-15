@@ -147,120 +147,105 @@ const PageBuilder = () => {
 
     // Position the placement preview
     useEffect(() => {
-        if (!draggingElement || !closestRow || !items.length) {
-            return;
-        }
-
-        // get the dimensions of the element that matches the droptarget
-        let item = items[dropTargetIndex];
-        if (dropTargetIndex === items.length) {
-            item = items[items.length - 1];
-        }
-
-        if (columnTimerActive && dragCollisions.current) {
-            let c = dragCollisions.current.find((c) => c.id === item.id);
-            if (c) {
-                c = c.data.droppableContainer.rect.current;
-
-                // Transition the placement preview to height = 0 while we wait for the timer
-                let newStyle = {
-                    transition: `height 300ms ease 0s, top 300ms ease 0s`,
-                    top: placementPreviewRef.current.style.top,
-                    left: c.left,
-                    width: c.width,
-                    height: 0,
-                };
-
-                updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
-            }
-        }
-
-        let previewHeight = getPreviewHeight();
-
-        if (relativeHoverPosition === "center" && !columnTimerActive) {
-            // We've been hovering long enough and can now show the preview
-            const columnCount = items.find((i) => i.id === closestRow.id)
-                .columns.length;
-
-            const columnWidth =
-                (closestRow.data.droppableContainer.rect.current.width -
-                    gridGap * columnCount) /
-                (columnCount + 1);
-
-            const columnXOffset =
-                closestRow.data.droppableContainer.rect.current.left +
-                columnWidth * columnCount +
-                gridGap * columnCount;
-
-            // There are certain invalid states where we don't want to show a drag preview
-            const validPlacement = isValidPlacement(
-                draggingElement,
-                items,
-                dropTargetIndex
-            );
-
-            if (validPlacement) {
-                let newStyle = {
-                    top: closestRow.data.droppableContainer.rect.current.top,
-                    left: columnXOffset,
-                    width: columnWidth,
-                    height: previewHeight,
-                    transition: `height 300ms ease 0s, top 300ms ease 0s`,
-                };
-                updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
-            } else {
-                setDebouncedDropTargetIndex(null);
-                setDebouncedRelativeHoverPosition(null);
-                setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
-                setUITimerActive(false);
-            }
-        } else if (!columnTimerActive) {
-            // Render the placement preview
-            if (dragCollisions.current) {
-                let c = dragCollisions.current.find((c) => c.id === item.id);
-
-                if (c) {
-                    const rect = c.data.droppableContainer.rect.current;
-
-                    let additional = 0;
-                    if (dropTargetIndex === items.length) {
-                        additional += rect.height + gridGap;
-                    }
-
-                    // There are certain invalid states where we don't want to show a drag preview
-                    const validPlacement = isValidPlacement(
-                        draggingElement,
-                        items,
-                        dropTargetIndex
-                    );
-
-                    if (validPlacement) {
-                        // Render the placement preview
-                        let newStyle = {
-                            visibility: "visible",
-                            width: rect.width,
-                            height: previewHeight,
-                            top: rect.top + additional,
-                            left: rect.left,
-                            transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
-                        };
-
-                        updatePlacementPreviewStyle(
-                            placementPreviewStyle,
-                            newStyle
-                        );
-                    } else {
-                        setDebouncedDropTargetIndex(null);
-                        setDebouncedRelativeHoverPosition(null);
-                        setDebouncedPlacementPreviewStyle({
-                            ...placementPreviewStyle,
-                            height: 0,
-                        });
-                        setUITimerActive(false);
-                    }
-                }
-            }
-        }
+        // if (!draggingElement || !closestRow || !items.length) {
+        //     return;
+        // }
+        // // get the dimensions of the element that matches the droptarget
+        // let item = items[dropTargetIndex];
+        // if (dropTargetIndex === items.length) {
+        //     item = items[items.length - 1];
+        // }
+        // if (columnTimerActive && dragCollisions.current) {
+        //     let c = dragCollisions.current.find((c) => c.id === item.id);
+        //     if (c) {
+        //         c = c.data.droppableContainer.rect.current;
+        //         // Transition the placement preview to height = 0 while we wait for the timer
+        //         let newStyle = {
+        //             transition: `height 300ms ease 0s, top 300ms ease 0s`,
+        //             top: placementPreviewRef.current.style.top,
+        //             left: c.left,
+        //             width: c.width,
+        //             height: 0,
+        //         };
+        //         updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
+        //     }
+        // }
+        // let previewHeight = getPreviewHeight();
+        // if (relativeHoverPosition === "center" && !columnTimerActive) {
+        //     // We've been hovering long enough and can now show the preview
+        //     const columnCount = items.find((i) => i.id === closestRow.id)
+        //         .columns.length;
+        //     const columnWidth =
+        //         (closestRow.data.droppableContainer.rect.current.width -
+        //             gridGap * columnCount) /
+        //         (columnCount + 1);
+        //     const columnXOffset =
+        //         closestRow.data.droppableContainer.rect.current.left +
+        //         columnWidth * columnCount +
+        //         gridGap * columnCount;
+        //     // There are certain invalid states where we don't want to show a drag preview
+        //     const validPlacement = isValidPlacement(
+        //         draggingElement,
+        //         items,
+        //         dropTargetIndex
+        //     );
+        //     if (validPlacement) {
+        //         let newStyle = {
+        //             top: closestRow.data.droppableContainer.rect.current.top,
+        //             left: columnXOffset,
+        //             width: columnWidth,
+        //             height: previewHeight,
+        //             transition: `height 300ms ease 0s, top 300ms ease 0s`,
+        //         };
+        //         updatePlacementPreviewStyle(placementPreviewStyle, newStyle);
+        //     } else {
+        //         setDebouncedDropTargetIndex(null);
+        //         setDebouncedRelativeHoverPosition(null);
+        //         setDebouncedPlacementPreviewStyle(defaultPlacementPreviewStyle);
+        //         setUITimerActive(false);
+        //     }
+        // } else if (!columnTimerActive) {
+        //     // Render the placement preview
+        //     if (dragCollisions.current) {
+        //         let c = dragCollisions.current.find((c) => c.id === item.id);
+        //         if (c) {
+        //             const rect = c.data.droppableContainer.rect.current;
+        //             let additional = 0;
+        //             if (dropTargetIndex === items.length) {
+        //                 additional += rect.height + gridGap;
+        //             }
+        //             // There are certain invalid states where we don't want to show a drag preview
+        //             const validPlacement = isValidPlacement(
+        //                 draggingElement,
+        //                 items,
+        //                 dropTargetIndex
+        //             );
+        //             if (validPlacement) {
+        //                 // Render the placement preview
+        //                 let newStyle = {
+        //                     visibility: "visible",
+        //                     width: rect.width,
+        //                     height: previewHeight,
+        //                     top: rect.top + additional,
+        //                     left: rect.left,
+        //                     transition: `transform ${translateTiming}ms ease 0s, height 400ms ease 0s, top 400ms ease 0s`,
+        //                 };
+        //                 updatePlacementPreviewStyle(
+        //                     placementPreviewStyle,
+        //                     newStyle
+        //                 );
+        //             } else {
+        //                 setDebouncedDropTargetIndex(null);
+        //                 setDebouncedRelativeHoverPosition(null);
+        //                 setDebouncedPlacementPreviewStyle({
+        //                     ...placementPreviewStyle,
+        //                     height: 0,
+        //                 });
+        //                 setUITimerActive(false);
+        //             }
+        //         }
+        //     }
+        // }
     }, [relativeHoverPosition, closestRow, dropTargetIndex, columnTimerActive]);
 
     const handleGridItemClick = (item) => {
@@ -542,6 +527,7 @@ const PageBuilder = () => {
             if (relativeHoverPosition === "center") {
                 previewHeight =
                     closestRow.data.droppableContainer.rect.current.height;
+                console.log(previewHeight);
             } else {
                 previewHeight = draggingElement.data.current.height;
             }
