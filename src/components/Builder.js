@@ -48,7 +48,7 @@ const PageBuilder = () => {
     // Closest element to your cursor when dragging, as determined by dnd-kit
     const [closestRow, setClosestRow] = useState(null);
 
-    // Elements your drag element is intersecting with while dragging
+    // Elements your drag element is intersecting with while dragging. This array changes a lot so I made it a ref instead of state.
     const dragCollisions = useRef(null);
 
     // Track the position of the mouse for positioning the drag preview
@@ -289,8 +289,6 @@ const PageBuilder = () => {
         const { active } = event;
         setDraggingElement(active);
 
-        console.log("grid wrapper height", gridWrapperRef.current.clientHeight);
-        console.log(active.data.current.height);
         gridWrapperRef.current.style.height = `${gridWrapperRef.current
             .clientHeight +
             active.data.current.height +
@@ -380,7 +378,11 @@ const PageBuilder = () => {
     function handleDragEnd(event) {
         const { active, collisions } = event;
         const closestRow = getClosestRow(collisions);
-        if (closestRow) {
+
+        if (
+            closestRow &&
+            isValidPlacement(draggingElement, items, dropTargetIndex)
+        ) {
             if (items.length === 0) {
                 setItems(addElement(0, active.data.current.type, false));
             } else {
@@ -402,6 +404,7 @@ const PageBuilder = () => {
                             )
                         );
                     } else {
+                        console.log("moving");
                         setItems(
                             moveElement(
                                 item,
@@ -700,9 +703,6 @@ const PageBuilder = () => {
                     <div
                         style={{
                             opacity: ".5",
-                            overflow: "hidden",
-                            // maxHeight: "200px",
-                            // maxWidth: "200px",
                             border: "1px solid #343536",
                         }}
                     >
