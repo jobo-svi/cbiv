@@ -137,8 +137,6 @@ const PageBuilder = () => {
                 setDebouncedPlacementPreviewStyle(placementPreviewStyle);
                 setDebouncedDropTargetIndex(dropTargetIndex);
                 setDebouncedRelativeHoverPosition(relativeHoverPosition);
-            } else {
-                console.log("timer triggered but dragging element was null");
             }
 
             setUITimerActive(false);
@@ -289,10 +287,12 @@ const PageBuilder = () => {
         const { active } = event;
         setDraggingElement(active);
 
+        // While dragging, increase the height of the content area to account for the drag preview dimensions.
+        //
         gridWrapperRef.current.style.height = `${gridWrapperRef.current
             .clientHeight +
             active.data.current.height +
-            100}px`;
+            1000}px`;
     }
 
     function handleDragMove(event) {
@@ -404,7 +404,6 @@ const PageBuilder = () => {
                             )
                         );
                     } else {
-                        console.log("moving");
                         setItems(
                             moveElement(
                                 item,
