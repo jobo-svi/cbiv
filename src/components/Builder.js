@@ -669,6 +669,7 @@ const PageBuilder = () => {
                         translateTiming={translateTiming}
                         columnTimerActive={columnTimerActive}
                         gridGap={gridGap}
+                        draggingElement={draggingElement}
                     />
                 </div>
                 <div className="sidebar" style={{ overflow: "auto" }}>

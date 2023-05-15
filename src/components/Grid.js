@@ -13,6 +13,7 @@ const Grid = ({
     translateTiming,
     columnTimerActive,
     gridGap,
+    draggingElement,
 }) => {
     function getRowStyle(rowIndex) {
         let style = {};
@@ -22,6 +23,11 @@ const Grid = ({
 
         // Don't apply any transforms if we're not trying to drop anywhere
         if (dropTargetIndex === null) {
+            // Not sure why this works, but it prevents the elements from "jumping" when you finish dragging
+            if (draggingElement !== null) {
+                style.transition = `transform ${translateTiming}ms ease 0s`;
+            }
+
             return style;
         }
 
