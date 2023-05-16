@@ -11,6 +11,7 @@ const GridColumn = forwardRef((props, ref) => {
             onMouseOut={() => props.setShowDragHandle(false)}
             style={{
                 ...props.positionStyle,
+                ...props.style,
             }}
         >
             {props.children}
