@@ -113,8 +113,8 @@ const PageBuilder = () => {
     // Timer for how long to hover before combining elements into multicolumn
     useTimeout(
         () => {
-            setDropTargetIndex(dropTargetIndex);
-            setRelativeHoverPosition("center");
+            setDebouncedDropTargetIndex(dropTargetIndex);
+            setDebouncedRelativeHoverPosition("center");
             setColumnTimerActive(false);
         },
         !columnTimerActive ? null : columnDelayTiming
@@ -327,7 +327,7 @@ const PageBuilder = () => {
                     hoverPosition = "top";
                 } else if (belowElement || insideBottom) {
                     hoverPosition = "bottom";
-                    dropTarget += 1;
+                    //dropTarget += 1;
                 } else if (insideCenter) {
                     hoverPosition = "center";
                 }

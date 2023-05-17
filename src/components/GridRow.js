@@ -15,7 +15,7 @@ const GridRow = (props) => {
             key={props.row.id}
             ref={setNodeRef}
             className="grid-row"
-            style={props.style}
+            style={{ ...props.style, position: "relative" }}
         >
             {props.children}
         </div>

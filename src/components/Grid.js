@@ -22,10 +22,6 @@ const Grid = forwardRef(
         function getRowStyle(rowIndex) {
             let style = {};
 
-            if (dropTargetIndex !== null) {
-                //console.log(dropTargetIndex);
-                //if (draggingElement.id ===)
-            }
             // const isWithinElement =
             //     relativeHoverPosition === "center" &&
             //     rowIndex === dropTargetIndex;
@@ -117,6 +113,12 @@ const Grid = forwardRef(
                                                     columnIndex,
                                                     row.columns.length
                                                 )}
+                                                dropTargetIndex={
+                                                    dropTargetIndex
+                                                }
+                                                relativeHoverPosition={
+                                                    relativeHoverPosition
+                                                }
                                             >
                                                 {constructComponent(item)}
                                             </DnDGridColumn>
