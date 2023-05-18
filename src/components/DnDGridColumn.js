@@ -51,112 +51,138 @@ const DnDGridColumn = (props) => {
         classes.push("dragging");
     }
 
-    let style = {};
-    const dropTargetIndex =
-        props.dropTargetIndex >= props.items.length
-            ? props.items.length - 1
-            : props.dropTargetIndex;
-    let translateY = 0;
-    let translateX = 0;
+    // let style = {};
+    // const dropTargetIndex =
+    //     props.dropTargetIndex >= props.items.length
+    //         ? props.items.length - 1
+    //         : props.dropTargetIndex;
+    // let translateY = 0;
+    // let translateX = 0;
+    // let width = null;
+    // let flex = "1";
+    // let position = null;
+    // let left = null;
 
-    if (over && dropTargetIndex !== null) {
-        const rowIsMultiColumn =
-            props.items[dropTargetIndex].columns.length > 1;
+    // if (over && dropTargetIndex !== null) {
+    //     const gridRow = document.getElementById(over.id);
+    //     const noOfColumns = props.items[dropTargetIndex].columns.length;
+    //     const rowWidth = gridRow.getBoundingClientRect().width;
 
-        const dragStartingLocation = props.items.findIndex((item) =>
-            item.columns.find((c) => c.id === active.id)
-        );
+    //     const rowIsMultiColumn =
+    //         props.items[dropTargetIndex].columns.length > 1;
 
-        const dragCurrentLocation = props.items.findIndex((item) =>
-            item.columns.find((c) => c.id === over.id)
-        );
+    //     const dragStartingLocation = props.items.findIndex((item) =>
+    //         item.columns.find((c) => c.id === active.id)
+    //     );
 
-        const heightOfDraggingElement = active.rect.current.initial.height - 2; // -2 is for ignoring the hovering border height
+    //     const dragCurrentLocation = props.items.findIndex((item) =>
+    //         item.columns.find((c) => c.id === over.id)
+    //     );
 
-        // If this is the column being dragged
-        if (isDragging) {
-            console.log({
-                rowIndex: props.rowIndex,
-                dropTargetIndex: dropTargetIndex,
-                hoverPosition: props.relativeHoverPosition,
-                dragStart: dragStartingLocation,
-            });
-            // Column being dragged is not in center of another column
-            //if (props.relativeHoverPosition !== "center") {
-            //Element is being moved upward, sum up the heights of elements between old position and new
-            if (
-                dropTargetIndex < dragStartingLocation &&
-                props.relativeHoverPosition === "top"
-            ) {
-                for (let i = dropTargetIndex; i < dragStartingLocation; i++) {
-                    translateY -=
-                        document
-                            .getElementById(props.items[i].id)
-                            .getBoundingClientRect().height + 24;
-                }
-            } else if (
-                rowIsMultiColumn &&
-                props.relativeHoverPosition === "top"
-            ) {
-                style.position = "absolute";
-                style.top = "0";
-                style.left = "0";
-                style.width = "1280px";
+    //     let heightOfDraggingElement = 0;
+    //     let draggingElement = document.getElementById(active.id);
+    //     if (draggingElement) {
+    //         heightOfDraggingElement = draggingElement.getBoundingClientRect()
+    //             .height;
+    //     } else {
+    //         heightOfDraggingElement = active.rect.current.initial.height - 2; // -2 is for ignoring the hovering border height
+    //     }
 
-                node.current.style.position = "absolute";
-                node.current.style.top = "0";
-                node.current.style.left = "0";
-                node.current.style.width = "1280px";
-                const newRowHeight = node.current.getBoundingClientRect()
-                    .height;
+    //     // If this is the column being dragged
+    //     if (isDragging) {
+    //         if (dragStartingLocation - dropTargetIndex < 0) {
+    //             // dragging downward
+    //             let start = Math.min(dragStartingLocation, dropTargetIndex);
+    //             let end = Math.max(dragStartingLocation, dropTargetIndex);
 
-                // for (
-                //     let i = dragStartingLocation;
-                //     i <= props.items.length - 1;
-                //     i++
-                // ) {
-                //     translateY += newRowHeight + 24;
-                // }
-            } else if (
-                dropTargetIndex > dragStartingLocation &&
-                props.relativeHoverPosition === "bottom"
-            ) {
-                // Element is being moved downward, sum up the heights of elements between old position and new
-                for (
-                    let i = dragStartingLocation + 1;
-                    i <= dropTargetIndex;
-                    i++
-                ) {
-                    translateY +=
-                        document
-                            .getElementById(props.items[i].id)
-                            .getBoundingClientRect().height + 24;
-                }
-            }
-            //}
-        }
-        // This column is one of the ones NOT being dragged
-        else {
-            if (
-                dropTargetIndex === props.rowIndex &&
-                props.relativeHoverPosition === "bottom" &&
-                dragStartingLocation <= props.rowIndex
-            ) {
-                // swap element upward
-                translateY = -(heightOfDraggingElement + 24);
-            } else if (
-                dropTargetIndex === props.rowIndex &&
-                props.relativeHoverPosition === "top" &&
-                dragStartingLocation >= props.rowIndex
-            ) {
-                // swap element downward
-                translateY = heightOfDraggingElement + 24;
-            }
-        }
+    //             if (props.relativeHoverPosition === "center") {
+    //                 //gridRow.style.justifyContent = "unset";
 
-        style.transition = "transform 300ms ease 0s";
-        style.transform = `translate(${translateX}px, ${translateY}px)`;
-    }
+    //                 //position = "absolute";
+    //                 translateY = heightOfDraggingElement + 24;
+    //                 translateX = 869.34;
+    //                 width = "410.6px";
+    //                 //flex = "unset";
+    //             } else {
+    //                 gridRow.style.justifyContent = "space-evenly";
+
+    //                 if (props.relativeHoverPosition !== "bottom") {
+    //                     end -= 1;
+    //                 }
+    //                 for (let i = start + 1; i <= end; i++) {
+    //                     translateY +=
+    //                         document
+    //                             .getElementById(props.items[i].id)
+    //                             .getBoundingClientRect().height + 24;
+    //                 }
+    //             }
+    //         } else if (dragStartingLocation - dropTargetIndex > 0) {
+    //             // dragging upward
+    //             let start = Math.min(dragStartingLocation, dropTargetIndex);
+    //             let end = Math.max(dragStartingLocation, dropTargetIndex);
+
+    //             console.log("moving upward");
+    //             if (props.relativeHoverPosition !== "top") {
+    //                 start += 1;
+    //             }
+
+    //             for (let i = start; i < end; i++) {
+    //                 translateY -=
+    //                     document
+    //                         .getElementById(props.items[i].id)
+    //                         .getBoundingClientRect().height + 24;
+    //             }
+    //         }
+    //     }
+    //     // This column is one of the ones NOT being dragged
+    //     else {
+    //         if (
+    //             dropTargetIndex === props.rowIndex &&
+    //             props.relativeHoverPosition === "center"
+    //         ) {
+    //             gridRow.style.justifyContent = "unset";
+    //             flex = "unset";
+    //             width = `${(1280 - 24 * noOfColumns) / (noOfColumns + 1)}px`;
+    //         }
+
+    //         if (
+    //             ((dropTargetIndex === props.rowIndex &&
+    //                 props.relativeHoverPosition === "bottom") ||
+    //                 dropTargetIndex > props.rowIndex) &&
+    //             dragStartingLocation <= props.rowIndex
+    //         ) {
+    //             // shift element upward
+    //             translateY = -(heightOfDraggingElement + 24);
+    //         } else if (
+    //             ((dropTargetIndex === props.rowIndex &&
+    //                 props.relativeHoverPosition === "top") ||
+    //                 dropTargetIndex < props.rowIndex) &&
+    //             dragStartingLocation >= props.rowIndex
+    //         ) {
+    //             // shift element downward
+    //             translateY = heightOfDraggingElement + 24;
+    //         }
+    //     }
+
+    //     style.transition = "transform 300ms ease 0s";
+    //     style.transform = `translate(${translateX}px, ${translateY}px)`;
+
+    //     if (width !== null) {
+    //         style.width = width;
+    //     }
+
+    //     if (flex !== null) {
+    //         style.flex = flex;
+    //     }
+
+    //     if (position !== null) {
+    //         style.position = position;
+    //     }
+
+    //     if (left !== null) {
+    //         style.left = left;
+    //     }
+    //}
 
     return (
         <GridColumn
@@ -164,7 +190,7 @@ const DnDGridColumn = (props) => {
             showDragHandle={showDragHandle}
             setShowDragHandle={setShowDragHandle}
             className={classes.join(" ")}
-            style={style}
+            // style={style}
             {...props}
         >
             {props.children}
