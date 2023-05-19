@@ -78,12 +78,11 @@
 
 .builder .grid .grid-row {
     display: flex;
-    justify-content: space-evenly;
 }
 
 .builder .grid .grid-column {
-    flex: 1;
-    width: 100%;
+    flex-basis: 100%;
+    margin-bottom: 24px;
 }
 
 @media screen and (min-width: 0px) {
@@ -327,11 +326,11 @@
     margin: -1px;
 }
 
-.builder .dragging {
+.builder .grid-column.dragging {
     opacity: .5;
 }
 
 .builder .drag-overlay {
-    /* max-height: 150px; */
     overflow: hidden;
+    background: #F8F8F8;
 }

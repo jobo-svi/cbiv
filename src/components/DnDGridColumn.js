@@ -7,21 +7,17 @@ import GridColumn from "./GridColumn";
 // Wrapper component for GridColumn where we wire up all the drag and drop stuff and forward the ref to GridColumn.
 // This way, we don't have to generate extra wrapper elements.
 const DnDGridColumn = (props) => {
-    const {
-        setNodeRef: setDroppableNodeRef,
-        over,
-        isOver,
-        node,
-    } = useDroppable({
+    const { setNodeRef: setDroppableNodeRef, over, isOver } = useDroppable({
         id: props.id,
         data: {
             type: "column",
-            rowId: props.rowId,
+            rowId: props.row.id,
         },
     });
 
     const {
         setNodeRef: setDraggableNodeRef,
+        node: draggableNode,
         setActivatorNodeRef,
         active,
         listeners,
@@ -29,7 +25,7 @@ const DnDGridColumn = (props) => {
         isDragging,
     } = useDraggable({
         id: props.id,
-        data: { rowId: props.rowId, ...props.data },
+        data: { rowId: props.row.id, ...props.data },
     });
 
     // This component is both draggable and droppable, so we have to combine the refs into one.
@@ -51,138 +47,169 @@ const DnDGridColumn = (props) => {
         classes.push("dragging");
     }
 
-    // let style = {};
-    // const dropTargetIndex =
-    //     props.dropTargetIndex >= props.items.length
-    //         ? props.items.length - 1
-    //         : props.dropTargetIndex;
-    // let translateY = 0;
-    // let translateX = 0;
-    // let width = null;
-    // let flex = "1";
-    // let position = null;
-    // let left = null;
+    let style = {};
+    const dropTargetIndex =
+        props.dropTargetIndex >= props.items.length
+            ? props.items.length - 1
+            : props.dropTargetIndex;
+    let translateY = 0;
+    let translateX = 0;
+    let height = null;
+    let flexBasis = null;
 
-    // if (over && dropTargetIndex !== null) {
-    //     const gridRow = document.getElementById(over.id);
-    //     const noOfColumns = props.items[dropTargetIndex].columns.length;
-    //     const rowWidth = gridRow.getBoundingClientRect().width;
-
-    //     const rowIsMultiColumn =
-    //         props.items[dropTargetIndex].columns.length > 1;
-
-    //     const dragStartingLocation = props.items.findIndex((item) =>
-    //         item.columns.find((c) => c.id === active.id)
+    // if (isDragging) {
+    //     console.log(
+    //         dropTargetIndex,
+    //         props.rowIndex,
+    //         props.relativeHoverPosition
     //     );
+    // }
+    if (over && dropTargetIndex !== null) {
+        const noOfColumns = props.row.columns.length;
 
-    //     const dragCurrentLocation = props.items.findIndex((item) =>
-    //         item.columns.find((c) => c.id === over.id)
-    //     );
+        // Which row drag was started from
+        const dragStartingLocation = props.items.findIndex((item) =>
+            item.columns.find((c) => c.id === active.id)
+        );
 
-    //     let heightOfDraggingElement = 0;
-    //     let draggingElement = document.getElementById(active.id);
-    //     if (draggingElement) {
-    //         heightOfDraggingElement = draggingElement.getBoundingClientRect()
-    //             .height;
-    //     } else {
-    //         heightOfDraggingElement = active.rect.current.initial.height - 2; // -2 is for ignoring the hovering border height
-    //     }
+        let heightOfDraggingElement = (heightOfDraggingElement =
+            active.rect.current.initial.height - 2); // -2 is for ignoring the hovering border height
 
-    //     // If this is the column being dragged
-    //     if (isDragging) {
-    //         if (dragStartingLocation - dropTargetIndex < 0) {
-    //             // dragging downward
-    //             let start = Math.min(dragStartingLocation, dropTargetIndex);
-    //             let end = Math.max(dragStartingLocation, dropTargetIndex);
+        // If this is the column being dragged
+        if (isDragging) {
+            // manually set height of the column so that the layout doesn't shift when combining columns
+            height = heightOfDraggingElement;
 
-    //             if (props.relativeHoverPosition === "center") {
-    //                 //gridRow.style.justifyContent = "unset";
+            if (dragStartingLocation - dropTargetIndex < 0) {
+                // dragging downward
+                if (
+                    props.relativeHoverPosition === "center" &&
+                    !props.columnTimerActive
+                ) {
+                    // Number of columns must be gotten from row we're adding to
+                    let columnsInDestinationRow =
+                        props.items[dropTargetIndex].columns.length;
 
-    //                 //position = "absolute";
-    //                 translateY = heightOfDraggingElement + 24;
-    //                 translateX = 869.34;
-    //                 width = "410.6px";
-    //                 //flex = "unset";
-    //             } else {
-    //                 gridRow.style.justifyContent = "space-evenly";
+                    const startingPosition = draggableNode.current.offsetTop;
+                    const destinationPosition = document
+                        .getElementById(props.items[dropTargetIndex].id)
+                        .getBoundingClientRect().top; //over.rect.top;
+                    const newPosition = destinationPosition - startingPosition;
 
-    //                 if (props.relativeHoverPosition !== "bottom") {
-    //                     end -= 1;
-    //                 }
-    //                 for (let i = start + 1; i <= end; i++) {
-    //                     translateY +=
-    //                         document
-    //                             .getElementById(props.items[i].id)
-    //                             .getBoundingClientRect().height + 24;
-    //                 }
-    //             }
-    //         } else if (dragStartingLocation - dropTargetIndex > 0) {
-    //             // dragging upward
-    //             let start = Math.min(dragStartingLocation, dropTargetIndex);
-    //             let end = Math.max(dragStartingLocation, dropTargetIndex);
+                    translateY = newPosition;
 
-    //             console.log("moving upward");
-    //             if (props.relativeHoverPosition !== "top") {
-    //                 start += 1;
-    //             }
+                    const columnWidth =
+                        (props.gridWidth - 24 * columnsInDestinationRow) /
+                        (columnsInDestinationRow + 1);
 
-    //             for (let i = start; i < end; i++) {
-    //                 translateY -=
-    //                     document
-    //                         .getElementById(props.items[i].id)
-    //                         .getBoundingClientRect().height + 24;
-    //             }
-    //         }
-    //     }
-    //     // This column is one of the ones NOT being dragged
-    //     else {
-    //         if (
-    //             dropTargetIndex === props.rowIndex &&
-    //             props.relativeHoverPosition === "center"
-    //         ) {
-    //             gridRow.style.justifyContent = "unset";
-    //             flex = "unset";
-    //             width = `${(1280 - 24 * noOfColumns) / (noOfColumns + 1)}px`;
-    //         }
+                    translateX =
+                        columnWidth * columnsInDestinationRow +
+                        24 * columnsInDestinationRow;
 
-    //         if (
-    //             ((dropTargetIndex === props.rowIndex &&
-    //                 props.relativeHoverPosition === "bottom") ||
-    //                 dropTargetIndex > props.rowIndex) &&
-    //             dragStartingLocation <= props.rowIndex
-    //         ) {
-    //             // shift element upward
-    //             translateY = -(heightOfDraggingElement + 24);
-    //         } else if (
-    //             ((dropTargetIndex === props.rowIndex &&
-    //                 props.relativeHoverPosition === "top") ||
-    //                 dropTargetIndex < props.rowIndex) &&
-    //             dragStartingLocation >= props.rowIndex
-    //         ) {
-    //             // shift element downward
-    //             translateY = heightOfDraggingElement + 24;
-    //         }
-    //     }
+                    let newWidth = `${(props.gridWidth -
+                        24 * columnsInDestinationRow) /
+                        (columnsInDestinationRow + 1)}px`;
+                    flexBasis = newWidth;
+                } else {
+                    let start = Math.min(dragStartingLocation, dropTargetIndex);
+                    let end = Math.max(dragStartingLocation, dropTargetIndex);
+                    if (props.relativeHoverPosition !== "bottom") {
+                        end -= 1;
+                    }
 
-    //     style.transition = "transform 300ms ease 0s";
-    //     style.transform = `translate(${translateX}px, ${translateY}px)`;
+                    for (let i = start + 1; i <= end; i++) {
+                        translateY += document
+                            .getElementById(props.items[i].id)
+                            .getBoundingClientRect().height;
+                    }
+                }
+            } else if (dragStartingLocation - dropTargetIndex > 0) {
+                // dragging upward
 
-    //     if (width !== null) {
-    //         style.width = width;
-    //     }
+                if (
+                    props.relativeHoverPosition === "center" &&
+                    !props.columnTimerActive
+                ) {
+                    // Number of columns must be gotten from row we're adding to
+                    let columnsInDestinationRow =
+                        props.items[dropTargetIndex].columns.length;
 
-    //     if (flex !== null) {
-    //         style.flex = flex;
-    //     }
+                    const startingPosition = draggableNode.current.offsetTop;
+                    const destinationPosition = document
+                        .getElementById(props.items[dropTargetIndex].id)
+                        .getBoundingClientRect().top; //over.rect.top;
+                    const newPosition = destinationPosition - startingPosition;
 
-    //     if (position !== null) {
-    //         style.position = position;
-    //     }
+                    translateY = newPosition;
 
-    //     if (left !== null) {
-    //         style.left = left;
-    //     }
-    //}
+                    const columnWidth =
+                        (props.gridWidth - 24 * columnsInDestinationRow) /
+                        (columnsInDestinationRow + 1);
+
+                    translateX =
+                        columnWidth * columnsInDestinationRow +
+                        24 * columnsInDestinationRow;
+
+                    let newWidth = `${(props.gridWidth -
+                        24 * columnsInDestinationRow) /
+                        (columnsInDestinationRow + 1)}px`;
+                    flexBasis = newWidth;
+                } else {
+                    let start = Math.min(dragStartingLocation, dropTargetIndex);
+                    let end = Math.max(dragStartingLocation, dropTargetIndex);
+                    if (props.relativeHoverPosition !== "top") {
+                        start += 1;
+                    }
+                    for (let i = start; i < end; i++) {
+                        translateY -= document
+                            .getElementById(props.items[i].id)
+                            .getBoundingClientRect().height;
+                    }
+                }
+            }
+        }
+        // This column is one of the ones NOT being dragged
+        else {
+            if (
+                dropTargetIndex === props.rowIndex &&
+                props.relativeHoverPosition === "center" &&
+                !props.columnTimerActive
+            ) {
+                let newWidth = `${(props.gridWidth - 24 * noOfColumns) /
+                    (noOfColumns + 1)}px`;
+                flexBasis = newWidth;
+            }
+
+            if (
+                ((dropTargetIndex === props.rowIndex &&
+                    props.relativeHoverPosition === "bottom") ||
+                    dropTargetIndex > props.rowIndex) &&
+                dragStartingLocation <= props.rowIndex
+            ) {
+                // shift element upward
+                translateY = -(heightOfDraggingElement + 24);
+            } else if (
+                ((dropTargetIndex === props.rowIndex &&
+                    props.relativeHoverPosition === "top") ||
+                    dropTargetIndex < props.rowIndex) &&
+                dragStartingLocation >= props.rowIndex
+            ) {
+                // shift element downward
+                translateY = heightOfDraggingElement + 24;
+            }
+        }
+
+        style.transition = "transform 300ms ease 0s, flex-basis 300ms ease 0s";
+        style.transform = `translate(${translateX}px, ${translateY}px)`;
+
+        if (flexBasis !== null) {
+            style.flexBasis = flexBasis;
+        }
+
+        if (height !== null) {
+            style.height = height;
+        }
+    }
 
     return (
         <GridColumn
@@ -190,7 +217,7 @@ const DnDGridColumn = (props) => {
             showDragHandle={showDragHandle}
             setShowDragHandle={setShowDragHandle}
             className={classes.join(" ")}
-            // style={style}
+            style={style}
             {...props}
         >
             {props.children}
