@@ -13,6 +13,7 @@ const GridColumn = forwardRef((props, ref) => {
                 ...props.positionStyle,
                 ...props.style,
             }}
+            data-translate-y={props.translateY}
         >
             {props.children}
         </div>

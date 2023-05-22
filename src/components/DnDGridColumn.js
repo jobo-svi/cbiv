@@ -40,10 +40,6 @@ const DnDGridColumn = (props) => {
         setDraggableNodeRef
     );
 
-    // if (draggableNode.current && isDragging) {
-    //     console.log(draggableNode.current.offsetTop);
-    // }
-
     const [showDragHandle, setShowDragHandle] = useState(false);
 
     const classes = [];
@@ -67,7 +63,11 @@ const DnDGridColumn = (props) => {
     let height = null;
     let flexBasis = null;
 
-    if (over && dropTargetIndex !== null) {
+    if (
+        over &&
+        dropTargetIndex !== null &&
+        props.relativeHoverPosition !== null
+    ) {
         const noOfColumns = props.row.columns.length;
 
         // Which row drag was started from
@@ -78,82 +78,78 @@ const DnDGridColumn = (props) => {
         const startingRowIsMultiColumn =
             props.items[dragStartingRow].columns.length > 1;
 
-        const currentRowIsMultiColumn =
-            props.items[dropTargetIndex].columns.length > 1;
-
         let heightOfDraggingElement = (heightOfDraggingElement =
             active.rect.current.initial.height - 2); // -2 is for ignoring the hovering border height
 
         // If this is the column being dragged
         if (isDragging) {
+            let start = Math.min(dragStartingRow, dropTargetIndex);
+            let end = Math.max(dragStartingRow, dropTargetIndex);
+            let isCombining = false;
+
             // manually set height of the column so that the layout doesn't shift when combining columns
             height = heightOfDraggingElement;
 
-            // // Shift the element position into a multicolumn
-            // if (
-            //     props.relativeHoverPosition === "center" &&
-            //     !props.columnTimerActive &&
-            //     dragStartingRow - dropTargetIndex !== 0 // make sure column isn't being dragged over itself
-            // ) {
-            //     // Number of columns must be gotten from row we're adding to
-            //     let columnsInDestinationRow =
-            //         props.items[dropTargetIndex].columns.length;
+            // Shift the element position into a multicolumn
+            if (
+                props.relativeHoverPosition === "center" &&
+                dragStartingRow - dropTargetIndex !== 0 && // make sure column isn't being dragged over itself
+                !props.columnTimerActive
+            ) {
+                isCombining = true;
+                // Number of columns must be gotten from row we're adding to
+                let columnsInDestinationRow =
+                    props.items[dropTargetIndex].columns.length;
 
-            //     const startingPosition = draggableNode.current.offsetTop;
-            //     const destinationPosition = document
-            //         .getElementById(props.items[dropTargetIndex].id)
-            //         .getBoundingClientRect().top;
-            //     const newPosition = destinationPosition - startingPosition;
+                const columnWidth =
+                    (props.gridWidth - 24 * columnsInDestinationRow) /
+                    (columnsInDestinationRow + 1);
 
-            //     translateY = newPosition;
+                translateX =
+                    columnWidth * columnsInDestinationRow +
+                    24 * columnsInDestinationRow;
 
-            //     const columnWidth =
-            //         (props.gridWidth - 24 * columnsInDestinationRow) /
-            //         (columnsInDestinationRow + 1);
+                let newWidth = `${(props.gridWidth -
+                    24 * columnsInDestinationRow) /
+                    (columnsInDestinationRow + 1)}px`;
+                flexBasis = newWidth;
+            }
 
-            //     translateX =
-            //         columnWidth * columnsInDestinationRow +
-            //         24 * columnsInDestinationRow;
+            // Shift the dragged element upwards/downwards, accounting for combining columns as well
+            if (dragStartingRow - dropTargetIndex < 0) {
+                // dragging downward
+                if (props.relativeHoverPosition !== "bottom") {
+                    end -= 1;
+                }
 
-            //     let newWidth = `${(props.gridWidth -
-            //         24 * columnsInDestinationRow) /
-            //         (columnsInDestinationRow + 1)}px`;
-            //     flexBasis = newWidth;
-            // }
+                for (let i = start + 1; i <= end; i++) {
+                    translateY += document
+                        .getElementById(props.items[i].id)
+                        .getBoundingClientRect().height;
+                }
 
-            // Shift the element upwards/downwards
-            const offsetTopStart = draggableNode.current.offsetTop;
-            const offsetTopEnd = Math.floor(
-                document
-                    .getElementById(props.items[dropTargetIndex].id)
-                    .getBoundingClientRect().top
-            );
-            console.log(offsetTopStart - offsetTopEnd);
+                if (isCombining) {
+                    translateY += heightOfDraggingElement + 24;
+                }
+            } else if (dragStartingRow - dropTargetIndex > 0) {
+                // dragging upward
+                console.log("dragging upward");
+                if (props.relativeHoverPosition !== "top") {
+                    start += 1;
+                }
+                for (let i = start; i < end; i++) {
+                    translateY -= document
+                        .getElementById(props.items[i].id)
+                        .getBoundingClientRect().height;
+                }
 
-            // let start = Math.min(dragStartingRow, dropTargetIndex);
-            // let end = Math.max(dragStartingRow, dropTargetIndex);
-            // if (dragStartingRow - dropTargetIndex < 0) {
-            //     // dragging downward
-            //     if (props.relativeHoverPosition !== "bottom") {
-            //         end -= 1;
-            //     }
-
-            //     for (let i = start + 1; i <= end; i++) {
-            //         translateY += document
-            //             .getElementById(props.items[i].id)
-            //             .getBoundingClientRect().height;
-            //     }
-            // } else if (dragStartingRow - dropTargetIndex > 0) {
-            //     // dragging upward
-            //     if (props.relativeHoverPosition !== "top") {
-            //         start += 1;
-            //     }
-            //     for (let i = start; i < end; i++) {
-            //         translateY -= document
-            //             .getElementById(props.items[i].id)
-            //             .getBoundingClientRect().height;
-            //     }
-            // }
+                if (isCombining) {
+                    let h = document
+                        .getElementById(props.items[dropTargetIndex].id)
+                        .getBoundingClientRect().height;
+                    translateY -= h;
+                }
+            }
         }
         // This column is one of the ones NOT being dragged
         else {
@@ -169,21 +165,20 @@ const DnDGridColumn = (props) => {
                 flexBasis = newWidth;
             }
 
-            // Dragging an element out of a multicolumn
-            const uncombiningColumn = startingRowIsMultiColumn;
-
-            const movingColumnDownward =
+            const moveColumnUpward =
                 ((dropTargetIndex === props.rowIndex &&
                     props.relativeHoverPosition === "bottom") ||
                     dropTargetIndex > props.rowIndex) &&
                 dragStartingRow <= props.rowIndex;
 
-            const movingColumnUpward =
+            const moveColumnDownward =
                 ((dropTargetIndex === props.rowIndex &&
                     props.relativeHoverPosition === "top") ||
                     dropTargetIndex < props.rowIndex) &&
                 dragStartingRow >= props.rowIndex;
 
+            // Dragging an element out of a multicolumn
+            const uncombiningColumn = startingRowIsMultiColumn;
             if (uncombiningColumn) {
                 // Column is being dragged into its own new row, so other rows should shift.
                 // If column is being dragged above its current row, that row will need to shift too.
@@ -196,18 +191,17 @@ const DnDGridColumn = (props) => {
                         translateY = heightOfDraggingElement + 24;
                     }
                 }
-
-                // TODO: Figure out if we need an else case?
-            } else if (movingColumnDownward) {
+            } else if (moveColumnDownward) {
                 // Column is being dragged downward, so shift elements below it upward
-                translateY = -(heightOfDraggingElement + 24);
-            } else if (movingColumnUpward) {
-                // Column is being dragged upward, so shift elements above it downward
                 translateY = heightOfDraggingElement + 24;
+            } else if (moveColumnUpward) {
+                // Column is being dragged upward, so shift elements above it downward
+                translateY = -(heightOfDraggingElement + 24);
             }
         }
 
-        style.transition = "transform 300ms ease 0s, flex-basis 300ms ease 0s";
+        style.transition =
+            "transform 300ms ease-out 0s, flex-basis 300ms ease-out 0s";
         style.transform = `translate(${translateX}px, ${translateY}px)`;
 
         if (flexBasis !== null) {
@@ -227,6 +221,7 @@ const DnDGridColumn = (props) => {
             className={classes.join(" ")}
             style={style}
             {...props}
+            translateY={translateY}
         >
             {props.children}
             <div

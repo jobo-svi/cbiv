@@ -10,6 +10,7 @@ const Grid = forwardRef(
             items,
             onGridItemClick,
             dropTargetIndex,
+            lastDropTargetIndex,
             relativeHoverPosition,
             columnTimerActive,
             gridGap,
@@ -54,6 +55,9 @@ const Grid = forwardRef(
                                                 }
                                                 dropTargetIndex={
                                                     dropTargetIndex
+                                                }
+                                                lastDropTargetIndex={
+                                                    lastDropTargetIndex
                                                 }
                                                 relativeHoverPosition={
                                                     relativeHoverPosition

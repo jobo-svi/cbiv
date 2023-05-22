@@ -17,6 +17,7 @@ import BuilderNavbar from "./BuilderNavbar";
 import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
 import useTimeout from "../hooks/useTimeout";
+import usePrevious from "../hooks/usePrevious";
 import useMousePosition from "../hooks/useMousePosition";
 import { data } from "../data";
 import "../css/App.css";
@@ -85,10 +86,20 @@ const PageBuilder = () => {
     ] = useState(relativeHoverPosition);
 
     // Where a new element will be inserted into the item array
-    const [dropTargetIndex, setDropTargetIndex] = useState(null);
+    const [dropTargetIndex, setDropTargetIndex] = useState(0);
+    const [lastDropTargetIndex, setLastDropTargetIndex] = useState(
+        dropTargetIndex
+    );
     const [debouncedDropTargetIndex, setDebouncedDropTargetIndex] = useState(
         dropTargetIndex
     );
+    const prevDropTargetIndex = usePrevious(debouncedDropTargetIndex);
+
+    useEffect(() => {
+        if (prevDropTargetIndex !== null) {
+            setLastDropTargetIndex(prevDropTargetIndex);
+        }
+    }, [debouncedDropTargetIndex]);
 
     // Whether or not the timer is active while hovering over an element while dragging
     const [columnTimerActive, setColumnTimerActive] = useState(false);
@@ -613,6 +624,7 @@ const PageBuilder = () => {
                         setItems={setItems}
                         onGridItemClick={handleGridItemClick}
                         dropTargetIndex={debouncedDropTargetIndex}
+                        lastDropTargetIndex={lastDropTargetIndex}
                         placementPreviewStyle={debouncedPlacementPreviewStyle}
                         relativeHoverPosition={debouncedRelativeHoverPosition}
                         translateTiming={translateTiming}
