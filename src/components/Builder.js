@@ -140,7 +140,11 @@ const PageBuilder = () => {
 
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
-    const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+    const itemIds = useMemo(
+        () => items.flatMap((item) => item.columns).map((item) => item.id),
+        [items]
+    );
+    console.log(itemIds);
     const spacerInsertedRef = useRef();
     const currentDragFieldRef = useRef();
     const [activeSidebarField, setActiveSidebarField] = useState(); // only for fields from the sidebar
@@ -157,9 +161,14 @@ const PageBuilder = () => {
 
     function createSpacer({ id }) {
         return {
-            id,
-            component: "spacer",
-            title: "spacer",
+            id: uuid(),
+            columns: [
+                {
+                    id,
+                    component: "spacer",
+                    title: "spacer",
+                },
+            ],
         };
     }
 
@@ -241,10 +250,8 @@ const PageBuilder = () => {
 
     const getComponentForPreview = () => {
         if (activeSidebarField) {
-            console.log(1);
             return constructComponent(Components[activeSidebarField.component]);
         } else if (activeField) {
-            console.log(2);
             return constructComponent(Components[activeField.component]);
         } else {
             return null;
@@ -287,12 +294,15 @@ const PageBuilder = () => {
         // since this field already belongs to the canvas.
         const { id, index } = activeData;
 
-        const item = items.find((item) => item.id === id);
+        const item = items
+            .flatMap((item) => item.columns)
+            .find((item) => item.id === id);
         setActiveField(item);
         currentDragFieldRef.current = item;
 
         let updateItems = [...items];
         updateItems.splice(index, 1, createSpacer({ id: active.id }));
+
         setItems(updateItems);
     };
 
@@ -391,7 +401,6 @@ const PageBuilder = () => {
         // Since the ref just holds a reference to a field that the context is aware of
         // we just swap out the spacer with the referenced field.
         let nextField = currentDragFieldRef.current;
-
         if (nextField) {
             let overData = {};
             if (over.data.current) {
@@ -399,27 +408,57 @@ const PageBuilder = () => {
             }
 
             let updateItems = [...items];
-            const spacerIndex = updateItems.findIndex(
-                (f) => f.component === "spacer"
+
+            const spacerRowIndex = updateItems.findIndex((f) =>
+                f.columns.find((col) => col.component === "spacer")
             );
-            updateItems.splice(spacerIndex, 1, {
-                id: uuid(),
-                component: nextField.component,
-                props: { ...Components[nextField.component].props },
+
+            // remove the spacer and replace with the actual element
+            updateItems.forEach(function(row, rowIndex) {
+                if (rowIndex === spacerRowIndex) {
+                    let spacerColIndex = row.columns.findIndex(
+                        (col) => col.component === "spacer"
+                    );
+
+                    row.columns.splice(spacerColIndex, 1, nextField);
+                }
             });
 
-            updateItems = arrayMove(
-                updateItems,
-                spacerIndex,
-                overData.index || 0
+            setItems(
+                moveElement(updateItems, nextField, overData.index, false)
             );
-
-            setItems(updateItems);
         }
 
         setSidebarFieldsRegenKey(Date.now());
         cleanUp();
     };
+
+    function moveElement(currentItems, item, rowIndex, within) {
+        let newItems = [...currentItems];
+
+        // Find the row where the item currently lives
+        newItems.map((row, rowIndex) => {
+            let column = row.columns.find((col) => col.id === item.id);
+            if (column) {
+                row.columns = row.columns.filter((c) => c.id !== column.id);
+            }
+        });
+
+        if (!within) {
+            const newOb = {
+                id: uuid(),
+                columns: [item],
+            };
+            newItems.splice(rowIndex, 0, newOb);
+        }
+
+        // Rows without any columns are empty and should be removed
+        newItems = newItems.filter(
+            (row) => row.columns && row.columns.length > 0
+        );
+
+        return newItems;
+    }
 
     const { listeners, setNodeRef, transform, transition } = useDroppable({
         id: "canvas_droppable",
@@ -463,22 +502,47 @@ const PageBuilder = () => {
                         items={itemIds}
                         strategy={verticalListSortingStrategy}
                     >
-                        <div
-                            ref={setNodeRef}
-                            className="canvas"
-                            style={style}
-                            {...listeners}
-                        >
-                            {items.length > 0 &&
-                                items.map((item, i) => (
-                                    <SortableItem
-                                        key={item.id}
-                                        id={item.id}
-                                        index={i}
-                                    >
-                                        {constructComponent(item)}
-                                    </SortableItem>
-                                ))}
+                        <div className="grid-wrapper">
+                            <div
+                                ref={setNodeRef}
+                                className="grid"
+                                style={style}
+                                {...listeners}
+                            >
+                                {items.length > 0 &&
+                                    items.map((row, rowIndex) => {
+                                        return (
+                                            <div
+                                                className="grid-row"
+                                                key={row.id}
+                                                id={row.id}
+                                            >
+                                                {row.columns.map(
+                                                    (col, colIndex) => {
+                                                        return (
+                                                            <div
+                                                                className="grid-column"
+                                                                key={col.id}
+                                                            >
+                                                                <SortableItem
+                                                                    key={col.id}
+                                                                    id={col.id}
+                                                                    index={
+                                                                        rowIndex
+                                                                    }
+                                                                >
+                                                                    {constructComponent(
+                                                                        col
+                                                                    )}
+                                                                </SortableItem>
+                                                            </div>
+                                                        );
+                                                    }
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                            </div>
                         </div>
                     </SortableContext>
                 </div>

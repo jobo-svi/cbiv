@@ -20,6 +20,11 @@ const SortableItem = (props) => {
     });
 
     const { collisions } = useDndContext();
+
+    if (props.id === "row2col1") {
+        console.log(collisions);
+    }
+
     let isHovered = false;
     if (collisions) {
         let c = collisions.find((collision) => collision.id === props.id);
@@ -32,7 +37,7 @@ const SortableItem = (props) => {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? ".5" : 1,
-        background: isHovered ? "gray" : "",
+        //background: isHovered ? "gray" : "",
     };
 
     return (
