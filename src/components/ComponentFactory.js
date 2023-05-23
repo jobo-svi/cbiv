@@ -3,6 +3,7 @@ import FlipCard from "./FlipCard";
 import Image from "./Image";
 import Header from "./Header";
 import Paragraph from "./Paragraph";
+import Spacer from "./Spacer";
 import UndefinedElement from "./UndefinedElement";
 
 export const Components = {
@@ -36,6 +37,11 @@ export const Components = {
         type: FlipCard,
         component: "flipcard",
         defaultHeight: 300,
+    },
+    spacer: {
+        type: Spacer,
+        component: "spacer",
+        defaultHeight: 96,
     },
     // columnlayout: {
     //     type: ColumnLayout,

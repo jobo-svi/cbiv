@@ -11,8 +11,9 @@ const BuilderElementsMenu = (props) => {
                 <BuilderElementsMenuItem
                     id="header-menu-item"
                     data={{
-                        type: "header",
+                        component: "header",
                         height: Components.header.defaultHeight,
+                        isNewElement: true,
                     }}
                 >
                     <button className="element">
@@ -24,8 +25,9 @@ const BuilderElementsMenu = (props) => {
                 <BuilderElementsMenuItem
                     id="paragraph-menu-item"
                     data={{
-                        type: "paragraph",
+                        component: "paragraph",
                         height: Components.paragraph.defaultHeight,
+                        isNewElement: true,
                     }}
                 >
                     <button className="element">
@@ -38,8 +40,9 @@ const BuilderElementsMenu = (props) => {
                 <BuilderElementsMenuItem
                     id="image-menu-item"
                     data={{
-                        type: "image",
+                        component: "image",
                         height: Components.image.defaultHeight,
+                        isNewElement: true,
                     }}
                 >
                     <button className="element">
@@ -52,8 +55,9 @@ const BuilderElementsMenu = (props) => {
                 <BuilderElementsMenuItem
                     id="flipcard-menu-item"
                     data={{
-                        type: "flipcard",
+                        component: "flipcard",
                         height: Components.flipcard.defaultHeight,
+                        isNewElement: true,
                     }}
                 >
                     <button className="element">
