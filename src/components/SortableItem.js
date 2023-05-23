@@ -21,10 +21,6 @@ const SortableItem = (props) => {
 
     const { collisions } = useDndContext();
 
-    if (props.id === "row2col1") {
-        console.log(collisions);
-    }
-
     let isHovered = false;
     if (collisions) {
         let c = collisions.find((collision) => collision.id === props.id);

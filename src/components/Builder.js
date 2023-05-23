@@ -70,7 +70,7 @@ const PageBuilder = () => {
     let previosValue = [];
     let initialValue = [];
 
-    const closestCenter = ({
+    const closestCenterr = ({
         collisionRect,
         droppableRects,
         droppableContainers,
@@ -444,6 +444,11 @@ const PageBuilder = () => {
             }
         });
 
+        // Rows without any columns are empty and should be removed
+        newItems = newItems.filter(
+            (row) => row.columns && row.columns.length > 0
+        );
+
         if (!within) {
             const newOb = {
                 id: uuid(),
@@ -451,11 +456,6 @@ const PageBuilder = () => {
             };
             newItems.splice(rowIndex, 0, newOb);
         }
-
-        // Rows without any columns are empty and should be removed
-        newItems = newItems.filter(
-            (row) => row.columns && row.columns.length > 0
-        );
 
         return newItems;
     }
