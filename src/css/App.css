@@ -69,6 +69,7 @@
     grid-template-columns: 1fr;
     margin: 0 auto;
     transform-origin: top;
+    gap: 24px;
 }
 
 .builder .grid .preview {
@@ -82,7 +83,7 @@
 
 .builder .grid .grid-column {
     flex-basis: 100%;
-    margin-bottom: 24px;
+    /* margin-bottom: 24px; */
 }
 
 @media screen and (min-width: 0px) {

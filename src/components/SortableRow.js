@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDndContext } from "@dnd-kit/core";
 
-const SortableItem = (props) => {
+const SortableRow = (props) => {
     const {
         attributes,
         listeners,
@@ -16,30 +16,13 @@ const SortableItem = (props) => {
         data: {
             id: props.id,
             rowIndex: props.rowIndex,
-            //colIndex: props.colIndex,
+            colIndex: props.colIndex,
         },
     });
 
-    //const { collisions } = useDndContext();
-
-    // let isHovered = false;
-    // if (collisions) {
-    //     let c = collisions.find((collision) => collision.id === props.id);
-    //     if (c && c.data) {
-    //         isHovered = c.data.hovered;
-    //     }
-    // }
-
-    // // We don't want anything to scale
-    // if (transform) {
-    //     transform.scaleX = 1;
-    //     transform.scaleY = 1;
-    // }
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? ".5" : 1,
-        //background: isHovered ? "gray" : "",
     };
 
     return (
@@ -55,4 +38,4 @@ const SortableItem = (props) => {
     );
 };
 
-export default SortableItem;
+export default SortableRow;

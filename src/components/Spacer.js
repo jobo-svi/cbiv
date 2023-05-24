@@ -5,7 +5,7 @@ const Spacer = (props) => {
     return (
         <div
             style={{
-                height: Components.header.defaultHeight,
+                height: props.height || Components.header.defaultHeight,
                 background: "#cae4ff",
             }}
         ></div>
