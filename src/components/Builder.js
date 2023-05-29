@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,28 +7,17 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  useDroppable,
-  CollisionDescriptor,
-  CollisionDetection,
   pointerWithin,
   rectIntersection,
   getFirstCollision,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   rectSortingStrategy,
-  horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS, Coordinates } from "@dnd-kit/utilities";
 import uuid from "react-uuid";
-import SortableItem from "./SortableItem";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Grid from "./Grid";
 import BuilderElementsMenu from "./BuilderElementsMenu";
-import ItemEditor from "./ItemEditor";
 import BuilderNavbar from "./BuilderNavbar";
 import PlacementPreview from "./PlacementPreview";
 import { Components, constructComponent } from "./ComponentFactory";
@@ -46,134 +29,20 @@ import "../css/App.css";
 import { snapDragHandleToCursor } from "../modifiers/snapDragHandleToCursor";
 import DebugValues from "./DebugValues";
 import Droppable from "./Droppable";
+import SortableGridColumn from "./SortableGridColumn";
 
 const PageBuilder = () => {
-  const zeroCoordinates = { x: 0, y: 0 };
-
-  function distanceBetween(p1, p2) {
-    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-  }
-
-  function sortCollisionsAsc({ data: { value: a } }, { data: { value: b } }) {
-    return a - b;
-  }
-
-  function centerOfRectangle(rect, left = rect.left, top = rect.top) {
-    return {
-      x: left + rect.width * 0.5,
-      y: top + rect.height * 0.5,
-    };
-  }
-
-  function isHovered(pointer, clientRect) {
-    if (!pointer || !clientRect) {
-      return false;
-    }
-
-    return (
-      pointer.x > clientRect.x &&
-      pointer.x < clientRect.x + clientRect.width &&
-      pointer.y > clientRect.y &&
-      pointer.y < clientRect.y + clientRect.height
-    );
-  }
-
-  let previosValue = [];
-  let initialValue = [];
-
-  const closestCenter = ({
-    collisionRect,
-    droppableRects,
-    droppableContainers,
-    active,
-    pointerCoordinates,
-  }) => {
-    const centerRect = centerOfRectangle(
-      collisionRect,
-      collisionRect.left,
-      collisionRect.top
-    );
-
-    const currentIndex = initialValue.findIndex((v) => v.id === active.id);
-    const currentId = previosValue[currentIndex]
-      ? previosValue[currentIndex].id
-      : active.id;
-    let collisions = [];
-
-    const currentRect = droppableRects.get(currentId);
-
-    const centerCurrectRect = currentRect
-      ? centerOfRectangle(currentRect)
-      : zeroCoordinates;
-
-    const spaceSize = 24;
-    const isEnabled =
-      Math.abs(centerCurrectRect.x - centerRect.x) >
-        collisionRect.width + spaceSize ||
-      Math.abs(centerCurrectRect.y - centerRect.y) >
-        collisionRect.height + spaceSize;
-
-    for (const droppableContainer of droppableContainers) {
-      const { id } = droppableContainer;
-      const rect = droppableRects.get(id);
-      const clientRect = droppableContainer.node.current
-        ? droppableContainer.node.current.getBoundingClientRect()
-        : null;
-
-      if (rect) {
-        let distBetween = distanceBetween(
-          centerOfRectangle(rect),
-          isEnabled ? centerRect : centerCurrectRect
-        );
-        // distBetween = Math.abs(
-        //     parseFloat(centerOfRectangle(rect).y) -
-        //         parseFloat(
-        //             isEnabled ? centerRect.y : centerCurrectRect.y
-        //         )
-        // );
-
-        collisions.push({
-          id,
-          data: {
-            droppableContainer,
-            value: distBetween,
-            hovered:
-              active.id !== id
-                ? isHovered(pointerCoordinates, clientRect)
-                : false,
-          },
-        });
-      }
-    }
-
-    previosValue = collisions.sort(sortCollisionsAsc);
-    if (initialValue.length === 0) {
-      initialValue = previosValue;
-    }
-
-    return previosValue;
-  };
-
   // The lesson elements
   const [items, setItems] = useState(data.content.body);
-  // const itemIds = useMemo(
-  //     () => items.flatMap((item) => item.columns).map((item) => item.id),
-  //     [items]
-  // );
 
   const [activeId, setActiveId] = useState(null);
-  const [clonedItems, setClonedItems] = useState([]);
 
   const lastOverId = useRef(null);
   const recentlyMovedToNewContainer = useRef(false);
 
-  const spacerInsertedRef = useRef();
-  const currentDragFieldRef = useRef();
   const [activeSidebarField, setActiveSidebarField] = useState(); // only for fields from the sidebar
   const [activeField, setActiveField] = useState(); // only for fields that are in the form.
-  const [sidebarFieldsRegenKey, setSidebarFieldsRegenKey] = useState(
-    Date.now()
-  );
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -292,13 +161,6 @@ const PageBuilder = () => {
     }
   };
 
-  const cleanUp = () => {
-    setActiveSidebarField(null);
-    setActiveField(null);
-    currentDragFieldRef.current = null;
-    spacerInsertedRef.current = false;
-  };
-
   const handleDragStart = (e) => {
     const { active } = e;
     let activeData = {};
@@ -307,13 +169,6 @@ const PageBuilder = () => {
     }
 
     setActiveId(active.id);
-    setClonedItems(items);
-  };
-
-  const replaceColumnWithSpacer = (rowIndex, colIndex, spacerColumn) => {
-    let updateItems = [...items];
-    updateItems[rowIndex].columns.splice(colIndex, 1, spacerColumn);
-    return updateItems;
   };
 
   const findContainer = (id) => {
@@ -325,7 +180,7 @@ const PageBuilder = () => {
   const handleDragOver = (e) => {
     const { active, over, collisions } = e;
 
-    if (!active || !over) {
+    if (!active || !over || !over.data.current.relativePosition) {
       return;
     }
 
@@ -357,9 +212,6 @@ const PageBuilder = () => {
       });
       updateItems = updateItems.filter((row) => row.columns.length > 0);
 
-      //   updateItems = updateItems.filter(
-      //     (row) => row.id !== "new-row-placeholder"
-      //   );
       if (over.data.current.relativePosition !== "within") {
         // insert new row
         const newOb = {
@@ -390,6 +242,7 @@ const PageBuilder = () => {
         setItems(updateItems);
       }
     } else {
+      console.log(over.data.current);
       const eleToMove = updateItems
         .flatMap((row) => row.columns)
         .find((col) => col.id === active.id);
@@ -399,7 +252,8 @@ const PageBuilder = () => {
           row.columns = row.columns.filter((col) => col.id !== active.id);
         });
 
-        updateItems.splice(overRowIndex + modifier, 0, {
+        const index = overRowIndex + modifier < 0 ? 0 : overRowIndex + modifier;
+        updateItems.splice(index, 0, {
           id: uuid(),
           columns: [eleToMove],
         });
@@ -439,75 +293,6 @@ const PageBuilder = () => {
     setActiveId(null);
   };
 
-  function moveElement(currentItems, item, rowIndex, eleToCombine) {
-    let newItems = [...currentItems];
-
-    // Find the row where the item currently lives
-    newItems.map((row, rowIndex) => {
-      let column = row.columns.find((col) => col.id === item.id);
-      if (column) {
-        row.columns = row.columns.filter((c) => c.id !== column.id);
-      }
-    });
-
-    if (!eleToCombine) {
-      // Rows without any columns are empty and should be removed
-      newItems = newItems.filter(
-        (row) => row.columns && row.columns.length > 0
-      );
-
-      const newOb = {
-        id: uuid(),
-        columns: [item],
-      };
-      newItems.splice(rowIndex, 0, newOb);
-    } else {
-      // Add a column to an existing row
-      let combineRowIndex = items.findIndex((item) =>
-        item.columns.find((col) => col.id === eleToCombine.id)
-      );
-      let row = newItems[combineRowIndex];
-      if (row) {
-        row.columns.push(item);
-      }
-
-      // Rows without any columns are empty and should be removed
-      newItems = newItems.filter(
-        (row) => row.columns && row.columns.length > 0
-      );
-    }
-
-    return newItems;
-  }
-
-  const replaceSpacerWithRealElement = (element) => {
-    let updateItems = [...items];
-    const spacerRowIndex = updateItems.findIndex((f) =>
-      f.columns.find((col) => col.component === "spacer")
-    );
-
-    // remove the spacer and replace with the actual element
-    updateItems.forEach(function(row, rowIndex) {
-      if (rowIndex === spacerRowIndex) {
-        let spacerColIndex = row.columns.findIndex(
-          (col) => col.component === "spacer"
-        );
-
-        row.columns.splice(spacerColIndex, 1, element);
-      }
-    });
-
-    return updateItems;
-  };
-
-  const { listeners, setNodeRef, transform, transition } = useDroppable({
-    id: "canvas_droppable",
-    data: {
-      parent: null,
-      isContainer: true,
-    },
-  });
-
   /**
    * Custom collision detection strategy optimized for multiple containers
    *
@@ -518,15 +303,6 @@ const PageBuilder = () => {
    */
   const collisionDetectionStrategy = useCallback(
     (args) => {
-      if (activeId && activeId in items) {
-        return closestCenter({
-          ...args,
-          droppableContainers: args.droppableContainers.filter(
-            (container) => container.id in items
-          ),
-        });
-      }
-
       // Start by finding any intersecting droppable
       const pointerIntersections = pointerWithin(args);
       const intersections =
@@ -584,6 +360,7 @@ const PageBuilder = () => {
       <div className="lessons">lessons</div>
       <DndContext
         sensors={sensors}
+        modifiers={[snapDragHandleToCursor]}
         collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
@@ -592,7 +369,7 @@ const PageBuilder = () => {
       >
         <div className="lesson-content">
           <div className="grid-wrapper">
-            <div className="grid" style={{ position: "relative" }}>
+            <div className="grid">
               <Droppable
                 id={`row-placeholder-start`}
                 rowIndex={0}
@@ -620,16 +397,14 @@ const PageBuilder = () => {
                     >
                       {items[rowIndex].columns.map((column, colIndex) => {
                         return (
-                          <div className="grid-column" key={column.id}>
-                            <SortableItem
-                              id={column.id}
-                              index={colIndex}
-                              rowIndex={rowIndex}
-                              relativePosition="within"
-                            >
-                              {constructComponent(column)}
-                            </SortableItem>
-                          </div>
+                          <SortableGridColumn
+                            id={column.id}
+                            key={column.id}
+                            index={colIndex}
+                            rowIndex={rowIndex}
+                            column={column}
+                            relativePosition="within"
+                          />
                         );
                       })}
                     </SortableContext>

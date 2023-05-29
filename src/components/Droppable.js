@@ -24,11 +24,14 @@ const Droppable = (props) => {
   if (node.current && !props.isPlaceholder && props.activeId) {
     height = node.current.clientHeight;
   }
+
   return (
     <div
       className="grid-row"
       ref={setNodeRef}
-      style={{ height: height !== null ? `${height}px` : "" }}
+      style={{
+        height: height !== null ? `${height}px` : "",
+      }}
     >
       {props.children}
     </div>
