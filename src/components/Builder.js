@@ -37,9 +37,6 @@ import Droppable from "./Droppable";
 import SortableGridColumn from "./SortableGridColumn";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const animateLayoutChanges = (args) =>
-    defaultAnimateLayoutChanges({ ...args, wasDragging: true });
-
 const PageBuilder = () => {
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
@@ -49,41 +46,12 @@ const PageBuilder = () => {
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
 
-    const [activeSidebarField, setActiveSidebarField] = useState(); // only for fields from the sidebar
-    const [activeField, setActiveField] = useState(); // only for fields that are in the form.
-
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
-
-    function createSpacerRow({ id }) {
-        return {
-            id: uuid(),
-            columns: [
-                {
-                    id,
-                    component: "spacer",
-                    title: "spacer",
-                },
-            ],
-        };
-    }
-
-    function createSpacerCol({ id }) {
-        const height = document.getElementById(id).getBoundingClientRect()
-            .height;
-        return {
-            id,
-            component: "spacer",
-            title: "spacer",
-            props: {
-                height: height,
-            },
-        };
-    }
 
     // What element we're currently dragging, needed so we can measure it and show a placeholder in the dom
     const [draggingElement, setDraggingElement] = useState(null);
@@ -468,6 +436,16 @@ const PageBuilder = () => {
                 onDragEnd={handleDragEnd}
             >
                 <div className="lesson-content">
+                    {/* <DebugValues
+                        translateTiming={translateTiming}
+                        setTranslateTiming={setTranslateTiming}
+                        columnDelayTiming={columnDelayTiming}
+                        setColumnDelayTiming={setColumnDelayTiming}
+                        slopTiming={slopTiming}
+                        setSlopTiming={setSlopTiming}
+                        gridGap={gridGap}
+                        setGridGap={setGridGap}
+                    /> */}
                     <div className="grid-wrapper">
                         <div className="grid">
                             <Droppable
