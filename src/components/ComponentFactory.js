@@ -38,11 +38,6 @@ export const Components = {
         component: "flipcard",
         defaultHeight: 300,
     },
-    spacer: {
-        type: Spacer,
-        component: "spacer",
-        defaultHeight: 96,
-    },
     // columnlayout: {
     //     type: ColumnLayout,
     // },
