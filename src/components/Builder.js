@@ -285,14 +285,19 @@ const PageBuilder = () => {
                 updateItems = updateItems.filter(
                     (row) => row.columns.length > 0
                 );
-                setItems(updateItems);
                 recentlyMovedToNewContainer.current = true;
+                setItems(updateItems);
             } else {
                 if (!overContainer || !activeContainer) {
                     return;
                 }
 
                 if (activeContainer !== overContainer) {
+                    const [eleRowIndex, eleColIndex] = getElementIndex(
+                        over.id,
+                        updateItems
+                    );
+
                     // remove ele from its original location
                     updateItems.map((row) => {
                         row.columns = row.columns.filter(
@@ -300,10 +305,14 @@ const PageBuilder = () => {
                         );
                     });
 
-                    updateItems[overRowIndex].columns.push(eleToMove);
+                    updateItems[overRowIndex].columns.splice(
+                        eleColIndex,
+                        0,
+                        eleToMove
+                    );
 
-                    setItems(updateItems);
                     recentlyMovedToNewContainer.current = true;
+                    setItems(updateItems);
                 } else {
                     // Update position of columns if they've been reordered
                     const [ele1RowIndex, ele1ColIndex] = getElementIndex(
@@ -315,7 +324,6 @@ const PageBuilder = () => {
                         updateItems
                     );
 
-                    //console.log(ele1RowIndex, ele1ColIndex, ele2RowIndex, ele2ColIndex);
                     if (
                         ele1RowIndex !== null &&
                         ele1ColIndex !== null &&
@@ -330,6 +338,7 @@ const PageBuilder = () => {
                             updateItems[ele2RowIndex].columns[ele2ColIndex];
                         updateItems[ele1RowIndex].columns[ele1ColIndex] = ele2;
                         updateItems[ele2RowIndex].columns[ele2ColIndex] = ele1;
+                        recentlyMovedToNewContainer.current = true;
                         setItems(updateItems);
                     }
                 }

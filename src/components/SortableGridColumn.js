@@ -9,6 +9,7 @@ const SortableGridColumn = (props) => {
     const {
         attributes,
         listeners,
+        node,
         setNodeRef,
         setActivatorNodeRef,
         transform,

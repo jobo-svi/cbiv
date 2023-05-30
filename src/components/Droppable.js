@@ -1,9 +1,11 @@
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
+import { useDndContext } from "@dnd-kit/core";
 
 const Droppable = (props) => {
     const {
-        activeIndex,
+        active,
+        over,
         attributes,
         listeners,
         setNodeRef,
@@ -19,6 +21,7 @@ const Droppable = (props) => {
             relativePosition: props.relativePosition,
         },
     });
+    const { collisions } = useDndContext();
 
     let height = null;
     if (node.current && !props.isPlaceholder && props.activeId) {
