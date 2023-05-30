@@ -261,10 +261,21 @@ const PageBuilder = () => {
                 }
 
                 if (activeContainer !== overContainer) {
-                    const [eleRowIndex, eleColIndex] = getElementIndex(
+                    let [eleRowIndex, eleColIndex] = getElementIndex(
                         over.id,
                         updateItems
                     );
+
+                    // Figure out which side of column we're hovering on...
+                    const isRightOfOverItem =
+                        over &&
+                        active.rect.current.translated &&
+                        active.rect.current.translated.right >
+                            over.rect.right - over.rect.width / 2;
+
+                    if (isRightOfOverItem) {
+                        eleColIndex += 1;
+                    }
 
                     // remove ele from its original location
                     updateItems.map((row) => {
