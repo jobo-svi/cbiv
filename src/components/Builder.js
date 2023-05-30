@@ -233,95 +233,176 @@ const PageBuilder = () => {
                 setItems(updateItems);
             }
         } else {
-            const eleToMove = updateItems
+            const fromCol = updateItems
                 .flatMap((row) => row.columns)
                 .find((col) => col.id === active.id);
-            if (over.data.current.relativePosition !== "within") {
-                // remove ele from its original location
+            const fromRowIndex = updateItems.findIndex((row) =>
+                row.columns.find((col) => col.id === active.id)
+            );
+            const fromColIndex = updateItems[fromRowIndex].columns.findIndex(
+                (col) => col.id === active.id
+            );
+
+            const destinationCol = updateItems
+                .flatMap((row) => row.columns)
+                .find((col) => col.id === over.id);
+
+            const destinationIsNewRow = destinationCol === undefined;
+
+            if (!destinationIsNewRow) {
+                // adding a column to existing row
+                const destinationRow = updateItems.find((row) =>
+                    row.columns.find((col) => col.id === destinationCol.id)
+                );
+
+                const destinationRowIndex = updateItems.findIndex((row) =>
+                    row.columns.find((col) => col.id === over.id)
+                );
+                const destinationColIndex = updateItems[
+                    destinationRowIndex
+                ].columns.findIndex((col) => col.id === over.id);
+
+                // Remove original location
+                updateItems[fromRowIndex].columns = updateItems[
+                    fromRowIndex
+                ].columns.filter((col) => col.id !== fromCol.id);
+
+                // Figure out which side of column we're hovering on...
+                const isRightOfOverItem =
+                    over &&
+                    active.rect.current.translated &&
+                    active.rect.current.translated.right >
+                        over.rect.right - over.rect.width / 2;
+
+                destinationRow.columns.splice(
+                    destinationColIndex + (isRightOfOverItem ? 1 : 0),
+                    0,
+                    fromCol
+                );
+
+                // We don't want the layout to jump while moving rows into columns, so don't remove empty rows yet...
+
+                setItems(updateItems);
+            } else {
+                const destinationRowIndex = over.data.current.rowIndex;
+
                 updateItems.map((row) => {
                     row.columns = row.columns.filter(
                         (col) => col.id !== active.id
                     );
                 });
 
-                const index =
-                    overRowIndex + modifier < 0 ? 0 : overRowIndex + modifier;
-                updateItems.splice(index, 0, {
+                updateItems.splice(destinationRowIndex + modifier, 0, {
                     id: uuid(),
-                    columns: [eleToMove],
+                    columns: [fromCol],
                 });
+
                 updateItems = updateItems.filter(
                     (row) => row.columns.length > 0
                 );
+
                 recentlyMovedToNewContainer.current = true;
                 setItems(updateItems);
-            } else {
-                if (!overContainer || !activeContainer) {
-                    return;
-                }
-
-                if (activeContainer !== overContainer) {
-                    let [eleRowIndex, eleColIndex] = getElementIndex(
-                        over.id,
-                        updateItems
-                    );
-
-                    // Figure out which side of column we're hovering on...
-                    const isRightOfOverItem =
-                        over &&
-                        active.rect.current.translated &&
-                        active.rect.current.translated.right >
-                            over.rect.right - over.rect.width / 2;
-
-                    if (isRightOfOverItem) {
-                        eleColIndex += 1;
-                    }
-
-                    // remove ele from its original location
-                    updateItems.map((row) => {
-                        row.columns = row.columns.filter(
-                            (col) => col.id !== active.id
-                        );
-                    });
-
-                    updateItems[overRowIndex].columns.splice(
-                        eleColIndex,
-                        0,
-                        eleToMove
-                    );
-
-                    recentlyMovedToNewContainer.current = true;
-                    setItems(updateItems);
-                } else {
-                    // Update position of columns if they've been reordered
-                    const [ele1RowIndex, ele1ColIndex] = getElementIndex(
-                        active.id,
-                        updateItems
-                    );
-                    const [ele2RowIndex, ele2ColIndex] = getElementIndex(
-                        over.id,
-                        updateItems
-                    );
-
-                    if (
-                        ele1RowIndex !== null &&
-                        ele1ColIndex !== null &&
-                        ele2RowIndex !== null &&
-                        ele2ColIndex !== null &&
-                        active.id !== over.id
-                    ) {
-                        // swap the elements
-                        const ele1 =
-                            updateItems[ele1RowIndex].columns[ele1ColIndex];
-                        const ele2 =
-                            updateItems[ele2RowIndex].columns[ele2ColIndex];
-                        updateItems[ele1RowIndex].columns[ele1ColIndex] = ele2;
-                        updateItems[ele2RowIndex].columns[ele2ColIndex] = ele1;
-                        recentlyMovedToNewContainer.current = true;
-                        setItems(updateItems);
-                    }
-                }
             }
+
+            // if (over.data.current.relativePosition !== "within") {
+            //     // don't do anything if there's...nothing to do...?
+            //     if (
+            //         active.data.current.relativePosition !== "within" &&
+            //         (over.data.current.rowIndex ===
+            //             active.data.current.rowIndex ||
+            //             over.data.current.rowIndex ===
+            //                 active.data.current.rowIndex - 1)
+            //     ) {
+            //         return;
+            //     }
+
+            //     // remove ele from its original location
+            //     updateItems.map((row) => {
+            //         row.columns = row.columns.filter(
+            //             (col) => col.id !== active.id
+            //         );
+            //     });
+
+            //     const index =
+            //         overRowIndex + modifier < 0 ? 0 : overRowIndex + modifier;
+            //     updateItems.splice(index, 0, {
+            //         id: uuid(),
+            //         columns: [eleToMove],
+            //     });
+            //     updateItems = updateItems.filter(
+            //         (row) => row.columns.length > 0
+            //     );
+            //     recentlyMovedToNewContainer.current = true;
+            //     setItems(updateItems);
+            // } else {
+            //     if (!overContainer || !activeContainer) {
+            //         return;
+            //     }
+
+            //     if (activeContainer !== overContainer) {
+            //         let [eleRowIndex, eleColIndex] = getElementIndex(
+            //             over.id,
+            //             updateItems
+            //         );
+
+            //         // Figure out which side of column we're hovering on...
+            //         const isRightOfOverItem =
+            //             over &&
+            //             active.rect.current.translated &&
+            //             active.rect.current.translated.right >
+            //                 over.rect.right - over.rect.width / 2;
+
+            //         if (isRightOfOverItem) {
+            //             eleColIndex += 1;
+            //         }
+
+            //         // remove ele from its original location
+            //         updateItems.map((row) => {
+            //             row.columns = row.columns.filter(
+            //                 (col) => col.id !== active.id
+            //             );
+            //         });
+
+            //         updateItems[overRowIndex].columns.splice(
+            //             eleColIndex,
+            //             0,
+            //             eleToMove
+            //         );
+
+            //         recentlyMovedToNewContainer.current = true;
+            //         setItems(updateItems);
+            //     } else {
+            //         console.log("reordering columns");
+            //         // Update position of columns if they've been reordered
+            //         const [ele1RowIndex, ele1ColIndex] = getElementIndex(
+            //             active.id,
+            //             updateItems
+            //         );
+            //         const [ele2RowIndex, ele2ColIndex] = getElementIndex(
+            //             over.id,
+            //             updateItems
+            //         );
+
+            //         if (
+            //             ele1RowIndex !== null &&
+            //             ele1ColIndex !== null &&
+            //             ele2RowIndex !== null &&
+            //             ele2ColIndex !== null &&
+            //             active.id !== over.id
+            //         ) {
+            //             // swap the elements
+            //             const ele1 =
+            //                 updateItems[ele1RowIndex].columns[ele1ColIndex];
+            //             const ele2 =
+            //                 updateItems[ele2RowIndex].columns[ele2ColIndex];
+            //             updateItems[ele1RowIndex].columns[ele1ColIndex] = ele2;
+            //             updateItems[ele2RowIndex].columns[ele2ColIndex] = ele1;
+            //             recentlyMovedToNewContainer.current = true;
+            //             setItems(updateItems);
+            //         }
+            //     }
+            // }
         }
     };
 
@@ -388,7 +469,10 @@ const PageBuilder = () => {
                     ? // If there are droppables intersecting with the pointer, return those
                       pointerIntersections
                     : rectIntersection(args);
-            let overId = getFirstCollision(intersections, "id");
+            const filteredIntersections = intersections.filter(
+                (i) => !i.data.droppableContainer.data.current.isParentContainer
+            );
+            let overId = getFirstCollision(filteredIntersections, "id");
 
             if (overId != null) {
                 if (overId in items) {
@@ -479,6 +563,7 @@ const PageBuilder = () => {
                                         id={row.id}
                                         isPlaceholder={false}
                                         activeId={activeId}
+                                        isParentContainer={true}
                                     >
                                         <SortableContext
                                             items={row.columns.map(
