@@ -18,25 +18,30 @@ const transitionStyles = {
 };
 
 const Droppable = (props) => {
-    const { setNodeRef, node, active, isOver } = useDroppable({
-        id: props.id,
-        data: {
+    const { setNodeRef, node, active, over, isOver, isDragging } = useDroppable(
+        {
             id: props.id,
-            rowIndex: props.rowIndex,
-            relativePosition: props.relativePosition,
-            isParentContainer: props.isParentContainer,
-            isPlaceholder: props.isPlaceholder,
-        },
-    });
+            data: {
+                id: props.id,
+                rowIndex: props.rowIndex,
+                relativePosition: props.relativePosition,
+                isParentContainer: props.isParentContainer,
+                isPlaceholder: props.isPlaceholder,
+            },
+        }
+    );
+
+    let heightOfActive = null;
+    if (active && active.data.current.height) {
+        heightOfActive = active.data.current.height;
+    } else if (active && active.rect.current.initial) {
+        heightOfActive = active.rect.current.initial.height;
+    }
 
     // Manually set the height of the grid row while we're dragging stuff over it, so that if we remove all columns the layout won't shift until we're done dragging
     let height = null;
-    if (isOver && node.current && !props.isPlaceholder) {
+    if (node.current && !props.isPlaceholder && active && over) {
         height = node.current.clientHeight;
-
-        if (active && active.rect.current.initial) {
-            height = Math.max(height, active.rect.current.initial.height);
-        }
     }
 
     const [inProp, setInProp] = useState(false);

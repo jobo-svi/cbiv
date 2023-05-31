@@ -157,14 +157,18 @@ const PageBuilder = () => {
                 fromRowIndex
             ].columns.filter((col) => col.id !== fromCol.id);
 
-            // Figure out which side of column we're hovering on...
+            // Figure out which side of column we're dragging element onto
             const isRightOfOverItem =
                 over &&
+                fromRowIndex !== destinationRowIndex &&
                 active.rect.current.translated &&
                 active.rect.current.translated.right >
                     over.rect.right - over.rect.width / 2;
-
-            destinationRow.columns.splice(destinationColIndex, 0, fromCol);
+            destinationRow.columns.splice(
+                destinationColIndex + (isRightOfOverItem ? 1 : 0),
+                0,
+                fromCol
+            );
 
             // We don't want the layout to jump while moving rows into columns, so don't remove empty rows yet...
             const isAddingNewColumn = fromRowIndex !== destinationRowIndex;
@@ -176,18 +180,13 @@ const PageBuilder = () => {
                 }, columnDelayTiming);
             }
         } else {
+            console.log(2);
             const destinationRowIndex = over.data.current.rowIndex;
 
             const destinationColIndex = updateItems[
                 destinationRowIndex
             ].columns.findIndex((col) => col.id === over.id);
 
-            // console.log(
-            //     fromRowIndex,
-            //     fromColIndex,
-            //     destinationRowIndex,
-            //     destinationColIndex
-            // );
             updateItems.map((row) => {
                 row.columns = row.columns.filter((col) => col.id !== active.id);
             });
@@ -422,6 +421,7 @@ const PageBuilder = () => {
                                         activeId={activeId}
                                         isParentContainer={true}
                                         items={items}
+                                        rowIndex={rowIndex}
                                     >
                                         <SortableContext
                                             items={row.columns.map(
