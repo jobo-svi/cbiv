@@ -34,6 +34,7 @@ const PageBuilder = () => {
     const [activeId, setActiveId] = useState(null);
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
+    const columnTimerId = useRef(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -74,28 +75,20 @@ const PageBuilder = () => {
         setActiveId(active.id);
     };
 
-    const debounce = (callback, wait) => {
-        let timeoutId = null;
-        return (...args) => {
-            window.clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(() => {
-                callback.apply(null, args);
-            }, wait);
-        };
-    };
-
-    const debouncedDragOver = useCallback(
-        debounce((e) => handleDragOver(e), 300),
-        [items]
-    );
-
     const handleDragOver = (e) => {
         const { active, over, collisions } = e;
+
+        // Unset the column hover timer every time our over target changes
+        clearTimeout(columnTimerId.current);
+        columnTimerId.current = null;
+
         if (!active || !over || !over.data.current.relativePosition) {
             return;
         }
 
-        if (active.id === over.id) {
+        // If an element is being hovered over itself, there's nothing to be done
+        const isHoveringOverSelf = active.id === over.id;
+        if (isHoveringOverSelf) {
             return;
         }
 
@@ -107,125 +100,170 @@ const PageBuilder = () => {
             modifier = 1;
         }
 
-        let updateItems = [...items];
         if (active.data.current.isNewElement) {
-            if (over.id === "new-column-placeholder") {
-                return;
-            }
-
-            // remove placeholders, and then "commit" in ondragend by searching and replacing the id
-            updateItems.map((row) => {
-                row.columns = row.columns.filter(
-                    (col) => col.id !== "new-column-placeholder"
-                );
-            });
-            updateItems = updateItems.filter((row) => row.columns.length > 0);
-
-            if (over.data.current.relativePosition !== "within") {
-                // insert new row
-                const newOb = {
-                    id: "new-row-placeholder",
-                    columns: [
-                        {
-                            id: "new-column-placeholder",
-                            component: active.data.current.component,
-                            props: {
-                                ...Components[active.data.current.component]
-                                    .props,
-                            },
-                        },
-                    ],
-                };
-
-                const index =
-                    overRowIndex + modifier < 0 ? 0 : overRowIndex + modifier;
-                updateItems.splice(index, 0, newOb);
-                setItems(updateItems);
-            } else {
-                // insert new column
-                const index =
-                    overRowIndex + modifier > updateItems.length - 1
-                        ? updateItems.length - 1
-                        : overRowIndex + modifier;
-                updateItems[index].columns.push({
-                    id: "new-column-placeholder",
-                    component: active.data.current.component,
-                    props: {
-                        ...Components[active.data.current.component].props,
-                    },
-                });
-                setItems(updateItems);
-            }
+            addNewElement(over, active, overRowIndex, modifier);
         } else {
-            const fromCol = updateItems
-                .flatMap((row) => row.columns)
-                .find((col) => col.id === active.id);
-            const fromRowIndex = updateItems.findIndex((row) =>
-                row.columns.find((col) => col.id === active.id)
-            );
-
-            const destinationCol = updateItems
-                .flatMap((row) => row.columns)
-                .find((col) => col.id === over.id);
-
-            const destinationIsNewRow = destinationCol === undefined;
-            if (!destinationIsNewRow) {
-                // adding a column to existing row
-                const destinationRow = updateItems.find((row) =>
-                    row.columns.find((col) => col.id === destinationCol.id)
-                );
-
-                const destinationRowIndex = updateItems.findIndex((row) =>
-                    row.columns.find((col) => col.id === over.id)
-                );
-                const destinationColIndex = updateItems[
-                    destinationRowIndex
-                ].columns.findIndex((col) => col.id === over.id);
-
-                // Remove original location
-                updateItems[fromRowIndex].columns = updateItems[
-                    fromRowIndex
-                ].columns.filter((col) => col.id !== fromCol.id);
-
-                // Figure out which side of column we're hovering on...
-                const isRightOfOverItem =
-                    over &&
-                    active.rect.current.translated &&
-                    active.rect.current.translated.right >
-                        over.rect.right - over.rect.width / 2;
-
-                destinationRow.columns.splice(destinationColIndex, 0, fromCol);
-
-                // We don't want the layout to jump while moving rows into columns, so don't remove empty rows yet...
-
-                recentlyMovedToNewContainer.current = true;
-                setItems(updateItems);
-            } else {
-                const destinationRowIndex = over.data.current.rowIndex;
-                updateItems.map((row) => {
-                    row.columns = row.columns.filter(
-                        (col) => col.id !== active.id
-                    );
-                });
-
-                const index =
-                    destinationRowIndex + modifier < 0
-                        ? 0
-                        : destinationRowIndex + modifier;
-                updateItems.splice(index, 0, {
-                    id: uuid(),
-                    columns: [fromCol],
-                });
-
-                updateItems = updateItems.filter(
-                    (row) => row.columns.length > 0
-                );
-
-                recentlyMovedToNewContainer.current = true;
-                setItems(updateItems);
-            }
+            moveElement(over, active, modifier);
         }
     };
+
+    function moveElement(over, active, modifier) {
+        let updateItems = [...items];
+        const fromCol = updateItems
+            .flatMap((row) => row.columns)
+            .find((col) => col.id === active.id);
+
+        const fromRow = updateItems.find((row) =>
+            row.columns.find((col) => col.id === fromCol.id)
+        );
+
+        // No need to move column if it's being moved to a directly adjacent target
+        if (
+            fromRow.columns.length === 1 &&
+            over.data.current.isPlaceholder === true
+        ) {
+            return;
+        }
+
+        const fromRowIndex = updateItems.findIndex((row) =>
+            row.columns.find((col) => col.id === active.id)
+        );
+
+        const fromColIndex = updateItems[fromRowIndex].columns.findIndex(
+            (col) => col.id === active.id
+        );
+
+        const destinationCol = updateItems
+            .flatMap((row) => row.columns)
+            .find((col) => col.id === over.id);
+
+        const destinationIsNewRow = destinationCol === undefined;
+
+        if (!destinationIsNewRow) {
+            // adding a column to existing row
+            const destinationRow = updateItems.find((row) =>
+                row.columns.find((col) => col.id === destinationCol.id)
+            );
+
+            const destinationRowIndex = updateItems.findIndex((row) =>
+                row.columns.find((col) => col.id === over.id)
+            );
+            const destinationColIndex = updateItems[
+                destinationRowIndex
+            ].columns.findIndex((col) => col.id === over.id);
+
+            // Remove original location
+            updateItems[fromRowIndex].columns = updateItems[
+                fromRowIndex
+            ].columns.filter((col) => col.id !== fromCol.id);
+
+            // Figure out which side of column we're hovering on...
+            const isRightOfOverItem =
+                over &&
+                active.rect.current.translated &&
+                active.rect.current.translated.right >
+                    over.rect.right - over.rect.width / 2;
+
+            destinationRow.columns.splice(destinationColIndex, 0, fromCol);
+
+            // We don't want the layout to jump while moving rows into columns, so don't remove empty rows yet...
+            const isAddingNewColumn = fromRowIndex !== destinationRowIndex;
+            if (isAddingNewColumn && columnTimerId.current === null) {
+                columnTimerId.current = setTimeout(() => {
+                    recentlyMovedToNewContainer.current = true;
+                    setItems(updateItems);
+                    columnTimerId.current = null;
+                }, columnDelayTiming);
+            }
+        } else {
+            const destinationRowIndex = over.data.current.rowIndex;
+
+            const destinationColIndex = updateItems[
+                destinationRowIndex
+            ].columns.findIndex((col) => col.id === over.id);
+
+            // console.log(
+            //     fromRowIndex,
+            //     fromColIndex,
+            //     destinationRowIndex,
+            //     destinationColIndex
+            // );
+            updateItems.map((row) => {
+                row.columns = row.columns.filter((col) => col.id !== active.id);
+            });
+
+            const index =
+                destinationRowIndex + modifier < 0
+                    ? 0
+                    : destinationRowIndex + modifier;
+
+            updateItems.splice(index, 0, {
+                id: uuid(),
+                columns: [fromCol],
+            });
+
+            updateItems = updateItems.filter((row) => row.columns.length > 0);
+            recentlyMovedToNewContainer.current = true;
+
+            setItems(updateItems);
+        }
+    }
+
+    function addNewElement(over, active, overRowIndex, modifier) {
+        let updateItems = [...items];
+
+        if (over.id === "new-column-placeholder") {
+            return;
+        }
+
+        // remove placeholders, and then "commit" in ondragend by searching and replacing the id
+        updateItems.map((row) => {
+            row.columns = row.columns.filter(
+                (col) => col.id !== "new-column-placeholder"
+            );
+        });
+        updateItems = updateItems.filter((row) => row.columns.length > 0);
+
+        if (over.data.current.relativePosition !== "within") {
+            // insert new row
+            const newOb = {
+                id: "new-row-placeholder",
+                columns: [
+                    {
+                        id: "new-column-placeholder",
+                        component: active.data.current.component,
+                        props: {
+                            ...Components[active.data.current.component].props,
+                        },
+                    },
+                ],
+            };
+
+            const index =
+                overRowIndex + modifier < 0 ? 0 : overRowIndex + modifier;
+            updateItems.splice(index, 0, newOb);
+            setItems(updateItems);
+        } else {
+            if (columnTimerId.current === null) {
+                columnTimerId.current = setTimeout(() => {
+                    // insert new column
+                    const index =
+                        overRowIndex + modifier > updateItems.length - 1
+                            ? updateItems.length - 1
+                            : overRowIndex + modifier;
+                    updateItems[index].columns.push({
+                        id: "new-column-placeholder",
+                        component: active.data.current.component,
+                        props: {
+                            ...Components[active.data.current.component].props,
+                        },
+                    });
+                    setItems(updateItems);
+                    columnTimerId.current = null;
+                }, columnDelayTiming);
+            }
+        }
+    }
 
     const handleDragEnd = (e) => {
         const { over, active, collisions } = e;
@@ -347,7 +385,7 @@ const PageBuilder = () => {
                 onDragEnd={handleDragEnd}
             >
                 <div className="lesson-content">
-                    {/* <DebugValues
+                    <DebugValues
                         translateTiming={translateTiming}
                         setTranslateTiming={setTranslateTiming}
                         columnDelayTiming={columnDelayTiming}
@@ -356,7 +394,7 @@ const PageBuilder = () => {
                         setSlopTiming={setSlopTiming}
                         gridGap={gridGap}
                         setGridGap={setGridGap}
-                    /> */}
+                    />
                     <div className="grid-wrapper">
                         <div className="grid">
                             <Droppable

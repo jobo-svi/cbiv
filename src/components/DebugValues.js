@@ -27,7 +27,7 @@ const DebugValues = ({
                 marginBottom: "40px",
             }}
         >
-            <label>
+            {/* <label>
                 <div>Translate speed (ms)</div>
                 <input
                     type="number"
@@ -36,7 +36,7 @@ const DebugValues = ({
                         setTranslateTiming(parseInt(event.target.value))
                     }
                 />
-            </label>
+            </label> */}
             <label>
                 <div>Column hover time (ms)</div>
                 <input
@@ -47,7 +47,7 @@ const DebugValues = ({
                     }
                 />
             </label>
-            <label>
+            {/* <label>
                 <div>Slop time (ms)</div>
                 <input
                     type="number"
@@ -66,7 +66,7 @@ const DebugValues = ({
                         setGridGap(parseInt(event.target.value))
                     }
                 />
-            </label>
+            </label> */}
         </div>
     );
 };

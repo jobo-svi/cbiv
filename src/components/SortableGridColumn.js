@@ -15,6 +15,7 @@ const SortableGridColumn = (props) => {
         transform,
         transition,
         isDragging,
+        active,
     } = useSortable({
         id: props.id,
         data: {
@@ -33,7 +34,7 @@ const SortableGridColumn = (props) => {
         transform.scaleY = 1;
     }
     const style = {
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Translate.toString(transform),
         transition,
         opacity: isDragging ? ".5" : 1,
     };

@@ -18,13 +18,14 @@ const transitionStyles = {
 };
 
 const Droppable = (props) => {
-    const { setNodeRef, node } = useDroppable({
+    const { setNodeRef, node } = useSortable({
         id: props.id,
         data: {
             id: props.id,
             rowIndex: props.rowIndex,
             relativePosition: props.relativePosition,
             isParentContainer: props.isParentContainer,
+            isPlaceholder: props.isPlaceholder,
         },
     });
     const { collisions } = useDndContext();
