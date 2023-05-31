@@ -297,6 +297,8 @@ const PageBuilder = () => {
      *
      */
 
+    const [shouldCheckCollisions, setShouldCheckCollisions] = useState(true);
+
     const collisionDetectionStrategy = useCallback(
         (args) => {
             // Start by finding any intersecting droppable
@@ -403,6 +405,7 @@ const PageBuilder = () => {
                                 relativePosition="above"
                                 isPlaceholder={true}
                                 activeId={activeId}
+                                items={items}
                             >
                                 <div
                                     style={{
@@ -418,6 +421,7 @@ const PageBuilder = () => {
                                         isPlaceholder={false}
                                         activeId={activeId}
                                         isParentContainer={true}
+                                        items={items}
                                     >
                                         <SortableContext
                                             items={row.columns.map(
@@ -449,6 +453,7 @@ const PageBuilder = () => {
                                         relativePosition="below"
                                         isPlaceholder={true}
                                         activeId={activeId}
+                                        items={items}
                                     >
                                         <div
                                             style={{

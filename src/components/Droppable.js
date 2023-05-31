@@ -18,7 +18,7 @@ const transitionStyles = {
 };
 
 const Droppable = (props) => {
-    const { setNodeRef, node } = useSortable({
+    const { setNodeRef, node, active, isOver } = useDroppable({
         id: props.id,
         data: {
             id: props.id,
@@ -28,15 +28,18 @@ const Droppable = (props) => {
             isPlaceholder: props.isPlaceholder,
         },
     });
-    const { collisions } = useDndContext();
 
+    // Manually set the height of the grid row while we're dragging stuff over it, so that if we remove all columns the layout won't shift until we're done dragging
     let height = null;
-    if (node.current && !props.isPlaceholder && props.activeId) {
+    if (isOver && node.current && !props.isPlaceholder) {
         height = node.current.clientHeight;
+
+        if (active && active.rect.current.initial) {
+            height = Math.max(height, active.rect.current.initial.height);
+        }
     }
 
     const [inProp, setInProp] = useState(false);
-
     useEffect(() => {
         setInProp(true);
     }, []);
