@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
-import { useDndContext } from "@dnd-kit/core";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { Transition } from "react-transition-group";
 
 const duration = 300;
@@ -18,7 +18,7 @@ const transitionStyles = {
 };
 
 const Droppable = (props) => {
-    const { setNodeRef, node } = useSortable({
+    const { setNodeRef, node } = useDroppable({
         id: props.id,
         data: {
             id: props.id,
