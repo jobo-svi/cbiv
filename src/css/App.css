@@ -84,7 +84,7 @@
 
 .builder .grid .grid-column {
     flex-basis: 100%;
-    /* margin-bottom: 24px; */
+    border: 1px solid rgba(0, 0, 0, 0.00);
 }
 
 @media screen and (min-width: 0px) {
@@ -324,12 +324,9 @@
 
 .builder .drag-handle-visible {
     position: relative;
-
     border: 1px solid rgba(0, 0, 0, 0.05);
-
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     border-radius: 3px;
-    margin: -1px;
 }
 
 .builder .grid-column.dragging {

@@ -176,6 +176,13 @@ const PageBuilder = () => {
             if (isAddingNewColumn && columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
                     recentlyMovedToNewContainer.current = true;
+                    console.log(updateItems);
+                    updateItems = updateItems.filter(
+                        (row) =>
+                            row.columns.length > 0 ||
+                            updateItems.findIndex((r) => r.id === row.id) <
+                                destinationRowIndex
+                    );
                     setItems(updateItems);
                     columnTimerId.current = null;
                 }, columnDelayTiming);

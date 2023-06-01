@@ -36,7 +36,7 @@ const SortableGridColumn = (props) => {
     const style = {
         transform: CSS.Translate.toString(transform),
         transition,
-        opacity: isDragging ? ".5" : 1,
+        opacity: isDragging || props.id.includes("placeholder") ? ".5" : 1,
     };
 
     const classes = [];
