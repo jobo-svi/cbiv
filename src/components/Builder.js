@@ -308,46 +308,19 @@ const PageBuilder = () => {
      *
      */
 
-    const [shouldCheckCollisions, setShouldCheckCollisions] = useState(true);
-
     const collisionDetectionStrategy = useCallback(
         (args) => {
             // Start by finding any intersecting droppable
             const pointerIntersections = pointerWithin(args);
-            const intersections =
-                pointerIntersections.length > 0
-                    ? // If there are droppables intersecting with the pointer, return those
-                      pointerIntersections
-                    : rectIntersection(args);
-            const filteredIntersections = intersections.filter(
+
+            // For collisions where pointer is within, we only want collisions with columns, not rows
+            const filteredPointerIntersections = pointerIntersections.filter(
                 (i) => !i.data.droppableContainer.data.current.isParentContainer
             );
-            let overId = getFirstCollision(filteredIntersections, "id");
+            let overId = getFirstCollision(filteredPointerIntersections, "id");
 
             if (overId != null) {
-                if (overId in items) {
-                    const containerItems = items[overId];
-
-                    // If a container is matched and it contains items (columns 'A', 'B', 'C')
-                    if (containerItems.length > 0) {
-                        // Return the closest droppable within that container
-                        const closestDroppables = closestCenter({
-                            ...args,
-                            droppableContainers: args.droppableContainers.filter(
-                                (container) =>
-                                    container.id !== overId &&
-                                    containerItems.includes(container.id)
-                            ),
-                        });
-                        overId =
-                            closestDroppables.length > 0
-                                ? closestDroppables[0].id
-                                : null;
-                    }
-                }
-
                 lastOverId.current = overId;
-
                 return [{ id: overId }];
             }
 
