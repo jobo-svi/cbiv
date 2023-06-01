@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { Transition } from "react-transition-group";
 
-const duration = 300;
+const duration = 350;
 
 const defaultStyle = {
     transition: `opacity ${duration}ms`,
@@ -18,18 +18,16 @@ const transitionStyles = {
 };
 
 const Droppable = (props) => {
-    const { setNodeRef, node, active, over, isOver, isDragging } = useDroppable(
-        {
+    const { setNodeRef, node, active, over } = useDroppable({
+        id: props.id,
+        data: {
             id: props.id,
-            data: {
-                id: props.id,
-                rowIndex: props.rowIndex,
-                relativePosition: props.relativePosition,
-                isParentContainer: props.isParentContainer,
-                isPlaceholder: props.isPlaceholder,
-            },
-        }
-    );
+            rowIndex: props.rowIndex,
+            relativePosition: props.relativePosition,
+            isParentContainer: props.isParentContainer,
+            isPlaceholder: props.isPlaceholder,
+        },
+    });
 
     // Manually set the height of the grid row while we're dragging stuff over it, so that if we remove all columns the layout won't shift until we're done dragging
     let height = null;

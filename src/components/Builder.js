@@ -107,28 +107,6 @@ const PageBuilder = () => {
         }
     };
 
-    function getRow(colId, updateItems) {
-        return updateItems.find((row) =>
-            row.columns.find((col) => col.id === colId)
-        );
-    }
-
-    function getRowIndex(colId, updateItems) {
-        return updateItems.findIndex((row) =>
-            row.columns.find((col) => col.id === colId)
-        );
-    }
-
-    function getColumn(colId, updateItems) {
-        return updateItems
-            .flatMap((row) => row.columns)
-            .find((col) => col.id === colId);
-    }
-
-    function getColumnIndex(row, colId) {
-        return row.columns.findIndex((col) => col.id === colId);
-    }
-
     function moveElement(over, active, modifier) {
         let updateItems = JSON.parse(JSON.stringify(items));
         const fromRow = getRow(active.id, updateItems);
@@ -171,12 +149,12 @@ const PageBuilder = () => {
                 fromCol
             );
 
-            // We don't want the layout to jump while moving rows into columns, so don't remove empty rows yet...
             const isAddingNewColumn = fromRowIndex !== destinationRowIndex;
             if (isAddingNewColumn && columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
                     recentlyMovedToNewContainer.current = true;
-                    console.log(updateItems);
+
+                    // When we move columns in and out of rows, leave the empty rows so that the layout doesn't jump/shift around too much
                     updateItems = updateItems.filter(
                         (row) =>
                             row.columns.length > 0 ||
@@ -306,11 +284,32 @@ const PageBuilder = () => {
         setActiveId(null);
     };
 
+    function getRow(colId, updateItems) {
+        return updateItems.find((row) =>
+            row.columns.find((col) => col.id === colId)
+        );
+    }
+
+    function getRowIndex(colId, updateItems) {
+        return updateItems.findIndex((row) =>
+            row.columns.find((col) => col.id === colId)
+        );
+    }
+
+    function getColumn(colId, updateItems) {
+        return updateItems
+            .flatMap((row) => row.columns)
+            .find((col) => col.id === colId);
+    }
+
+    function getColumnIndex(row, colId) {
+        return row.columns.findIndex((col) => col.id === colId);
+    }
+
     /**
      * Custom collision detection strategy optimized for multiple containers
      *
      * - First, find any droppable containers intersecting with the pointer.
-     * - If there are none, find intersecting containers with the active draggable.
      * - If there are no intersecting containers, return the last matched intersection
      *
      */
@@ -320,7 +319,7 @@ const PageBuilder = () => {
             // Start by finding any intersecting droppable
             const pointerIntersections = pointerWithin(args);
 
-            // For collisions where pointer is within, we only want collisions with columns, not rows
+            // For collisions where pointer is within, we only want collisions with columns, not container rows
             const filteredPointerIntersections = pointerIntersections.filter(
                 (i) => !i.data.droppableContainer.data.current.isParentContainer
             );

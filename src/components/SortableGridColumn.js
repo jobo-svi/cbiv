@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import GridColumn from "./GridColumn";
 import { constructComponent } from "./ComponentFactory";
+import { Transition } from "react-transition-group";
 
 const SortableGridColumn = (props) => {
     const {
         attributes,
         listeners,
-        node,
         setNodeRef,
         setActivatorNodeRef,
         transform,
@@ -35,12 +35,12 @@ const SortableGridColumn = (props) => {
     }
     const style = {
         transform: CSS.Translate.toString(transform),
-        transition,
+        transition: transition,
         opacity: isDragging || props.id.includes("placeholder") ? ".5" : 1,
     };
 
     const classes = [];
-    if (showDragHandle) {
+    if (showDragHandle && !active) {
         classes.push("drag-handle-visible");
     }
 
@@ -60,7 +60,7 @@ const SortableGridColumn = (props) => {
                 {...attributes}
                 className="drag-handle"
                 style={{
-                    display: showDragHandle ? "" : "none",
+                    display: showDragHandle && !active ? "" : "none",
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
