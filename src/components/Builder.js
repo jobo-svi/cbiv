@@ -107,35 +107,36 @@ const PageBuilder = () => {
         }
     };
 
+    function getRow(colId, updateItems) {
+        return updateItems.find((row) =>
+            row.columns.find((col) => col.id === colId)
+        );
+    }
+
+    function getRowIndex(colId, updateItems) {
+        return updateItems.findIndex((row) =>
+            row.columns.find((col) => col.id === colId)
+        );
+    }
+
+    function getColumn(colId, updateItems) {
+        return updateItems
+            .flatMap((row) => row.columns)
+            .find((col) => col.id === colId);
+    }
+
+    function getColumnIndex(row, colId) {
+        return row.columns.findIndex((col) => col.id === colId);
+    }
+
     function moveElement(over, active, modifier) {
-        let updateItems = [...items];
-        const fromCol = updateItems
-            .flatMap((row) => row.columns)
-            .find((col) => col.id === active.id);
+        let updateItems = JSON.parse(JSON.stringify(items));
+        const fromRow = getRow(active.id, updateItems);
+        const fromRowIndex = getRowIndex(active.id, updateItems);
+        const fromCol = getColumn(active.id, updateItems);
+        const fromColIndex = getColumnIndex(fromRow, active.id);
 
-        const fromRow = updateItems.find((row) =>
-            row.columns.find((col) => col.id === fromCol.id)
-        );
-
-        // No need to move column if it's being moved to a directly adjacent target
-        if (
-            fromRow.columns.length === 1 &&
-            over.data.current.isPlaceholder === true
-        ) {
-            return;
-        }
-
-        const fromRowIndex = updateItems.findIndex((row) =>
-            row.columns.find((col) => col.id === active.id)
-        );
-
-        const fromColIndex = updateItems[fromRowIndex].columns.findIndex(
-            (col) => col.id === active.id
-        );
-
-        const destinationCol = updateItems
-            .flatMap((row) => row.columns)
-            .find((col) => col.id === over.id);
+        const destinationCol = getColumn(over.id, updateItems);
 
         const destinationIsNewRow = destinationCol === undefined;
 
@@ -178,10 +179,18 @@ const PageBuilder = () => {
                     setItems(updateItems);
                     columnTimerId.current = null;
                 }, columnDelayTiming);
+            } else {
+                setItems(updateItems);
             }
         } else {
-            console.log(2);
             const destinationRowIndex = over.data.current.rowIndex;
+
+            if (
+                fromRowIndex === destinationRowIndex &&
+                fromRow.columns.length <= 1
+            ) {
+                return;
+            }
 
             const destinationColIndex = updateItems[
                 destinationRowIndex
@@ -203,13 +212,12 @@ const PageBuilder = () => {
 
             updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current = true;
-
             setItems(updateItems);
         }
     }
 
     function addNewElement(over, active, overRowIndex, modifier) {
-        let updateItems = [...items];
+        let updateItems = JSON.parse(JSON.stringify(items));
 
         if (over.id === "new-column-placeholder") {
             return;
@@ -267,7 +275,11 @@ const PageBuilder = () => {
     const handleDragEnd = (e) => {
         const { over, active, collisions } = e;
 
-        let updateItems = [...items];
+        // Unset the column hover timer every time our over target changes
+        clearTimeout(columnTimerId.current);
+        columnTimerId.current = null;
+
+        let updateItems = JSON.parse(JSON.stringify(items));
 
         // Replace any placeholder elements with real ids
         updateItems.map((row) => {
