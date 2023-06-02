@@ -170,10 +170,17 @@ const PageBuilder = () => {
         } else {
             const destinationRowIndex = over.data.current.rowIndex;
 
-            if (
+            const hoveringOverBottomPlaceholder =
                 fromRowIndex === destinationRowIndex &&
-                fromRow.columns.length <= 1
-            ) {
+                fromRow.columns.length <= 1;
+
+            const hoveringOverTopPlaceholder =
+                fromRowIndex === destinationRowIndex + 1 &&
+                over.data.current.isPlaceholder &&
+                fromRow.columns.length === 1 &&
+                over.id !== "row-placeholder-start";
+
+            if (hoveringOverBottomPlaceholder || hoveringOverTopPlaceholder) {
                 return;
             }
 
@@ -204,19 +211,74 @@ const PageBuilder = () => {
     function addNewElement(over, active, overRowIndex, modifier) {
         let updateItems = JSON.parse(JSON.stringify(items));
 
-        if (over.id === "new-column-placeholder") {
-            return;
+        const fromCol = getColumn("new-column-placeholder", updateItems);
+        const fromRow = getRow("new-column-placeholder", updateItems);
+        let fromRowIndex = null;
+
+        if (fromCol && fromRow) {
+            fromRowIndex = getRowIndex("new-column-placeholder", updateItems);
+
+            const fromColIndex = getColumnIndex(
+                fromRow,
+                "new-column-placeholder"
+            );
+
+            // if (over.id === "new-column-placeholder") {
+            //     return;
+            // }
+
+            // if (
+            //     over.data.current.isPlaceholder &&
+            //     fromRow.columns.length <= 1 &&
+            //     (fromRowIndex === over.data.current.rowIndex ||
+            //         fromRowIndex === over.data.current.rowIndex + 1)
+            // ) {
+            //     console.log("returning");
+            //     return;
+            // }
         }
 
-        // remove placeholders, and then "commit" in ondragend by searching and replacing the id
-        updateItems.map((row) => {
-            row.columns = row.columns.filter(
-                (col) => col.id !== "new-column-placeholder"
-            );
-        });
-        updateItems = updateItems.filter((row) => row.columns.length > 0);
+        // // If new element has been dragged elsewhere, remove old placeholder
+        // updateItems.map((row) => {
+        //     row.columns = row.columns.filter(
+        //         (col) => col.id !== "new-column-placeholder"
+        //     );
+        // });
 
-        if (over.data.current.relativePosition !== "within") {
+        if (over.data.current.isPlaceholder) {
+            // is ele being hovered over itself?
+            const fromCol = getColumn("new-column-placeholder", updateItems);
+            const fromRow = getRow("new-column-placeholder", updateItems);
+            let fromRowIndex = null;
+            if (fromRow) {
+                fromRowIndex = getRowIndex(
+                    "new-column-placeholder",
+                    updateItems
+                );
+
+                if (fromRowIndex === over.data.current.rowIndex) {
+                    return;
+                }
+            }
+            let modifier = 0;
+            if (over.data.current.relativePosition === "above") {
+                modifier = -1;
+            } else if (
+                !fromRowIndex ||
+                fromRowIndex > over.data.current.rowIndex
+            ) {
+                modifier = 1;
+            }
+
+            // is there already a placeholder? Remove it if so.
+            updateItems.map((row) => {
+                row.columns = row.columns.filter(
+                    (col) => col.id !== "new-column-placeholder"
+                );
+            });
+
+            updateItems = updateItems.filter((row) => row.columns.length > 0);
+
             // insert new row
             const newOb = {
                 id: `new-row-placeholder-${uuid()}`,
@@ -231,30 +293,63 @@ const PageBuilder = () => {
                 ],
             };
 
-            const index =
-                overRowIndex + modifier < 0 ? 0 : overRowIndex + modifier;
-            updateItems.splice(index, 0, newOb);
-            setItems(updateItems);
-        } else {
-            if (columnTimerId.current === null) {
-                columnTimerId.current = setTimeout(() => {
-                    // insert new column
-                    const index =
-                        overRowIndex + modifier > updateItems.length - 1
-                            ? updateItems.length - 1
-                            : overRowIndex + modifier;
-                    updateItems[index].columns.push({
-                        id: "new-column-placeholder",
-                        component: active.data.current.component,
-                        props: {
-                            ...Components[active.data.current.component].props,
-                        },
-                    });
-                    setItems(updateItems);
-                    columnTimerId.current = null;
-                }, columnDelayTiming);
+            let index = over.data.current.rowIndex + modifier;
+            if (index < 0) {
+                index = 0;
             }
+            updateItems.splice(index, 0, newOb);
+
+            setItems(updateItems);
         }
+
+        // if (over.data.current.relativePosition !== "within") {
+        //     updateItems = updateItems.filter((row) => row.columns.length > 0);
+
+        //     // insert new row
+        //     const newOb = {
+        //         id: `new-row-placeholder-${uuid()}`,
+        //         columns: [
+        //             {
+        //                 id: "new-column-placeholder",
+        //                 component: active.data.current.component,
+        //                 props: {
+        //                     ...Components[active.data.current.component].props,
+        //                 },
+        //             },
+        //         ],
+        //     };
+
+        //     let index = overRowIndex;
+
+        //     if (over.data.current.relativePosition === "below" && !fromRow) {
+        //         console.log(over.data.current.relativePosition);
+        //         index += 1;
+        //     }
+
+        //     console.log("insert index", index);
+
+        //     updateItems.splice(index, 0, newOb);
+        //     setItems(updateItems);
+        // } else {
+        //     if (columnTimerId.current === null) {
+        //         columnTimerId.current = setTimeout(() => {
+        //             // insert new column
+        //             const index =
+        //                 overRowIndex + modifier > updateItems.length - 1
+        //                     ? updateItems.length - 1
+        //                     : overRowIndex + modifier;
+        //             updateItems[index].columns.push({
+        //                 id: "new-column-placeholder",
+        //                 component: active.data.current.component,
+        //                 props: {
+        //                     ...Components[active.data.current.component].props,
+        //                 },
+        //             });
+        //             setItems(updateItems);
+        //             columnTimerId.current = null;
+        //         }, columnDelayTiming);
+        //     }
+        // }
     }
 
     const handleDragEnd = (e) => {

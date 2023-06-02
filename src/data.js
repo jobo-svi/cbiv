@@ -43,6 +43,18 @@ export const data = {
                 ],
             },
             {
+                id: uuid(),
+                columns: [
+                    {
+                        id: uuid(),
+                        component: "paragraph",
+                        props: {
+                            text: "Another short paragraph",
+                        },
+                    },
+                ],
+            },
+            {
                 id: "row 3",
                 columns: [
                     {
