@@ -219,7 +219,7 @@ const PageBuilder = () => {
         if (over.data.current.relativePosition !== "within") {
             // insert new row
             const newOb = {
-                id: "new-row-placeholder",
+                id: `new-row-placeholder-${uuid()}`,
                 columns: [
                     {
                         id: "new-column-placeholder",
@@ -268,7 +268,7 @@ const PageBuilder = () => {
 
         // Replace any placeholder elements with real ids
         updateItems.map((row) => {
-            if (row.id === "new-row-placeholder") {
+            if (row.id.includes("new-row-placeholder")) {
                 row.id = uuid();
             }
 
