@@ -4,6 +4,12 @@ import { useDroppable } from "@dnd-kit/core";
 const DefaultDroppable = (props) => {
     const { isOver, setNodeRef } = useDroppable({
         id: "initial-droppable",
+        data: {
+            rowIndex: 0,
+            relativePosition: "below",
+            isParentContainer: false,
+            isPlaceholder: true,
+        },
     });
     return (
         <div
