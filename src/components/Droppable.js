@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { Transition } from "react-transition-group";
 
-const duration = 350;
+const duration = 450;
 
 const defaultStyle = {
     transition: `opacity ${duration}ms`,

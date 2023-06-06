@@ -222,28 +222,7 @@ const PageBuilder = () => {
                 fromRow,
                 "new-column-placeholder"
             );
-
-            // if (over.id === "new-column-placeholder") {
-            //     return;
-            // }
-
-            // if (
-            //     over.data.current.isPlaceholder &&
-            //     fromRow.columns.length <= 1 &&
-            //     (fromRowIndex === over.data.current.rowIndex ||
-            //         fromRowIndex === over.data.current.rowIndex + 1)
-            // ) {
-            //     console.log("returning");
-            //     return;
-            // }
         }
-
-        // // If new element has been dragged elsewhere, remove old placeholder
-        // updateItems.map((row) => {
-        //     row.columns = row.columns.filter(
-        //         (col) => col.id !== "new-column-placeholder"
-        //     );
-        // });
 
         if (over.data.current.isPlaceholder) {
             // is ele being hovered over itself?
@@ -256,17 +235,25 @@ const PageBuilder = () => {
                     updateItems
                 );
 
-                if (fromRowIndex === over.data.current.rowIndex) {
+                console.log(
+                    fromRowIndex,
+                    over.data.current.rowIndex,
+                    over.data.current.relativePosition
+                );
+
+                // Some movements aren't valid so we don't need to handle them, such as moving an element to a directly adjacent placeholder row.
+                if (
+                    fromRowIndex === over.data.current.rowIndex ||
+                    (fromRowIndex === over.data.current.rowIndex + 1 &&
+                        over.data.current.relativePosition !== "above")
+                ) {
                     return;
                 }
             }
             let modifier = 0;
             if (over.data.current.relativePosition === "above") {
                 modifier = -1;
-            } else if (
-                !fromRowIndex ||
-                fromRowIndex > over.data.current.rowIndex
-            ) {
+            } else if (fromRowIndex > over.data.current.rowIndex) {
                 modifier = 1;
             }
 
@@ -297,6 +284,7 @@ const PageBuilder = () => {
             if (index < 0) {
                 index = 0;
             }
+
             updateItems.splice(index, 0, newOb);
 
             setItems(updateItems);
