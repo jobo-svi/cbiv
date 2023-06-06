@@ -413,8 +413,13 @@ const PageBuilder = () => {
                 .find((col) => col.id === activeId);
 
             if (col) {
-                return constructComponent(Components[col.component]);
-            } else if (activeId.includes("-menu-item")) {
+                // Copy the existing element into the drag preview
+                return React.createElement(
+                    Components[col.component].type,
+                    col.props
+                );
+            } else {
+                // Dragging a new item onto the grid, so construct the drag preview using the element defaults
                 let componentType = activeId.replace("-menu-item", "");
                 return constructComponent(Components[componentType]);
             }
