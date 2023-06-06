@@ -28,10 +28,12 @@ import Droppable from "./Droppable";
 import SortableGridColumn from "./SortableGridColumn";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DefaultDroppable from "./DefaultDroppable";
+import { useBuilderHistory, undoHistory } from "../hooks/useBuilderHistory";
 
 const PageBuilder = () => {
     // The lesson elements
     const [items, setItems] = useState(data.content.body);
+
     const [activeId, setActiveId] = useState(null);
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
@@ -43,9 +45,6 @@ const PageBuilder = () => {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
-
-    // What element we're currently dragging, needed so we can measure it and show a placeholder in the dom
-    const [draggingElement, setDraggingElement] = useState(null);
 
     const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -65,6 +64,8 @@ const PageBuilder = () => {
     const [gridGap, setGridGap] = useState(
         +localStorage.getItem("gridGap") || 24
     );
+
+    const [hasHistory, setHasHistory] = useBuilderHistory(activeId, items);
 
     const handleDragStart = (e) => {
         const { active } = e;
@@ -106,6 +107,37 @@ const PageBuilder = () => {
         } else {
             moveElement(over, active, modifier);
         }
+    };
+
+    const handleDragEnd = (e) => {
+        const { over, active, collisions } = e;
+
+        if (!over || !active) {
+            return;
+        }
+
+        // Unset the column hover timer every time our over target changes
+        clearTimeout(columnTimerId.current);
+        columnTimerId.current = null;
+
+        let updateItems = JSON.parse(JSON.stringify(items));
+
+        // Replace any placeholder elements with real ids
+        updateItems.map((row) => {
+            if (row.id.includes("new-row-placeholder")) {
+                row.id = uuid();
+            }
+
+            row.columns.map((col) => {
+                if (col.id === "new-column-placeholder") {
+                    col.id = uuid();
+                }
+            });
+        });
+
+        updateItems = updateItems.filter((row) => row.columns.length > 0);
+        setItems(updateItems);
+        setActiveId(null);
     };
 
     function moveElement(over, active, modifier) {
@@ -199,7 +231,7 @@ const PageBuilder = () => {
                     : destinationRowIndex + modifier;
 
             updateItems.splice(index, 0, {
-                id: uuid(),
+                id: fromRow.id, // Use the existing row id, which makes undo functionality easier
                 columns: [fromCol],
             });
 
@@ -320,33 +352,6 @@ const PageBuilder = () => {
         }
     }
 
-    const handleDragEnd = (e) => {
-        const { over, active, collisions } = e;
-
-        // Unset the column hover timer every time our over target changes
-        clearTimeout(columnTimerId.current);
-        columnTimerId.current = null;
-
-        let updateItems = JSON.parse(JSON.stringify(items));
-
-        // Replace any placeholder elements with real ids
-        updateItems.map((row) => {
-            if (row.id.includes("new-row-placeholder")) {
-                row.id = uuid();
-            }
-
-            row.columns.map((col) => {
-                if (col.id === "new-column-placeholder") {
-                    col.id = uuid();
-                }
-            });
-        });
-
-        updateItems = updateItems.filter((row) => row.columns.length > 0);
-        setItems(updateItems);
-        setActiveId(null);
-    };
-
     function getRow(colId, updateItems) {
         return updateItems.find((row) =>
             row.columns.find((col) => col.id === colId)
@@ -429,11 +434,18 @@ const PageBuilder = () => {
         return null;
     };
 
+    const handleUndo = () => {
+        const history = undoHistory();
+        if (history) {
+            setItems(history);
+        } else {
+            setItems([]);
+            setHasHistory(false);
+        }
+    };
+
     return (
-        <div
-            className="builder"
-            style={{ cursor: draggingElement ? "grabbing" : "" }}
-        >
+        <div className="builder">
             <BuilderNavbar />
             <div className="lessons">lessons</div>
             <DndContext
@@ -445,16 +457,24 @@ const PageBuilder = () => {
                 onDragEnd={handleDragEnd}
             >
                 <div className="lesson-content">
-                    <DebugValues
-                        translateTiming={translateTiming}
-                        setTranslateTiming={setTranslateTiming}
-                        columnDelayTiming={columnDelayTiming}
-                        setColumnDelayTiming={setColumnDelayTiming}
-                        slopTiming={slopTiming}
-                        setSlopTiming={setSlopTiming}
-                        gridGap={gridGap}
-                        setGridGap={setGridGap}
-                    />
+                    {/* <DebugValues
+                            translateTiming={translateTiming}
+                            setTranslateTiming={setTranslateTiming}
+                            columnDelayTiming={columnDelayTiming}
+                            setColumnDelayTiming={setColumnDelayTiming}
+                            slopTiming={slopTiming}
+                            setSlopTiming={setSlopTiming}
+                            gridGap={gridGap}
+                            setGridGap={setGridGap}
+                        /> */}
+                    <div style={{ height: "28px" }}>
+                        {hasHistory && (
+                            <button onClick={handleUndo}>
+                                <FontAwesomeIcon icon="fa-solid fa-rotate-left" />{" "}
+                                undo
+                            </button>
+                        )}
+                    </div>
                     <div className="grid-wrapper">
                         <div className="grid">
                             {items.length > 0 ? (
