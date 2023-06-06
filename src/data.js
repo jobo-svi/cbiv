@@ -54,42 +54,42 @@ export const data = {
                     },
                 ],
             },
-            {
-                id: "row 3",
-                columns: [
-                    {
-                        id: "row 3 col 1",
-                        component: "header",
-                        props: {
-                            text: "row 3 col 1",
-                        },
-                    },
-                ],
-            },
-            {
-                id: "row 4",
-                columns: [
-                    {
-                        id: "row 4 col 1",
-                        component: "header",
-                        props: {
-                            text: "row 4 col 1",
-                        },
-                    },
-                ],
-            },
-            {
-                id: "specialrow",
-                columns: [
-                    {
-                        id: "specialcolumn",
-                        component: "header",
-                        props: {
-                            text: "specialcolumn",
-                        },
-                    },
-                ],
-            },
+            // {
+            //     id: "row 3",
+            //     columns: [
+            //         {
+            //             id: "row 3 col 1",
+            //             component: "header",
+            //             props: {
+            //                 text: "row 3 col 1",
+            //             },
+            //         },
+            //     ],
+            // },
+            // {
+            //     id: "row 4",
+            //     columns: [
+            //         {
+            //             id: "row 4 col 1",
+            //             component: "header",
+            //             props: {
+            //                 text: "row 4 col 1",
+            //             },
+            //         },
+            //     ],
+            // },
+            // {
+            //     id: "specialrow",
+            //     columns: [
+            //         {
+            //             id: "specialcolumn",
+            //             component: "header",
+            //             props: {
+            //                 text: "specialcolumn",
+            //             },
+            //         },
+            //     ],
+            // },
         ],
     },
 };
