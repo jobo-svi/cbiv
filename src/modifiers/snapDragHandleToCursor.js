@@ -1,4 +1,3 @@
-import { Modifier } from "@dnd-kit/core";
 import { getEventCoordinates } from "@dnd-kit/utilities";
 
 // Custom drag handle modifier that "snaps" the drag handle to your cursor.
