@@ -38,7 +38,7 @@ import { useBuilderHistory, undoHistory } from "../hooks/useBuilderHistory";
 const PageBuilder = () => {
     // The lesson elements
     const [items, setItems] = useState(
-        JSON.parse(localStorage.getItem("builder-session")) ??
+        JSON.parse(sessionStorage.getItem("builder-session")) ??
             data.content.body ??
             []
     );

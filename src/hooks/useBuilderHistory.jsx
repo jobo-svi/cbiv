@@ -38,7 +38,7 @@ export function useBuilderHistory(activeId, items) {
     useEffect(() => {
         if (!activeId) {
             // Also save to localstorage until we get real saving working
-            localStorage.setItem("builder-session", JSON.stringify(items));
+            sessionStorage.setItem("builder-session", JSON.stringify(items));
         }
     }, [activeId, items]);
 
