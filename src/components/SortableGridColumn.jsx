@@ -33,6 +33,7 @@ const SortableGridColumn = (props) => {
         transform.scaleX = 1;
         transform.scaleY = 1;
     }
+
     const style = {
         transform: CSS.Translate.toString(transform),
         transition: transition,
