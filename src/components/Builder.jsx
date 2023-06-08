@@ -40,7 +40,10 @@ const PageBuilder = () => {
     const columnTimerId = useRef(null);
 
     // Builder history
-    const { undo, redo, index, lastIndex } = useBuilderHistory(activeId, items);
+    const { undo, redo, index, lastIndex, clear } = useBuilderHistory(
+        activeId,
+        items
+    );
     const canUndo = index > 0;
     const canRedo = index < lastIndex;
 
@@ -436,6 +439,11 @@ const PageBuilder = () => {
         setItems(redo());
     };
 
+    const handleClear = () => {
+        setItems([]);
+        clear();
+    };
+
     return (
         <div className="builder">
             <BuilderNavbar />
@@ -449,17 +457,6 @@ const PageBuilder = () => {
                 onDragEnd={handleDragEnd}
             >
                 <div className="lesson-content">
-                    {/* <DebugValues
-                            translateTiming={translateTiming}
-                            setTranslateTiming={setTranslateTiming}
-                            columnDelayTiming={columnDelayTiming}
-                            setColumnDelayTiming={setColumnDelayTiming}
-                            slopTiming={slopTiming}
-                            setSlopTiming={setSlopTiming}
-                            gridGap={gridGap}
-                            setGridGap={setGridGap}
-                        /> */}
-
                     <div className="grid">
                         <div style={{ padding: "1rem" }}>
                             <button onClick={handleUndo} disabled={!canUndo}>
@@ -470,6 +467,13 @@ const PageBuilder = () => {
                             <button onClick={handleRedo} disabled={!canRedo}>
                                 <FontAwesomeIcon icon="fa-solid fa-rotate-right" />
                                 redo
+                            </button>
+
+                            <button
+                                onClick={handleClear}
+                                disabled={!items.length}
+                            >
+                                RESET
                             </button>
                         </div>
                         {items.length > 0 ? (

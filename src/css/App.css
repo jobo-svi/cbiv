@@ -55,8 +55,6 @@
 
 .builder .lesson-content {
     background-color: #f8f8f8;
-    /* overflow: auto; */
-    /* padding: 1rem 2rem 5rem 2rem; */
     display: flex;
 }
 
@@ -84,35 +82,18 @@
 }
 
 @media screen and (min-width: 0px) {
-
-    /* .grid,
-    .grid-wrapper {
-        max-width: 480px;
-    } */
-
     .grid .grid-row {
         max-width: 520px;
     }
 }
 
 @media screen and (min-width: 600px) {
-
-    /* .grid,
-    .grid-wrapper {
-        max-width: 960px;
-    } */
     .grid .grid-row {
         max-width: 1000px;
     }
 }
 
 @media screen and (min-width: 1024px) {
-
-    /* .grid,
-    .grid-wrapper {
-        max-width: 1280px;
-    } */
-
     .grid .grid-row {
         max-width: 1320px;
     }

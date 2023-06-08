@@ -38,6 +38,13 @@ export function useBuilderHistory(activeId, items) {
         }
     }, [activeId]);
 
+    useEffect(() => {
+        if (!activeId) {
+            // Also save to localstorage until we get real saving working.
+            localStorage.setItem("builder-session", JSON.stringify(items));
+        }
+    }, [activeId, items]);
+
     // Allows you to go back (undo) N steps.
     const undo = (steps = 1) => {
         const newIndex = Math.max(0, index - (steps || 1));
@@ -60,14 +67,13 @@ export function useBuilderHistory(activeId, items) {
         return sessionHistory[newIndex];
     };
 
-    useEffect(() => {
-        if (!activeId) {
-            // Also save to localstorage until we get real saving working.
-            localStorage.setItem("builder-session", JSON.stringify(items));
-        }
-    }, [activeId, items]);
+    const clear = () => {
+        sessionStorage.setItem("builder-session-history", JSON.stringify([[]]));
+        setIndex(0);
+        setLastIndex(0);
+    };
 
-    return { undo, redo, index, lastIndex: lastIndex };
+    return { undo, redo, index, lastIndex: lastIndex, clear };
 }
 
 function getSessionHistory() {
