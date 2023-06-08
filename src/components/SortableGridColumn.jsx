@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import GridColumn from "./GridColumn";
 import { constructComponent } from "./ComponentFactory";
-import { Transition } from "react-transition-group";
+import GridColumn from "./GridColumn";
 
 const SortableGridColumn = (props) => {
     const {

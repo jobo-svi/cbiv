@@ -1,9 +1,8 @@
 import React from "react";
 import FlipCard from "./FlipCard";
-import Image from "./Image";
 import Header from "./Header";
+import Image from "./Image";
 import Paragraph from "./Paragraph";
-import Spacer from "./Spacer";
 import UndefinedElement from "./UndefinedElement";
 
 export const Components = {
@@ -37,13 +36,7 @@ export const Components = {
         component: "flipcard",
         defaultHeight: 300,
     },
-    // columnlayout: {
-    //     type: ColumnLayout,
-    // },
 };
-
-// TODO: need a map of what components can be children of what other components,
-// and throw an error or ignore if invalid, ie: flipcard's child can't be another flipcard.
 
 // Get the props for a component. Recursively handle nested sub-components
 const getProps = (item) => {
@@ -89,9 +82,3 @@ export const constructComponent = (item) => {
         { key: item.id }
     );
 };
-
-function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
-}

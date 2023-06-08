@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { useSpring, animated } from "@react-spring/web";
 
@@ -13,9 +13,6 @@ const Droppable = (props) => {
             isPlaceholder: props.isPlaceholder,
         },
     });
-
-    // if not active, don't do animations maybe?
-    //console.log(active);
 
     const [theProps, api] = useSpring(
         () => ({

@@ -5,7 +5,7 @@ export function useBuilderHistory(activeId, items) {
     const [lastIndex, setLastIndex] = useState(0);
 
     useEffect(() => {
-        // Clear the builder history on page load
+        // Clear the builder history on page load.
         sessionStorage.setItem(
             "builder-session-history",
             JSON.stringify([items])
@@ -15,16 +15,17 @@ export function useBuilderHistory(activeId, items) {
     useEffect(() => {
         let sessionHistory = getSessionHistory();
 
-        // Write to history once we're no longer dragging the element. Any changes to items array while dragging
+        // Write to history once we're no longer dragging the element.
+        // Don't write to history if nothing changed since the last entry.
         if (!activeId) {
-            // Don't write to history if nothing changed since the last entry
             if (
                 JSON.stringify(items) === JSON.stringify(sessionHistory[index])
             ) {
                 return;
             }
 
-            const copy = sessionHistory.slice(0, index + 1); // This removes all future (redo) states after current index
+            // This removes all future (redo) states after current index.
+            const copy = sessionHistory.slice(0, index + 1);
             copy.push(items);
             sessionHistory = copy;
             sessionStorage.setItem(
@@ -37,7 +38,7 @@ export function useBuilderHistory(activeId, items) {
         }
     }, [activeId]);
 
-    // Allows you to go back (undo) N steps
+    // Allows you to go back (undo) N steps.
     const undo = (steps = 1) => {
         const newIndex = Math.max(0, index - (steps || 1));
         setIndex(newIndex);
@@ -47,7 +48,7 @@ export function useBuilderHistory(activeId, items) {
         return sessionHistory[newIndex];
     };
 
-    // Allows you to go forward (redo) N steps
+    // Allows you to go forward (redo) N steps.
     const redo = (steps = 1) => {
         let sessionHistory = getSessionHistory();
         const newIndex = Math.min(
@@ -61,7 +62,7 @@ export function useBuilderHistory(activeId, items) {
 
     useEffect(() => {
         if (!activeId) {
-            // Also save to localstorage until we get real saving working
+            // Also save to localstorage until we get real saving working.
             localStorage.setItem("builder-session", JSON.stringify(items));
         }
     }, [activeId, items]);

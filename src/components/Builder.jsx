@@ -1,41 +1,32 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-
-import { createPortal } from "react-dom";
-
-import { Virtuoso } from "react-virtuoso";
-import { useHistoryState } from "@uidotdev/usehooks";
+import React, { useCallback, useRef, useState } from "react";
 import {
     DndContext,
     DragOverlay,
-    closestCenter,
     KeyboardSensor,
     PointerSensor,
+    getFirstCollision,
+    pointerWithin,
     useSensor,
     useSensors,
-    pointerWithin,
-    rectIntersection,
-    getFirstCollision,
 } from "@dnd-kit/core";
 import {
     SortableContext,
-    sortableKeyboardCoordinates,
-    horizontalListSortingStrategy,
     arrayMove,
+    horizontalListSortingStrategy,
+    sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import uuid from "react-uuid";
+import { Virtuoso } from "react-virtuoso";
+import "../css/App.css";
+import { useBuilderHistory } from "../hooks/useBuilderHistory";
+import { snapDragHandleToCursor } from "../modifiers/snapDragHandleToCursor";
 import BuilderElementsMenu from "./BuilderElementsMenu";
 import BuilderNavbar from "./BuilderNavbar";
 import { Components, constructComponent } from "./ComponentFactory";
-import { data } from "../data";
-import "../css/App.css";
-import { snapDragHandleToCursor } from "../modifiers/snapDragHandleToCursor";
-import DebugValues from "./DebugValues";
+import DefaultDroppable from "./DefaultDroppable";
 import Droppable from "./Droppable";
 import SortableGridColumn from "./SortableGridColumn";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import DefaultDroppable from "./DefaultDroppable";
-import { useBuilderHistory } from "../hooks/useBuilderHistory";
-import { update } from "@react-spring/web";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -53,28 +44,16 @@ const PageBuilder = () => {
     const canUndo = index > 0;
     const canRedo = index < lastIndex;
 
+    const [itemToEdit, setItemToEdit] = useState(null);
+
+    // How long you have to wait before item combines with an existing row
+    const [columnDelayTiming, setColumnDelayTiming] = useState(450);
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
-    );
-
-    const [itemToEdit, setItemToEdit] = useState(null);
-
-    // Configurable debug settings
-    const [slopTiming, setSlopTiming] = useState(
-        +localStorage.getItem("slopTiming") || 150
-    );
-
-    const [translateTiming, setTranslateTiming] = useState(
-        +localStorage.getItem("translateTiming") || 300
-    );
-
-    const [columnDelayTiming, setColumnDelayTiming] = useState(450);
-
-    const [gridGap, setGridGap] = useState(
-        +localStorage.getItem("gridGap") || 24
     );
 
     const handleDragStart = (e) => {

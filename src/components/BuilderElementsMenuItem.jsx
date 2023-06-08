@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useDraggable } from "@dnd-kit/core";
+import React from "react";
 
 const BuilderElementsMenuItem = (props) => {
     const { attributes, listeners, setNodeRef } = useDraggable({

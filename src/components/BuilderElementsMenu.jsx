@@ -4,7 +4,7 @@ import "../css/App.css";
 import BuilderElementsMenuItem from "./BuilderElementsMenuItem";
 import { Components } from "./ComponentFactory";
 
-const BuilderElementsMenu = (props) => {
+const BuilderElementsMenu = () => {
     return (
         <div className="builder-elements-menu">
             <div className="element-wrapper">
