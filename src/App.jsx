@@ -8,6 +8,7 @@ import {
     faTriangleExclamation,
     faUpDownLeftRight,
     faRotateLeft,
+    faRotateRight,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -16,7 +17,8 @@ library.add(
     faParagraph,
     faTriangleExclamation,
     faUpDownLeftRight,
-    faRotateLeft
+    faRotateLeft,
+    faRotateRight
 );
 
 function App() {

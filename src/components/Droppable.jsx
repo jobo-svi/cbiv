@@ -14,6 +14,9 @@ const Droppable = (props) => {
         },
     });
 
+    // if not active, don't do animations maybe?
+    //console.log(active);
+
     const [theProps, api] = useSpring(
         () => ({
             from: { opacity: 0 },

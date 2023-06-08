@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import { Virtuoso } from "react-virtuoso";
+import { useHistoryState } from "@uidotdev/usehooks";
 import {
     DndContext,
     DragOverlay,
@@ -33,20 +34,24 @@ import Droppable from "./Droppable";
 import SortableGridColumn from "./SortableGridColumn";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DefaultDroppable from "./DefaultDroppable";
-import { useBuilderHistory, undoHistory } from "../hooks/useBuilderHistory";
+import { useBuilderHistory } from "../hooks/useBuilderHistory";
+import { update } from "@react-spring/web";
 
 const PageBuilder = () => {
     // The lesson elements
     const [items, setItems] = useState(
-        JSON.parse(sessionStorage.getItem("builder-session")) ??
-            data.content.body ??
-            []
+        JSON.parse(localStorage.getItem("builder-session")) ?? []
     );
 
     const [activeId, setActiveId] = useState(null);
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
     const columnTimerId = useRef(null);
+
+    // Builder history
+    const { undo, redo, index, lastIndex } = useBuilderHistory(activeId, items);
+    const canUndo = index > 0;
+    const canRedo = index < lastIndex;
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -66,15 +71,11 @@ const PageBuilder = () => {
         +localStorage.getItem("translateTiming") || 300
     );
 
-    const [columnDelayTiming, setColumnDelayTiming] = useState(
-        +localStorage.getItem("columnDelayTiming") || 1000
-    );
+    const [columnDelayTiming, setColumnDelayTiming] = useState(450);
 
     const [gridGap, setGridGap] = useState(
         +localStorage.getItem("gridGap") || 24
     );
-
-    const [hasHistory, setHasHistory] = useBuilderHistory(activeId, items);
 
     const handleDragStart = (e) => {
         const { active } = e;
@@ -138,7 +139,6 @@ const PageBuilder = () => {
             const fromColIndex = getColumnIndex(row, active.id);
             const toColIndex = getColumnIndex(row, over.id);
             row.columns = arrayMove(row.columns, fromColIndex, toColIndex);
-            setItems(updateItems);
         }
 
         // Replace any placeholder elements with real ids
@@ -156,6 +156,7 @@ const PageBuilder = () => {
 
         updateItems = updateItems.filter((row) => row.columns.length > 0);
         setItems(updateItems);
+
         setActiveId(null);
         lastOverId.current = null;
     };
@@ -218,9 +219,6 @@ const PageBuilder = () => {
                     columnTimerId.current = null;
                 }, columnDelayTiming);
             }
-            // else {
-            //     setItems(updateItems);
-            // }
         } else {
             const destinationRowIndex = over.data.current.rowIndex;
 
@@ -238,10 +236,6 @@ const PageBuilder = () => {
                 return;
             }
 
-            const destinationColIndex = updateItems[
-                destinationRowIndex
-            ].columns.findIndex((col) => col.id === over.id);
-
             updateItems.map((row) => {
                 row.columns = row.columns.filter((col) => col.id !== active.id);
             });
@@ -252,7 +246,7 @@ const PageBuilder = () => {
                     : destinationRowIndex + modifier;
 
             updateItems.splice(index, 0, {
-                id: uuid(),
+                id: fromRow.id,
                 columns: [fromCol],
             });
 
@@ -456,13 +450,11 @@ const PageBuilder = () => {
     };
 
     const handleUndo = () => {
-        const history = undoHistory();
-        if (history) {
-            setItems(history);
-        } else {
-            setItems([]);
-            setHasHistory(false);
-        }
+        setItems(undo());
+    };
+
+    const handleRedo = () => {
+        setItems(redo());
     };
 
     return (
@@ -491,9 +483,14 @@ const PageBuilder = () => {
 
                     <div className="grid">
                         <div style={{ padding: "1rem" }}>
-                            <button onClick={handleUndo} disabled={!hasHistory}>
-                                <FontAwesomeIcon icon="fa-solid fa-rotate-left" />{" "}
+                            <button onClick={handleUndo} disabled={!canUndo}>
+                                <FontAwesomeIcon icon="fa-solid fa-rotate-left" />
                                 undo
+                            </button>
+
+                            <button onClick={handleRedo} disabled={!canRedo}>
+                                <FontAwesomeIcon icon="fa-solid fa-rotate-right" />
+                                redo
                             </button>
                         </div>
                         {items.length > 0 ? (
