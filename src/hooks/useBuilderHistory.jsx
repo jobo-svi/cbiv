@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { diff, applyDiff, applyChange, revertChange } from "deep-diff";
+import { diffArrays } from "diff";
 
 export function useBuilderHistory(activeId, items) {
     const [index, setIndex] = useState(0);
@@ -24,6 +26,44 @@ export function useBuilderHistory(activeId, items) {
                 return;
             }
 
+            var before = {
+                data: [],
+            };
+
+            var after = {
+                data: [
+                    {
+                        id: "1",
+                        columns: [
+                            {
+                                id: "1",
+                                component: "paragraph",
+                                props: {
+                                    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                                },
+                            },
+                        ],
+                    },
+                ],
+            };
+
+            let result = after;
+
+            var differences = diff(before, after);
+
+            var reverted = differences.reduce((acc, change) => {
+                diff.revertChange(acc, true, change);
+                return acc;
+            }, result);
+
+            console.log(result);
+
+            var unreverted = differences.reduce((acc, change) => {
+                diff.applyChange(acc, true, change);
+                return acc;
+            }, result);
+            console.log(result);
+
             // This removes all future (redo) states after current index.
             const copy = sessionHistory.slice(0, index + 1);
             copy.push(items);
@@ -35,6 +75,8 @@ export function useBuilderHistory(activeId, items) {
 
             setIndex(copy.length - 1);
             setLastIndex(copy.length - 1);
+
+            //console.log(`session storage size: ${sessionStorageSize()}kb`);
         }
     }, [activeId]);
 
@@ -87,3 +129,27 @@ function getSessionHistory() {
 
     return sessionHistory;
 }
+
+let localStorageSize = function () {
+    let _lsTotal = 0,
+        _xLen,
+        _x;
+    for (_x in localStorage) {
+        if (!localStorage.hasOwnProperty(_x)) continue;
+        _xLen = (localStorage[_x].length + _x.length) * 2;
+        _lsTotal += _xLen;
+    }
+    return (_lsTotal / 1024).toFixed(2);
+};
+
+let sessionStorageSize = function () {
+    let _lsTotal = 0,
+        _xLen,
+        _x;
+    for (_x in sessionStorage) {
+        if (!sessionStorage.hasOwnProperty(_x)) continue;
+        _xLen = (sessionStorage[_x].length + _x.length) * 2;
+        _lsTotal += _xLen;
+    }
+    return (_lsTotal / 1024).toFixed(2);
+};
