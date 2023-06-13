@@ -1,11 +1,10 @@
 import React from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { useSpring, animated } from "@react-spring/web";
-import { useSortable } from "@dnd-kit/sortable";
 
 const Droppable = (props) => {
     const { setNodeRef, node, active, over, transition, transform } =
-        useSortable({
+        useDroppable({
             id: props.id,
             data: {
                 id: props.id,
@@ -15,8 +14,6 @@ const Droppable = (props) => {
                 isPlaceholder: props.isPlaceholder,
             },
         });
-
-    console.log(transition, transform);
 
     const [theProps, api] = useSpring(
         () => ({
@@ -38,17 +35,17 @@ const Droppable = (props) => {
     }
 
     return (
-        <animated.div style={theProps}>
-            <div
-                className="grid-row"
-                ref={setNodeRef}
-                style={{
-                    height: height !== null ? `${height}px` : "",
-                }}
-            >
-                {props.children}
-            </div>
-        </animated.div>
+        // <animated.div style={theProps}>
+        <div
+            className="grid-row"
+            ref={setNodeRef}
+            style={{
+                height: height !== null ? `${height}px` : "",
+            }}
+        >
+            {props.children}
+        </div>
+        // </animated.div>
     );
 };
 

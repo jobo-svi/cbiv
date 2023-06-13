@@ -4,6 +4,7 @@ import {
     DragOverlay,
     KeyboardSensor,
     PointerSensor,
+    closestCenter,
     getFirstCollision,
     pointerWithin,
     useSensor,
@@ -14,6 +15,7 @@ import {
     arrayMove,
     horizontalListSortingStrategy,
     sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import uuid from "react-uuid";
@@ -27,6 +29,7 @@ import { Components, constructComponent } from "./ComponentFactory";
 import DefaultDroppable from "./DefaultDroppable";
 import Droppable from "./Droppable";
 import SortableGridColumn from "./SortableGridColumn";
+import SortableRow from "./SortableRow";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -81,11 +84,6 @@ const PageBuilder = () => {
         if (!active || !over || !over.data.current.relativePosition) {
             return;
         }
-
-        console.log(over.id, over.rect.width);
-        document.querySelector(
-            ".drag-handle-visible"
-        ).style.width = `${over.rect.width}px`;
 
         // If an element is being hovered over itself, there's nothing to be done
         const isHoveringOverSelf = active.id === over.id;
@@ -165,19 +163,16 @@ const PageBuilder = () => {
             const destinationRow = updateItems.find((row) =>
                 row.columns.find((col) => col.id === destinationCol.id)
             );
-
             const destinationRowIndex = updateItems.findIndex((row) =>
                 row.columns.find((col) => col.id === over.id)
             );
             const destinationColIndex = updateItems[
                 destinationRowIndex
             ].columns.findIndex((col) => col.id === over.id);
-
             // Remove original location
             updateItems[fromRowIndex].columns = updateItems[
                 fromRowIndex
             ].columns.filter((col) => col.id !== fromCol.id);
-
             // Figure out which side of column we're dragging element onto
             const isRightOfOverItem =
                 over &&
@@ -190,23 +185,21 @@ const PageBuilder = () => {
                 0,
                 fromCol
             );
-
             const isAddingNewColumn = fromRowIndex !== destinationRowIndex;
-            if (isAddingNewColumn && columnTimerId.current === null) {
-                columnTimerId.current = setTimeout(() => {
-                    recentlyMovedToNewContainer.current = true;
-
-                    // When we move columns in and out of rows, leave the empty rows so that the layout doesn't jump/shift around too much
-                    updateItems = updateItems.filter(
-                        (row) =>
-                            row.columns.length > 0 ||
-                            updateItems.findIndex((r) => r.id === row.id) <
-                                destinationRowIndex
-                    );
-                    setItems(updateItems);
-                    columnTimerId.current = null;
-                }, columnDelayTiming);
-            }
+            // if (isAddingNewColumn && columnTimerId.current === null) {
+            //     columnTimerId.current = setTimeout(() => {
+            //         recentlyMovedToNewContainer.current = true;
+            //         // When we move columns in and out of rows, leave the empty rows so that the layout doesn't jump/shift around too much
+            //         updateItems = updateItems.filter(
+            //             (row) =>
+            //                 row.columns.length > 0 ||
+            //                 updateItems.findIndex((r) => r.id === row.id) <
+            //                     destinationRowIndex
+            //         );
+            //         setItems(updateItems);
+            //         columnTimerId.current = null;
+            //     }, columnDelayTiming);
+            // }
         } else {
             const destinationRowIndex = over.data.current.rowIndex;
 
@@ -510,13 +503,11 @@ const PageBuilder = () => {
                         </div>
                         {items.length > 0 ? (
                             <>
-                                <Virtuoso
-                                    style={{
-                                        height: "100%",
-                                    }}
-                                    totalCount={items.length}
-                                    data={items}
-                                    itemContent={(rowIndex, row) => {
+                                <SortableContext
+                                    items={items.map((row) => row.id)}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    {items.map((row, rowIndex) => {
                                         return (
                                             <div key={row.id}>
                                                 {rowIndex === 0 && (
@@ -536,72 +527,77 @@ const PageBuilder = () => {
                                                         ></div>
                                                     </Droppable>
                                                 )}
-                                                <Droppable
+                                                <SortableRow
+                                                    key={row.id}
                                                     id={row.id}
-                                                    isPlaceholder={false}
-                                                    activeId={activeId}
-                                                    isParentContainer={true}
-                                                    items={items}
-                                                    rowIndex={rowIndex}
                                                 >
-                                                    <SortableContext
-                                                        items={row.columns.map(
-                                                            (col) => col.id
-                                                        )}
-                                                        strategy={
-                                                            horizontalListSortingStrategy
-                                                        }
+                                                    <Droppable
+                                                        id={row.id}
+                                                        isPlaceholder={false}
+                                                        activeId={activeId}
+                                                        isParentContainer={true}
+                                                        items={items}
+                                                        rowIndex={rowIndex}
                                                     >
-                                                        {items[
-                                                            rowIndex
-                                                        ].columns.map(
-                                                            (
-                                                                column,
-                                                                colIndex
-                                                            ) => {
-                                                                return (
-                                                                    <SortableGridColumn
-                                                                        id={
-                                                                            column.id
-                                                                        }
-                                                                        key={
-                                                                            column.id
-                                                                        }
-                                                                        index={
-                                                                            colIndex
-                                                                        }
-                                                                        rowIndex={
-                                                                            rowIndex
-                                                                        }
-                                                                        column={
-                                                                            column
-                                                                        }
-                                                                        relativePosition="within"
-                                                                    />
-                                                                );
+                                                        <SortableContext
+                                                            items={row.columns.map(
+                                                                (col) => col.id
+                                                            )}
+                                                            strategy={
+                                                                horizontalListSortingStrategy
                                                             }
-                                                        )}
-                                                    </SortableContext>
-                                                </Droppable>
-                                                <Droppable
-                                                    id={`row-placeholder-${rowIndex}`}
-                                                    rowIndex={rowIndex}
-                                                    relativePosition="below"
-                                                    isPlaceholder={true}
-                                                    activeId={activeId}
-                                                    items={items}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            height: "24px",
-                                                            width: "100%",
-                                                        }}
-                                                    ></div>
-                                                </Droppable>
+                                                        >
+                                                            {items[
+                                                                rowIndex
+                                                            ].columns.map(
+                                                                (
+                                                                    column,
+                                                                    colIndex
+                                                                ) => {
+                                                                    return (
+                                                                        <SortableGridColumn
+                                                                            id={
+                                                                                column.id
+                                                                            }
+                                                                            key={
+                                                                                column.id
+                                                                            }
+                                                                            index={
+                                                                                colIndex
+                                                                            }
+                                                                            rowIndex={
+                                                                                rowIndex
+                                                                            }
+                                                                            column={
+                                                                                column
+                                                                            }
+                                                                            relativePosition="within"
+                                                                        />
+                                                                    );
+                                                                }
+                                                            )}
+                                                        </SortableContext>
+                                                    </Droppable>
+                                                    <Droppable
+                                                        id={`row-placeholder-${rowIndex}`}
+                                                        rowIndex={rowIndex}
+                                                        relativePosition="below"
+                                                        isPlaceholder={true}
+                                                        activeId={activeId}
+                                                        items={items}
+                                                    >
+                                                        <div
+                                                            style={{
+                                                                height: "24px",
+                                                                width: "100%",
+                                                            }}
+                                                        ></div>
+                                                    </Droppable>
+                                                </SortableRow>
                                             </div>
                                         );
-                                    }}
-                                />
+                                    })}
+                                </SortableContext>
                             </>
                         ) : (
                             <DefaultDroppable />
