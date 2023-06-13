@@ -1,155 +1,108 @@
 import { useEffect, useState } from "react";
-import { diff, applyDiff, applyChange, revertChange } from "deep-diff";
-import { diffArrays } from "diff";
+import { create } from "jsondiffpatch/dist/jsondiffpatch.umd";
 
-export function useBuilderHistory(activeId, items) {
-    const [index, setIndex] = useState(0);
-    const [lastIndex, setLastIndex] = useState(0);
+export function useBuilderHistory(activeId, items, previousItems) {
+    const [index, setIndex] = useState(-1);
+    const [lastIndex, setLastIndex] = useState(-1);
+
+    const diffpatcher = create({
+        objectHash: function (obj) {
+            return obj.id;
+        },
+    });
 
     useEffect(() => {
         // Clear the builder history on page load.
-        sessionStorage.setItem(
-            "builder-session-history",
-            JSON.stringify([items])
-        );
+        sessionStorage.setItem("builder-session-history", JSON.stringify([]));
     }, []);
 
     useEffect(() => {
-        let sessionHistory = getSessionHistory();
-
-        // Write to history once we're no longer dragging the element.
-        // Don't write to history if nothing changed since the last entry.
-        if (!activeId) {
-            if (
-                JSON.stringify(items) === JSON.stringify(sessionHistory[index])
-            ) {
-                return;
-            }
-
-            var before = {
-                data: [],
-            };
-
-            var after = {
-                data: [
-                    {
-                        id: "1",
-                        columns: [
-                            {
-                                id: "1",
-                                component: "paragraph",
-                                props: {
-                                    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                                },
-                            },
-                        ],
-                    },
-                ],
-            };
-
-            let result = after;
-
-            var differences = diff(before, after);
-
-            var reverted = differences.reduce((acc, change) => {
-                diff.revertChange(acc, true, change);
-                return acc;
-            }, result);
-
-            console.log(result);
-
-            var unreverted = differences.reduce((acc, change) => {
-                diff.applyChange(acc, true, change);
-                return acc;
-            }, result);
-            console.log(result);
-
-            // This removes all future (redo) states after current index.
-            const copy = sessionHistory.slice(0, index + 1);
-            copy.push(items);
-            sessionHistory = copy;
-            sessionStorage.setItem(
-                "builder-session-history",
-                JSON.stringify(sessionHistory)
-            );
-
-            setIndex(copy.length - 1);
-            setLastIndex(copy.length - 1);
-
-            //console.log(`session storage size: ${sessionStorageSize()}kb`);
+        // Only write to history if something changed, and we're done dragging.
+        var differences = diffpatcher.diff(previousItems, items);
+        if (activeId !== null || differences === undefined) {
+            return;
         }
+
+        // This removes all future (redo) states after current index.
+        let sessionHistory = getSessionHistory();
+        const copy = sessionHistory.slice(0, index + 1);
+        copy.push(differences);
+        sessionStorage.setItem("builder-session-history", JSON.stringify(copy));
+
+        setIndex(copy.length - 1);
+        setLastIndex(copy.length - 1);
+
+        console.log(`session storage size: ${sessionStorageSize()}kb`);
     }, [activeId]);
 
     useEffect(() => {
         if (!activeId) {
-            // Also save to localstorage until we get real saving working.
+            // Save to localstorage until we get real saving working.
             localStorage.setItem("builder-session", JSON.stringify(items));
         }
     }, [activeId, items]);
 
-    // Allows you to go back (undo) N steps.
-    const undo = (steps = 1) => {
-        const newIndex = Math.max(0, index - (steps || 1));
-        setIndex(newIndex);
-
+    const undo = () => {
         let sessionHistory = getSessionHistory();
+        const differences = sessionHistory[index];
+
+        const newIndex = index - 1;
+        setIndex(newIndex);
         setLastIndex(sessionHistory.length - 1);
-        return sessionHistory[newIndex];
+
+        let after = JSON.parse(JSON.stringify(items));
+        diffpatcher.unpatch(after, differences);
+        return after;
     };
 
-    // Allows you to go forward (redo) N steps.
-    const redo = (steps = 1) => {
+    const redo = () => {
         let sessionHistory = getSessionHistory();
-        const newIndex = Math.min(
-            sessionHistory.length - 1,
-            index + (steps || 1)
-        );
+
+        const newIndex = Math.min(sessionHistory.length - 1, index + 1);
         setIndex(newIndex);
         setLastIndex(sessionHistory.length - 1);
-        return sessionHistory[newIndex];
+
+        let after = JSON.parse(JSON.stringify(items));
+        const differences = sessionHistory[newIndex];
+        diffpatcher.patch(after, differences);
+        return after;
     };
 
     const clear = () => {
         sessionStorage.setItem("builder-session-history", JSON.stringify([[]]));
-        setIndex(0);
-        setLastIndex(0);
+        setIndex(-1);
+        setLastIndex(-1);
     };
 
-    return { undo, redo, index, lastIndex: lastIndex, clear };
+    function getSessionHistory() {
+        let sessionHistory = [];
+
+        if (sessionStorage.getItem("builder-session-history") !== undefined) {
+            sessionHistory = JSON.parse(
+                sessionStorage.getItem("builder-session-history")
+            );
+        }
+
+        return sessionHistory;
+    }
+
+    let sessionStorageSize = function () {
+        let _lsTotal = 0,
+            _xLen,
+            _x;
+        for (_x in sessionStorage) {
+            if (!sessionStorage.hasOwnProperty(_x)) continue;
+            _xLen = (sessionStorage[_x].length + _x.length) * 2;
+            _lsTotal += _xLen;
+        }
+        return (_lsTotal / 1024).toFixed(2);
+    };
+
+    return {
+        undo,
+        redo,
+        clear,
+        canUndo: index >= 0,
+        canRedo: index < lastIndex,
+    };
 }
-
-function getSessionHistory() {
-    let sessionHistory = [];
-
-    if (sessionStorage.getItem("builder-session-history")) {
-        sessionHistory = JSON.parse(
-            sessionStorage.getItem("builder-session-history")
-        );
-    }
-
-    return sessionHistory;
-}
-
-let localStorageSize = function () {
-    let _lsTotal = 0,
-        _xLen,
-        _x;
-    for (_x in localStorage) {
-        if (!localStorage.hasOwnProperty(_x)) continue;
-        _xLen = (localStorage[_x].length + _x.length) * 2;
-        _lsTotal += _xLen;
-    }
-    return (_lsTotal / 1024).toFixed(2);
-};
-
-let sessionStorageSize = function () {
-    let _lsTotal = 0,
-        _xLen,
-        _x;
-    for (_x in sessionStorage) {
-        if (!sessionStorage.hasOwnProperty(_x)) continue;
-        _xLen = (sessionStorage[_x].length + _x.length) * 2;
-        _lsTotal += _xLen;
-    }
-    return (_lsTotal / 1024).toFixed(2);
-};

@@ -34,18 +34,19 @@ const PageBuilder = () => {
         JSON.parse(localStorage.getItem("builder-session")) ?? []
     );
 
+    const [previousItems, setPreviousItems] = useState(items);
+
     const [activeId, setActiveId] = useState(null);
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
     const columnTimerId = useRef(null);
 
     // Builder history
-    const { undo, redo, index, lastIndex, clear } = useBuilderHistory(
+    const { undo, redo, clear, canUndo, canRedo } = useBuilderHistory(
         activeId,
-        items
+        items,
+        previousItems
     );
-    const canUndo = index > 0;
-    const canRedo = index < lastIndex;
 
     const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -66,6 +67,7 @@ const PageBuilder = () => {
             activeData = active.data.current;
         }
 
+        setPreviousItems(items);
         setActiveId(active.id);
     };
 
@@ -138,7 +140,6 @@ const PageBuilder = () => {
 
         updateItems = updateItems.filter((row) => row.columns.length > 0);
         setItems(updateItems);
-
         setActiveId(null);
         lastOverId.current = null;
     };
