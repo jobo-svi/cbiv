@@ -82,6 +82,11 @@ const PageBuilder = () => {
             return;
         }
 
+        console.log(over.id, over.rect.width);
+        document.querySelector(
+            ".drag-handle-visible"
+        ).style.width = `${over.rect.width}px`;
+
         // If an element is being hovered over itself, there's nothing to be done
         const isHoveringOverSelf = active.id === over.id;
         if (isHoveringOverSelf) {

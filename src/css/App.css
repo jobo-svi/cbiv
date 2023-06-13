@@ -71,7 +71,6 @@
 
 .builder .grid .grid-row {
     margin: 0 auto;
-    padding: 0px 20px 0px 20px;
     display: flex;
     gap: 24px;
 }
@@ -83,19 +82,19 @@
 
 @media screen and (min-width: 0px) {
     .grid .grid-row {
-        max-width: 520px;
+        max-width: 480px;
     }
 }
 
 @media screen and (min-width: 600px) {
     .grid .grid-row {
-        max-width: 1000px;
+        max-width: 960px;
     }
 }
 
 @media screen and (min-width: 1024px) {
     .grid .grid-row {
-        max-width: 1320px;
+        max-width: 1280px;
     }
 }
 

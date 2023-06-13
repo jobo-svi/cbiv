@@ -1,18 +1,22 @@
 import React from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { useSpring, animated } from "@react-spring/web";
+import { useSortable } from "@dnd-kit/sortable";
 
 const Droppable = (props) => {
-    const { setNodeRef, node, active, over } = useDroppable({
-        id: props.id,
-        data: {
+    const { setNodeRef, node, active, over, transition, transform } =
+        useSortable({
             id: props.id,
-            rowIndex: props.rowIndex,
-            relativePosition: props.relativePosition,
-            isParentContainer: props.isParentContainer,
-            isPlaceholder: props.isPlaceholder,
-        },
-    });
+            data: {
+                id: props.id,
+                rowIndex: props.rowIndex,
+                relativePosition: props.relativePosition,
+                isParentContainer: props.isParentContainer,
+                isPlaceholder: props.isPlaceholder,
+            },
+        });
+
+    console.log(transition, transform);
 
     const [theProps, api] = useSpring(
         () => ({
