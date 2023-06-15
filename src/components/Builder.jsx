@@ -157,6 +157,7 @@ const PageBuilder = () => {
         const destinationIsNewRow = destinationCol === undefined;
 
         if (!destinationIsNewRow) {
+            console.log(1);
             // adding a column to existing row
             const destinationRow = updateItems.find((row) =>
                 row.columns.find((col) => col.id === destinationCol.id)
@@ -383,7 +384,7 @@ const PageBuilder = () => {
 
             // For collisions where pointer is within, we only want collisions with columns, not container rows
             const filteredPointerIntersections = pointerIntersections.filter(
-                (i) => !i.data.droppableContainer.data.current.isParentContainer
+                (i) => !i.data.droppableContainer.data.current.ignoreCollisions
             );
             let overId = getFirstCollision(filteredPointerIntersections, "id");
 

@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 const SortableRow = (props) => {
     const { attributes, listeners, setNodeRef, transform, transition } =
-        useSortable({ id: props.id });
+        useSortable({ id: props.id, disabled: true });
 
     //console.log(transform, transition);
     // We don't want anything to scale
