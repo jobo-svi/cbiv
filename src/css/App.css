@@ -156,6 +156,25 @@
     }
 }
 
+.virtualize-container {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    contain: strict;
+}
+
+.virtualize-inner-container {
+    width: 100%;
+    position: relative;
+}
+
+.virtualize-inner-scroller {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
 /*
 *
 * ==========================================
