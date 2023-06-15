@@ -11,15 +11,14 @@
         "@fortawesome/free-solid-svg-icons": "^6.2.0",
         "@fortawesome/react-fontawesome": "^0.2.0",
         "@react-spring/web": "^9.7.2",
+        "@tanstack/react-virtual": "^3.0.0-beta.54",
         "@testing-library/jest-dom": "^5.16.4",
         "@testing-library/react": "^13.2.0",
         "@testing-library/user-event": "^13.5.0",
-        "@uidotdev/usehooks": "^2.0.1",
         "jsondiffpatch": "^0.4.1",
         "react": "^18.1.0",
         "react-dom": "^18.1.0",
         "react-uuid": "^1.0.2",
-        "react-virtuoso": "^4.3.8",
         "web-vitals": "^2.1.4"
     },
     "scripts": {
