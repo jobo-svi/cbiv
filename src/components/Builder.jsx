@@ -285,7 +285,8 @@ const PageBuilder = () => {
                     },
                 ],
             };
-            let index = over.data.current.rowIndex;
+
+            let index = over.data.current.rowIndex; // todo: I don't think rowindex is trustworthy in all cases. Figure something else out.
             updateItems.splice(index, 0, newOb);
             setItems(updateItems);
         } else if (over.data.current.type === "column") {
@@ -337,39 +338,18 @@ const PageBuilder = () => {
     }
 
     /**
-     * Custom collision detection strategy optimized for multiple containers
+     * Custom collision strategy for the course builder.
      *
-     * - First, find any droppable containers intersecting with the pointer.
-     * - If there are no intersecting containers, return the last matched intersection
+     * - First, find any columns intersecting with the pointer.
+     * - If there are no directly intersecting columns, find the closest row
      *
      */
-
-    function centerOfRectangle(rect, left = rect.left, top = rect.top) {
-        return {
-            x: left + rect.width * 0.5,
-            y: top + rect.height * 0.5,
-        };
-    }
-
-    function isHovered(pointer, clientRect) {
-        if (!pointer || !clientRect) {
-            return false;
-        }
-
-        return (
-            pointer.x > clientRect.x &&
-            pointer.x < clientRect.x + clientRect.width &&
-            pointer.y > clientRect.y &&
-            pointer.y < clientRect.y + clientRect.height
-        );
-    }
-
     const collisionDetectionStrategy = useCallback(
         (args) => {
-            // Start by finding any intersecting droppable
+            // Start by finding any intersecting droppable.
             const pointerIntersections = pointerWithin(args);
 
-            // For collisions where pointer is within, we only want collisions with columns, not container rows
+            // For collisions where pointer is within, we only want collisions with columns, not container rows.
             const filteredPointerIntersections = pointerIntersections.filter(
                 (i) => i.data.droppableContainer.data.current.type !== "row"
             );
@@ -392,12 +372,6 @@ const PageBuilder = () => {
                 // Figure out if we are hovering above or below the nearest element
                 const rect = over.data.droppableContainer.rect.current;
                 const centerOfOverRect = centerOfRectangle(rect);
-
-                const withinBounds =
-                    args.pointerCoordinates.y >= rect.top &&
-                    args.pointerCoordinates.y <= rect.bottom &&
-                    args.pointerCoordinates.x >= rect.left &&
-                    args.pointerCoordinates.x <= rect.left + rect.width;
 
                 const withinVerticalBounds =
                     args.pointerCoordinates.y >= rect.top &&
@@ -432,6 +406,13 @@ const PageBuilder = () => {
         },
         [activeId, items]
     );
+
+    function centerOfRectangle(rect, left = rect.left, top = rect.top) {
+        return {
+            x: left + rect.width * 0.5,
+            y: top + rect.height * 0.5,
+        };
+    }
 
     const getComponentForPreview = () => {
         if (activeId !== null) {
@@ -494,30 +475,6 @@ const PageBuilder = () => {
                     ],
                 });
             }
-            // stressTestItems.push({
-            //     id: uuid(),
-            //     columns: [
-            //         {
-            //             id: uuid(),
-            //             component: "paragraph",
-            //             props: {
-            //                 text: "1",
-            //             },
-            //         },
-            //     ],
-            // });
-            // stressTestItems.push({
-            //     id: uuid(),
-            //     columns: [
-            //         {
-            //             id: uuid(),
-            //             component: "paragraph",
-            //             props: {
-            //                 text: "2",
-            //             },
-            //         },
-            //     ],
-            // });
             return stressTestItems;
         });
     };
