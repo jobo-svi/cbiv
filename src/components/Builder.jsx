@@ -3,6 +3,7 @@ import {
     DndContext,
     DragOverlay,
     KeyboardSensor,
+    MeasuringStrategy,
     PointerSensor,
     closestCenter,
     getFirstCollision,
@@ -79,7 +80,7 @@ const PageBuilder = () => {
         clearTimeout(columnTimerId.current);
         columnTimerId.current = null;
 
-        if (!active || !over || !over.data.current.relativePosition) {
+        if (!active || !over) {
             return;
         }
 
@@ -89,18 +90,10 @@ const PageBuilder = () => {
             return;
         }
 
-        const overRowIndex = over.data.current.rowIndex;
-        let modifier = 0;
-        if (over.data.current.relativePosition === "above") {
-            modifier = -1;
-        } else if (over.data.current.relativePosition === "below") {
-            modifier = 1;
-        }
-
         if (active.data.current.isNewElement) {
-            addNewElement(over, active, overRowIndex, modifier);
+            addNewElement(over, active, collisions);
         } else {
-            moveElement(over, active, modifier);
+            moveElement(over, active, collisions);
         }
     };
 
@@ -113,18 +106,18 @@ const PageBuilder = () => {
 
         let updateItems = JSON.parse(JSON.stringify(items));
 
-        // Special case: For the reorder columns sort animation to work properly when grid is virtualized, we have to wait until drag is finished to update state.
-        const dragWasColumnReorder =
-            active?.id !== over?.id &&
-            !active?.data.current.isNewElement &&
-            !over?.data.current.isPlaceholder;
+        // // Special case: For the reorder columns sort animation to work properly when grid is virtualized, we have to wait until drag is finished to update state.
+        // const dragWasColumnReorder =
+        //     active?.id !== over?.id &&
+        //     !active?.data.current.isNewElement &&
+        //     !over?.data.current.isPlaceholder;
 
-        if (dragWasColumnReorder) {
-            const row = getRow(over.id, updateItems);
-            const fromColIndex = getColumnIndex(row, active.id);
-            const toColIndex = getColumnIndex(row, over.id);
-            row.columns = arrayMove(row.columns, fromColIndex, toColIndex);
-        }
+        // if (dragWasColumnReorder) {
+        //     const row = getRow(over.id, updateItems);
+        //     const fromColIndex = getColumnIndex(row, active.id);
+        //     const toColIndex = getColumnIndex(row, over.id);
+        //     row.columns = arrayMove(row.columns, fromColIndex, toColIndex);
+        // }
 
         // Replace any placeholder elements with real ids
         updateItems.map((row) => {
@@ -145,28 +138,24 @@ const PageBuilder = () => {
         lastOverId.current = null;
     };
 
-    function moveElement(over, active, modifier) {
+    function moveElement(over, active, collisions) {
         let updateItems = JSON.parse(JSON.stringify(items));
         const fromRow = getRow(active.id, updateItems);
         const fromRowIndex = getRowIndex(active.id, updateItems);
         const fromCol = getColumn(active.id, updateItems);
-        const fromColIndex = getColumnIndex(fromRow, active.id);
 
-        const destinationCol = getColumn(over.id, updateItems);
-
-        const destinationIsNewRow = destinationCol === undefined;
-
-        if (!destinationIsNewRow) {
-            // adding a column to existing row
-            const destinationRow = updateItems.find((row) =>
-                row.columns.find((col) => col.id === destinationCol.id)
+        if (over.data.current.type === "column") {
+            const toCol = getColumn(over.id, updateItems);
+            const toRow = updateItems.find((row) =>
+                row.columns.find((col) => col.id === toCol.id)
             );
-            const destinationRowIndex = updateItems.findIndex((row) =>
+            const toRowIndex = updateItems.findIndex((row) =>
                 row.columns.find((col) => col.id === over.id)
             );
-            const destinationColIndex = updateItems[
-                destinationRowIndex
-            ].columns.findIndex((col) => col.id === over.id);
+            const toColIndex = updateItems[toRowIndex].columns.findIndex(
+                (col) => col.id === over.id
+            );
+
             // Remove original location
             updateItems[fromRowIndex].columns = updateItems[
                 fromRowIndex
@@ -174,17 +163,17 @@ const PageBuilder = () => {
             // Figure out which side of column we're dragging element onto
             const isRightOfOverItem =
                 over &&
-                fromRowIndex !== destinationRowIndex &&
+                fromRowIndex !== toRowIndex &&
                 active.rect.current.translated &&
                 active.rect.current.translated.right >
                     over.rect.right - over.rect.width / 2;
 
-            destinationRow.columns.splice(
-                destinationColIndex + (isRightOfOverItem ? 1 : 0),
+            toRow.columns.splice(
+                toColIndex + (isRightOfOverItem ? 1 : 0),
                 0,
                 fromCol
             );
-            const isAddingNewColumn = fromRowIndex !== destinationRowIndex;
+            const isAddingNewColumn = fromRowIndex !== toRowIndex;
             if (isAddingNewColumn && columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
                     recentlyMovedToNewContainer.current = true;
@@ -193,43 +182,49 @@ const PageBuilder = () => {
                         (row) =>
                             row.columns.length > 0 ||
                             updateItems.findIndex((r) => r.id === row.id) <
-                                destinationRowIndex
+                                toRowIndex
                     );
                     setItems(updateItems);
                     columnTimerId.current = null;
                 }, columnDelayTiming);
+            } else {
+                setItems(updateItems);
             }
-        } else {
-            const destinationRowIndex = over.data.current.rowIndex;
+        } else if (over.data.current.type === "row") {
+            // If element is hovering over its own row, or close enough to its own row, no need to swap positions
+            const hoveringOverSelf = fromRow?.id === over.id;
 
-            const hoveringOverBottomPlaceholder =
-                fromRowIndex === destinationRowIndex &&
-                fromRow.columns.length <= 1;
+            const toRowIndex = updateItems.findIndex(
+                (row) => row.id === over.id
+            );
+            const collision = collisions.find((c) => c.id === over.id);
+            const hoveringNextToSelf =
+                (collision.data.relativePosition === "below" &&
+                    toRowIndex + 1 === fromRowIndex) ||
+                (collision.data.relativePosition === "above" &&
+                    toRowIndex - 1 === fromRowIndex);
 
-            const hoveringOverTopPlaceholder =
-                fromRowIndex === destinationRowIndex + 1 &&
-                over.data.current.isPlaceholder &&
-                fromRow.columns.length === 1 &&
-                over.id !== "row-placeholder-start";
+            const decombining = fromRow?.columns.length > 1;
 
-            if (hoveringOverBottomPlaceholder || hoveringOverTopPlaceholder) {
+            if (!decombining && (hoveringOverSelf || hoveringNextToSelf)) {
                 return;
             }
-            const isDecombining = fromRow.columns.length > 1;
 
+            // first remove orig location
             updateItems.map((row) => {
                 row.columns = row.columns.filter((col) => col.id !== active.id);
             });
 
-            const index =
-                destinationRowIndex + modifier < 0
-                    ? 0
-                    : destinationRowIndex + modifier;
-
-            updateItems.splice(index, 0, {
-                id: isDecombining ? uuid() : fromRow.id,
-                columns: [fromCol],
-            });
+            // now move it to new location
+            updateItems.splice(
+                toRowIndex +
+                    (collision.data.relativePosition === "above" ? 0 : 1),
+                0,
+                {
+                    id: decombining ? uuid() : fromRow.id, // Decombined elements need a new row id to keep react from complaining about duplicate keys
+                    columns: [fromCol],
+                }
+            );
 
             updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current = true;
@@ -237,55 +232,36 @@ const PageBuilder = () => {
         }
     }
 
-    function addNewElement(over, active, overRowIndex, modifier) {
+    function addNewElement(over, active, collisions) {
         let updateItems = JSON.parse(JSON.stringify(items));
 
-        const fromCol = getColumn("new-column-placeholder", updateItems);
-        const fromRow = getRow("new-column-placeholder", updateItems);
-        let fromRowIndex = null;
-
-        if (fromCol && fromRow) {
-            fromRowIndex = getRowIndex("new-column-placeholder", updateItems);
-        }
-
-        if (over.data.current.isPlaceholder) {
-            // is ele being hovered over itself?
+        if (over.data.current.type === "row") {
             const fromRow = getRow("new-column-placeholder", updateItems);
-            let fromRowIndex = null;
-            let isDecombiningColumn = false;
-            if (fromRow) {
-                fromRowIndex = getRowIndex(
-                    "new-column-placeholder",
-                    updateItems
-                );
+            const fromRowIndex = getRowIndex(
+                "new-column-placeholder",
+                updateItems
+            );
+            // If element is hovering over its own row, or close enough to its own row, no need to swap positions
+            const hoveringOverSelf = fromRow?.id === over.id;
 
-                isDecombiningColumn = fromRow.columns.length > 1;
+            const toRowIndex = updateItems.findIndex(
+                (row) => row.id === over.id
+            );
+            const collision = collisions.find((c) => c.id === over.id);
+            const hoveringNextToSelf =
+                (collision.data.relativePosition === "below" &&
+                    toRowIndex + 1 === fromRowIndex) ||
+                (collision.data.relativePosition === "above" &&
+                    toRowIndex - 1 === fromRowIndex);
 
-                // Some movements aren't valid so we don't need to handle them, such as moving an element to a directly adjacent placeholder row.
-                if (
-                    !isDecombiningColumn &&
-                    (fromRowIndex === over.data.current.rowIndex ||
-                        (fromRowIndex === over.data.current.rowIndex + 1 &&
-                            over.data.current.relativePosition !== "above"))
-                ) {
-                    return;
-                }
-            }
-            let modifier = 0;
+            const decombining = fromRow?.columns.length > 1;
 
-            if (!fromRow && over.data.current.relativePosition !== "above") {
-                modifier = 1;
-            } else if (isDecombiningColumn) {
-                if (
-                    over.data.current.rowIndex === fromRowIndex &&
-                    over.data.current.relativePosition !== "above"
-                ) {
-                    modifier = 1;
-                }
-            } else if (over.data.current.relativePosition === "above") {
-                modifier = -1;
-            } else if (fromRowIndex > over.data.current.rowIndex) {
-                modifier = 1;
+            if (
+                fromRow &&
+                !decombining &&
+                (hoveringOverSelf || hoveringNextToSelf)
+            ) {
+                return;
             }
 
             // is there already a placeholder? Remove it if so.
@@ -294,7 +270,6 @@ const PageBuilder = () => {
                     (col) => col.id !== "new-column-placeholder"
                 );
             });
-
             updateItems = updateItems.filter((row) => row.columns.length > 0);
 
             // insert new row
@@ -310,16 +285,10 @@ const PageBuilder = () => {
                     },
                 ],
             };
-
-            let index = over.data.current.rowIndex + modifier;
-            if (index < 0) {
-                index = 0;
-            }
-
+            let index = over.data.current.rowIndex;
             updateItems.splice(index, 0, newOb);
-
             setItems(updateItems);
-        } else {
+        } else if (over.data.current.type === "column") {
             if (columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
                     // is there already a placeholder? Remove it if so.
@@ -328,13 +297,8 @@ const PageBuilder = () => {
                             (col) => col.id !== "new-column-placeholder"
                         );
                     });
-
                     // insert new column
-                    const index =
-                        overRowIndex + modifier > updateItems.length - 1
-                            ? updateItems.length - 1
-                            : overRowIndex + modifier;
-                    updateItems[index].columns.push({
+                    updateItems[over.data.current.rowIndex].columns.push({
                         id: "new-column-placeholder",
                         component: active.data.current.component,
                         props: {
@@ -344,6 +308,8 @@ const PageBuilder = () => {
                     setItems(updateItems);
                     columnTimerId.current = null;
                 }, columnDelayTiming);
+            } else {
+                console.log("timer thing");
             }
         }
     }
@@ -378,6 +344,26 @@ const PageBuilder = () => {
      *
      */
 
+    function centerOfRectangle(rect, left = rect.left, top = rect.top) {
+        return {
+            x: left + rect.width * 0.5,
+            y: top + rect.height * 0.5,
+        };
+    }
+
+    function isHovered(pointer, clientRect) {
+        if (!pointer || !clientRect) {
+            return false;
+        }
+
+        return (
+            pointer.x > clientRect.x &&
+            pointer.x < clientRect.x + clientRect.width &&
+            pointer.y > clientRect.y &&
+            pointer.y < clientRect.y + clientRect.height
+        );
+    }
+
     const collisionDetectionStrategy = useCallback(
         (args) => {
             // Start by finding any intersecting droppable
@@ -385,13 +371,52 @@ const PageBuilder = () => {
 
             // For collisions where pointer is within, we only want collisions with columns, not container rows
             const filteredPointerIntersections = pointerIntersections.filter(
-                (i) => !i.data.droppableContainer.data.current.ignoreCollisions
+                (i) => i.data.droppableContainer.data.current.type !== "row"
             );
             let overId = getFirstCollision(filteredPointerIntersections, "id");
 
             if (overId != null) {
                 lastOverId.current = overId;
                 return [{ id: overId }];
+            }
+
+            // explain this logic
+            const closestCenters = closestCenter(args);
+            const closestRows = closestCenters.filter(
+                (c) => c.data.droppableContainer.data.current.type === "row"
+            );
+
+            const over = getFirstCollision(closestRows);
+
+            if (over != null) {
+                // Figure out if we are hovering above or below the nearest element
+                const rect = over.data.droppableContainer.rect.current;
+                const centerOfOverRect = centerOfRectangle(rect);
+
+                const withinBounds =
+                    args.pointerCoordinates.y >= rect.top &&
+                    args.pointerCoordinates.y <= rect.bottom &&
+                    args.pointerCoordinates.x >= rect.left &&
+                    args.pointerCoordinates.x <= rect.left + rect.width;
+
+                const withinVerticalBounds =
+                    args.pointerCoordinates.y >= rect.top &&
+                    args.pointerCoordinates.y <= rect.bottom;
+
+                if (!withinVerticalBounds) {
+                    return [
+                        {
+                            id: over.id,
+                            data: {
+                                relativePosition:
+                                    args.pointerCoordinates.y <=
+                                    centerOfOverRect.y
+                                        ? "above"
+                                        : "below",
+                            },
+                        },
+                    ];
+                }
             }
 
             // When a draggable item moves to a new container, the layout may shift
@@ -459,9 +484,40 @@ const PageBuilder = () => {
                                 text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
                             },
                         },
+                        {
+                            id: uuid(),
+                            component: "paragraph",
+                            props: {
+                                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
+                            },
+                        },
                     ],
                 });
             }
+            // stressTestItems.push({
+            //     id: uuid(),
+            //     columns: [
+            //         {
+            //             id: uuid(),
+            //             component: "paragraph",
+            //             props: {
+            //                 text: "1",
+            //             },
+            //         },
+            //     ],
+            // });
+            // stressTestItems.push({
+            //     id: uuid(),
+            //     columns: [
+            //         {
+            //             id: uuid(),
+            //             component: "paragraph",
+            //             props: {
+            //                 text: "2",
+            //             },
+            //         },
+            //     ],
+            // });
             return stressTestItems;
         });
     };
@@ -477,6 +533,12 @@ const PageBuilder = () => {
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
+                measuring={{
+                    droppable: {
+                        strategy: MeasuringStrategy.Always,
+                        frequency: 100,
+                    },
+                }}
             >
                 <div className="lesson-content">
                     <div className="grid">

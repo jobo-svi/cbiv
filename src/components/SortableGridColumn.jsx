@@ -21,7 +21,7 @@ const SortableGridColumn = (props) => {
             id: props.id,
             index: props.index,
             rowIndex: props.rowIndex,
-            relativePosition: props.relativePosition,
+            type: props.type,
         },
     });
 

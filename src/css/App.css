@@ -73,6 +73,7 @@
     margin: 0 auto;
     display: flex;
     gap: 24px;
+    margin-bottom: 24px;
 }
 
 .builder .grid .grid-column {

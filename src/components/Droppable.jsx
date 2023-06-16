@@ -1,6 +1,6 @@
 import React from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { useSpring, animated } from "@react-spring/web";
+import { useSortable } from "@dnd-kit/sortable";
 
 const Droppable = (props) => {
     const { setNodeRef, node, active, over, transition, transform } =
@@ -9,22 +9,11 @@ const Droppable = (props) => {
             data: {
                 id: props.id,
                 rowIndex: props.rowIndex,
-                relativePosition: props.relativePosition,
-                isParentContainer: props.isParentContainer,
-                isPlaceholder: props.isPlaceholder,
+                type: props.type,
             },
         });
 
-    const [theProps, api] = useSpring(
-        () => ({
-            from: { opacity: 0 },
-            to: { opacity: 1 },
-            config: {
-                duration: 250,
-            },
-        }),
-        []
-    );
+    //console.log(transition, transform);
 
     // Manually set the height of the grid row while we're dragging stuff over it, so that if we remove all columns the layout won't shift until we're done dragging
     let height = null;
@@ -35,8 +24,8 @@ const Droppable = (props) => {
     }
 
     return (
-        // <animated.div style={theProps}>
         <div
+            id={props.id}
             className="grid-row"
             ref={setNodeRef}
             style={{
@@ -45,7 +34,6 @@ const Droppable = (props) => {
         >
             {props.children}
         </div>
-        // </animated.div>
     );
 };
 
