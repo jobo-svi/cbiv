@@ -157,7 +157,6 @@ const PageBuilder = () => {
         const destinationIsNewRow = destinationCol === undefined;
 
         if (!destinationIsNewRow) {
-            console.log(1);
             // adding a column to existing row
             const destinationRow = updateItems.find((row) =>
                 row.columns.find((col) => col.id === destinationCol.id)
@@ -179,26 +178,27 @@ const PageBuilder = () => {
                 active.rect.current.translated &&
                 active.rect.current.translated.right >
                     over.rect.right - over.rect.width / 2;
+
             destinationRow.columns.splice(
                 destinationColIndex + (isRightOfOverItem ? 1 : 0),
                 0,
                 fromCol
             );
             const isAddingNewColumn = fromRowIndex !== destinationRowIndex;
-            // if (isAddingNewColumn && columnTimerId.current === null) {
-            //     columnTimerId.current = setTimeout(() => {
-            //         recentlyMovedToNewContainer.current = true;
-            //         // When we move columns in and out of rows, leave the empty rows so that the layout doesn't jump/shift around too much
-            //         updateItems = updateItems.filter(
-            //             (row) =>
-            //                 row.columns.length > 0 ||
-            //                 updateItems.findIndex((r) => r.id === row.id) <
-            //                     destinationRowIndex
-            //         );
-            //         setItems(updateItems);
-            //         columnTimerId.current = null;
-            //     }, columnDelayTiming);
-            // }
+            if (isAddingNewColumn && columnTimerId.current === null) {
+                columnTimerId.current = setTimeout(() => {
+                    recentlyMovedToNewContainer.current = true;
+                    // When we move columns in and out of rows, leave the empty rows so that the layout doesn't jump/shift around too much
+                    updateItems = updateItems.filter(
+                        (row) =>
+                            row.columns.length > 0 ||
+                            updateItems.findIndex((r) => r.id === row.id) <
+                                destinationRowIndex
+                    );
+                    setItems(updateItems);
+                    columnTimerId.current = null;
+                }, columnDelayTiming);
+            }
         } else {
             const destinationRowIndex = over.data.current.rowIndex;
 
@@ -215,6 +215,7 @@ const PageBuilder = () => {
             if (hoveringOverBottomPlaceholder || hoveringOverTopPlaceholder) {
                 return;
             }
+            const isDecombining = fromRow.columns.length > 1;
 
             updateItems.map((row) => {
                 row.columns = row.columns.filter((col) => col.id !== active.id);
@@ -226,7 +227,7 @@ const PageBuilder = () => {
                     : destinationRowIndex + modifier;
 
             updateItems.splice(index, 0, {
-                id: fromRow.id,
+                id: isDecombining ? uuid() : fromRow.id,
                 columns: [fromCol],
             });
 
@@ -476,7 +477,6 @@ const PageBuilder = () => {
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
-                autoScroll={false}
             >
                 <div className="lesson-content">
                     <div className="grid">

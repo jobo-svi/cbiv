@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useCallback, useRef } from "react";
+import { useVirtualizer, defaultRangeExtractor } from "@tanstack/react-virtual";
 import {
     SortableContext,
     horizontalListSortingStrategy,
