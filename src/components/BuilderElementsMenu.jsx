@@ -66,6 +66,21 @@ const BuilderElementsMenu = () => {
                     </button>
                 </BuilderElementsMenuItem>
             </div>
+            <div className="element-wrapper">
+                <BuilderElementsMenuItem
+                    id="headerAndParagraph-menu-item"
+                    data={{
+                        component: "headerAndParagraph",
+                        height: Components.paragraph.defaultHeight,
+                        isNewElement: true,
+                    }}
+                >
+                    <button className="element">
+                        <FontAwesomeIcon icon="fa-solid fa-heading" /> HEADER
+                        AND PARAGRAPH
+                    </button>
+                </BuilderElementsMenuItem>
+            </div>
         </div>
     );
 };

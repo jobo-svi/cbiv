@@ -44,6 +44,24 @@ export const Components = {
             defaultHeight: 300,
         },
     ],
+    headerAndParagraph: [
+        {
+            type: Header,
+            component: "header",
+            props: {
+                text: "My Header",
+            },
+            defaultHeight: 96,
+        },
+        {
+            type: Paragraph,
+            component: "paragraph",
+            props: {
+                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
+            },
+            defaultHeight: 96,
+        },
+    ],
 };
 
 // Get the props for a component. Recursively handle nested sub-components
