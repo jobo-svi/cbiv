@@ -106,19 +106,6 @@ const PageBuilder = () => {
 
         let updateItems = JSON.parse(JSON.stringify(items));
 
-        // // Special case: For the reorder columns sort animation to work properly when grid is virtualized, we have to wait until drag is finished to update state.
-        // const dragWasColumnReorder =
-        //     active?.id !== over?.id &&
-        //     !active?.data.current.isNewElement &&
-        //     !over?.data.current.isPlaceholder;
-
-        // if (dragWasColumnReorder) {
-        //     const row = getRow(over.id, updateItems);
-        //     const fromColIndex = getColumnIndex(row, active.id);
-        //     const toColIndex = getColumnIndex(row, over.id);
-        //     row.columns = arrayMove(row.columns, fromColIndex, toColIndex);
-        // }
-
         // Replace any placeholder elements with real ids
         updateItems.map((row) => {
             if (row.id.includes("new-row-placeholder")) {
@@ -126,7 +113,7 @@ const PageBuilder = () => {
             }
 
             row.columns.map((col) => {
-                if (col.id === "new-column-placeholder") {
+                if (col.id.includes("new-column-placeholder")) {
                     col.id = uuid();
                 }
             });
@@ -236,9 +223,10 @@ const PageBuilder = () => {
         let updateItems = JSON.parse(JSON.stringify(items));
 
         if (over.data.current.type === "row") {
-            const fromRow = getRow("new-column-placeholder", updateItems);
+            // Move all the new columns from one row to another row
+            const fromRow = getRow("new-column-placeholder-0", updateItems);
             const fromRowIndex = getRowIndex(
-                "new-column-placeholder",
+                "new-column-placeholder-0",
                 updateItems
             );
             // If element is hovering over its own row, or close enough to its own row, no need to swap positions
@@ -254,7 +242,11 @@ const PageBuilder = () => {
                 (collision.data.relativePosition === "above" &&
                     toRowIndex - 1 === fromRowIndex);
 
-            const decombining = fromRow?.columns.length > 1;
+            // If there are non-new columns in the row we're coming from, that indicates that they've been combined with other elements, and we should decombine them
+            //const decombining = fromRow?.columns.length > 1;
+            const decombining = fromRow?.columns.some(
+                (col) => !col.id.includes("new-column-placeholder-")
+            );
 
             if (
                 fromRow &&
@@ -267,50 +259,67 @@ const PageBuilder = () => {
             // is there already a placeholder? Remove it if so.
             updateItems.map((row) => {
                 row.columns = row.columns.filter(
-                    (col) => col.id !== "new-column-placeholder"
+                    (col) => !col.id.includes("new-column-placeholder")
                 );
             });
             updateItems = updateItems.filter((row) => row.columns.length > 0);
 
             // insert new row
+            const cols = Components[active.data.current.component].map(
+                (c, index) => {
+                    return {
+                        id: "new-column-placeholder-" + index,
+                        component: c.component,
+                        props: {
+                            ...c.props,
+                        },
+                    };
+                }
+            );
             const newOb = {
                 id: `new-row-placeholder`,
-                columns: [
-                    {
-                        id: "new-column-placeholder",
-                        component: active.data.current.component,
-                        props: {
-                            ...Components[active.data.current.component].props,
-                        },
-                    },
-                ],
+                columns: [...cols],
             };
 
-            let index = over.data.current.rowIndex; // todo: I don't think rowindex is trustworthy in all cases. Figure something else out.
+            // Where to insert
+            let index = updateItems.findIndex((row) => row.id === over.id);
+
+            // Adjust insert index based on where we're hovering relative to the element
+            if (collision.data.relativePosition === "below") {
+                index += 1;
+            }
+
             updateItems.splice(index, 0, newOb);
+            recentlyMovedToNewContainer.current;
             setItems(updateItems);
         } else if (over.data.current.type === "column") {
             if (columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
-                    // is there already a placeholder? Remove it if so.
+                    // Move all new columns from one row and combine them into another
                     updateItems.map((row) => {
                         row.columns = row.columns.filter(
-                            (col) => col.id !== "new-column-placeholder"
+                            (col) => !col.id.includes("new-column-placeholder")
                         );
                     });
                     // insert new column
-                    updateItems[over.data.current.rowIndex].columns.push({
-                        id: "new-column-placeholder",
-                        component: active.data.current.component,
-                        props: {
-                            ...Components[active.data.current.component].props,
-                        },
-                    });
+                    const cols = Components[active.data.current.component].map(
+                        (c, index) => {
+                            return {
+                                id: "new-column-placeholder-" + index,
+                                component: c.component,
+                                props: {
+                                    ...c.props,
+                                },
+                            };
+                        }
+                    );
+                    updateItems[over.data.current.rowIndex].columns.push(
+                        ...cols
+                    );
+                    recentlyMovedToNewContainer.current;
                     setItems(updateItems);
                     columnTimerId.current = null;
                 }, columnDelayTiming);
-            } else {
-                console.log("timer thing");
             }
         }
     }
@@ -377,6 +386,10 @@ const PageBuilder = () => {
                     args.pointerCoordinates.y >= rect.top &&
                     args.pointerCoordinates.y <= rect.bottom;
 
+                const withinHorizontalBounds =
+                    args.pointerCoordinates.x >= rect.left &&
+                    args.pointerCoordinates.x <= rect.left + rect.width;
+
                 if (!withinVerticalBounds) {
                     return [
                         {
@@ -390,6 +403,18 @@ const PageBuilder = () => {
                             },
                         },
                     ];
+                } else if (withinHorizontalBounds) {
+                    // Handle edge case where you're re-ordering columns, and you drag over the gap between columns.
+                    // This registers as hovering over the underlying row, but we still want the closest column.
+                    const closestCols = closestCenters.filter(
+                        (c) =>
+                            c.data.droppableContainer.data.current.type ===
+                            "column"
+                    );
+                    if (closestCols[0]) {
+                        lastOverId.current = closestCols[0].id;
+                        return [{ id: closestCols[0].id }];
+                    }
                 }
             }
 
@@ -423,13 +448,14 @@ const PageBuilder = () => {
             if (col) {
                 // Copy the existing element into the drag preview
                 return React.createElement(
-                    Components[col.component].type,
+                    Components[col.component][0].type,
                     col.props
                 );
             } else {
                 // Dragging a new item onto the grid, so construct the drag preview using the element defaults
                 let componentType = activeId.replace("-menu-item", "");
-                return constructComponent(Components[componentType]);
+                //return constructComponent(Components[componentType]);
+                return <div>preview</div>;
             }
         }
 
