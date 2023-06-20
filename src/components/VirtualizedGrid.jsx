@@ -1,15 +1,14 @@
-import { useCallback, useRef } from "react";
-import { useVirtualizer, defaultRangeExtractor } from "@tanstack/react-virtual";
+import { useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
     SortableContext,
     horizontalListSortingStrategy,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import Droppable from "./Droppable";
 import SortableGridColumn from "./SortableGridColumn";
 import SortableRow from "./SortableRow";
 
-const VirtualizedGrid = ({ items, activeId }) => {
+const VirtualizedGrid = ({ items, activeId, handleDelete }) => {
     const parentRef = useRef(null);
     const count = items.length;
     const virtualizer = useVirtualizer({
@@ -72,6 +71,9 @@ const VirtualizedGrid = ({ items, activeId }) => {
                                                             rowIndex={rowIndex}
                                                             column={column}
                                                             type="column"
+                                                            handleDelete={
+                                                                handleDelete
+                                                            }
                                                         />
                                                     );
                                                 }

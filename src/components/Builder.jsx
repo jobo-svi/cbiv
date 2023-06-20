@@ -11,13 +11,7 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import {
-    SortableContext,
-    arrayMove,
-    horizontalListSortingStrategy,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import uuid from "react-uuid";
 
@@ -37,18 +31,14 @@ const PageBuilder = () => {
     );
 
     const [previousItems, setPreviousItems] = useState(items);
-
     const [activeId, setActiveId] = useState(null);
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
     const columnTimerId = useRef(null);
 
     // Builder history
-    const { undo, redo, clear, canUndo, canRedo } = useBuilderHistory(
-        activeId,
-        items,
-        previousItems
-    );
+    const { undo, redo, clear, canUndo, canRedo, setHistoryEnabled } =
+        useBuilderHistory(activeId, items, previousItems);
 
     const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -66,6 +56,11 @@ const PageBuilder = () => {
         const { active } = e;
         setPreviousItems(items);
         setActiveId(active.id);
+
+        // Set the width of the drag overlay
+
+        // Don't track history while actively dragging.
+        setHistoryEnabled(false);
     };
 
     const handleDragOver = (e) => {
@@ -116,6 +111,9 @@ const PageBuilder = () => {
         updateItems = updateItems.filter((row) => row.columns.length > 0);
         setItems(updateItems);
         setActiveId(null);
+
+        // We can re-enable history tracking now that dragging has ended.
+        setHistoryEnabled(true);
         lastOverId.current = null;
     };
 
@@ -392,13 +390,8 @@ const PageBuilder = () => {
                 const rect = over.data.droppableContainer.rect.current;
                 const centerOfOverRect = centerOfRectangle(rect);
 
-                const withinVerticalBounds =
-                    args.pointerCoordinates.y >= rect.top &&
-                    args.pointerCoordinates.y <= rect.bottom;
-
-                const withinHorizontalBounds =
-                    args.pointerCoordinates.x >= rect.left &&
-                    args.pointerCoordinates.x <= rect.left + rect.width;
+                const { withinVerticalBounds, withinHorizontalBounds } =
+                    isWithinBounds(rect, args);
 
                 if (!withinVerticalBounds) {
                     return [
@@ -429,6 +422,18 @@ const PageBuilder = () => {
         },
         [activeId, items]
     );
+
+    function isWithinBounds(rect, args) {
+        const withinVerticalBounds =
+            args.pointerCoordinates.y >= rect.top &&
+            args.pointerCoordinates.y <= rect.bottom;
+
+        const withinHorizontalBounds =
+            args.pointerCoordinates.x >= rect.left &&
+            args.pointerCoordinates.x <= rect.left + rect.width;
+
+        return { withinVerticalBounds, withinHorizontalBounds };
+    }
 
     function centerOfRectangle(rect, left = rect.left, top = rect.top) {
         return {
@@ -471,6 +476,20 @@ const PageBuilder = () => {
         return null;
     };
 
+    const handleDelete = (columnId) => {
+        setPreviousItems(items);
+        setHistoryEnabled(true);
+
+        let updateItems = getItems();
+        updateItems.map((row) => {
+            row.columns = row.columns.filter(
+                (col) => !col.id.includes(columnId)
+            );
+        });
+        updateItems = updateItems.filter((row) => row.columns.length > 0);
+        setItems(updateItems);
+    };
+
     const handleUndo = () => {
         setItems(undo());
     };
@@ -484,12 +503,16 @@ const PageBuilder = () => {
         clear();
     };
 
+    function getItems() {
+        return JSON.parse(JSON.stringify(items));
+    }
+
     const handleStressTest = () => {
-        handleClear();
+        setHistoryEnabled(false);
 
         setItems(() => {
             let stressTestItems = [];
-            for (let i = 0; i < 1000; i++) {
+            for (let i = 0; i < 3500; i++) {
                 stressTestItems.push({
                     id: uuid(),
                     columns: [
@@ -532,7 +555,7 @@ const PageBuilder = () => {
                     },
                 }}
             >
-                <div className="lesson-content">
+                <div className="canvas">
                     <div className="grid">
                         <div style={{ padding: "1rem" }}>
                             <button onClick={handleUndo} disabled={!canUndo}>
@@ -552,13 +575,14 @@ const PageBuilder = () => {
                                 RESET
                             </button>
                             <button onClick={handleStressTest}>
-                                GENERATE 1000 PARAGRAPHS
+                                GENERATE 3500 PARAGRAPHS
                             </button>
                         </div>
                         {items.length > 0 ? (
                             <VirtualizedGrid
                                 items={items}
                                 activeId={activeId}
+                                handleDelete={handleDelete}
                             />
                         ) : (
                             <DefaultDroppable />
@@ -570,12 +594,10 @@ const PageBuilder = () => {
                 </div>
                 <DragOverlay dropAnimation={null}>
                     <div
-                        className="drag-handle-visible"
-                        style={{ width: "1280px" }}
+                        className="drag-overlay hovered"
+                        style={{ position: "relative", width: "1280px" }}
                     >
-                        <div className="dragging drag-overlay">
-                            {getComponentForPreview()}
-                        </div>
+                        {getComponentForPreview()}
                         <div className="drag-handle">
                             <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
                         </div>

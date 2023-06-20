@@ -4,6 +4,7 @@ import { create } from "jsondiffpatch/dist/jsondiffpatch.umd";
 export function useBuilderHistory(activeId, items, previousItems) {
     const [index, setIndex] = useState(-1);
     const [lastIndex, setLastIndex] = useState(-1);
+    const [historyEnabled, setHistoryEnabled] = useState(true);
 
     const diffpatcher = create({
         objectHash: function (obj) {
@@ -19,7 +20,8 @@ export function useBuilderHistory(activeId, items, previousItems) {
     useEffect(() => {
         // Only write to history if something changed, and we're done dragging.
         var differences = diffpatcher.diff(previousItems, items);
-        if (activeId !== null || differences === undefined) {
+
+        if (!historyEnabled || differences === undefined) {
             return;
         }
 
@@ -32,17 +34,20 @@ export function useBuilderHistory(activeId, items, previousItems) {
         setIndex(copy.length - 1);
         setLastIndex(copy.length - 1);
 
-        //console.log(`session storage size: ${sessionStorageSize()}kb`);
-    }, [activeId]);
+        console.log(`session storage size: ${sessionStorageSize()}kb`);
+    }, [items, historyEnabled]);
 
     useEffect(() => {
         if (!activeId) {
             // Save to localstorage until we get real saving working.
             localStorage.setItem("builder-session", JSON.stringify(items));
         }
-    }, [activeId, items]);
+    }, [items]);
 
     const undo = () => {
+        // Don't track history while performing undo/redo operations
+        setHistoryEnabled(false);
+
         let sessionHistory = getSessionHistory();
         const differences = sessionHistory[index];
 
@@ -56,6 +61,9 @@ export function useBuilderHistory(activeId, items, previousItems) {
     };
 
     const redo = () => {
+        // Don't track history while performing undo/redo operations
+        setHistoryEnabled(false);
+
         let sessionHistory = getSessionHistory();
 
         const newIndex = Math.min(sessionHistory.length - 1, index + 1);
@@ -104,5 +112,6 @@ export function useBuilderHistory(activeId, items, previousItems) {
         clear,
         canUndo: index >= 0,
         canRedo: index < lastIndex,
+        setHistoryEnabled,
     };
 }

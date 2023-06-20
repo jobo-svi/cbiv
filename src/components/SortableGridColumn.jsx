@@ -26,6 +26,7 @@ const SortableGridColumn = (props) => {
     });
 
     const [showDragHandle, setShowDragHandle] = useState(false);
+    const [hovered, setHovered] = useState(false);
 
     // We don't want anything to scale
     if (transform) {
@@ -40,15 +41,24 @@ const SortableGridColumn = (props) => {
     };
 
     const classes = [];
-    if (showDragHandle && !active) {
-        classes.push("drag-handle-visible");
+    if (hovered && !active) {
+        classes.push("hovered");
     }
+
+    const handleMouseOver = () => {
+        setHovered(true);
+    };
+
+    const handleMouseOut = () => {
+        setHovered(false);
+    };
 
     return (
         <GridColumn
             ref={setNodeRef}
             showDragHandle={showDragHandle}
-            setShowDragHandle={setShowDragHandle}
+            handleMouseOver={handleMouseOver}
+            handleMouseOut={handleMouseOut}
             className={classes.join(" ")}
             style={style}
             {...props}
@@ -60,10 +70,19 @@ const SortableGridColumn = (props) => {
                 {...attributes}
                 className="drag-handle"
                 style={{
-                    display: showDragHandle && !active ? "" : "none",
+                    display: hovered && !active ? "" : "none",
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
+            </div>
+            <div
+                className="delete"
+                style={{
+                    display: hovered && !active ? "" : "none",
+                }}
+                onClick={() => props.handleDelete(props.id)}
+            >
+                <FontAwesomeIcon icon="fa-solid fa-trash-can" />
             </div>
         </GridColumn>
     );

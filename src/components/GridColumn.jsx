@@ -7,8 +7,8 @@ const GridColumn = forwardRef((props, ref) => {
             key={props.id}
             ref={ref}
             className={`grid-column ${props.className}`}
-            onMouseOver={() => props.setShowDragHandle(true)}
-            onMouseOut={() => props.setShowDragHandle(false)}
+            onMouseOver={props.handleMouseOver}
+            onMouseOut={props.handleMouseOut}
             style={{
                 ...props.positionStyle,
                 ...props.style,
