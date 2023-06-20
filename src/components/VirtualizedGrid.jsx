@@ -54,12 +54,6 @@ const VirtualizedGrid = ({ items, activeId }) => {
                                         rowIndex={rowIndex}
                                         type="row"
                                     >
-                                        {/* <Droppable
-                                            id={row.id}
-                                            activeId={activeId}
-                                            items={items}
-                                            rowIndex={rowIndex}
-                                        > */}
                                         <SortableContext
                                             items={row.columns.map(
                                                 (col) => col.id
@@ -83,7 +77,6 @@ const VirtualizedGrid = ({ items, activeId }) => {
                                                 }
                                             )}
                                         </SortableContext>
-                                        {/* </Droppable> */}
                                     </SortableRow>
                                 </div>
                             );

@@ -56,12 +56,11 @@
 .builder .lesson-content {
     background-color: #f8f8f8;
     display: flex;
+    width: 100%;
 }
 
 .builder .grid {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+    width: 100%;
 }
 
 .builder .grid .preview {
@@ -70,15 +69,18 @@
 }
 
 .builder .grid .grid-row {
-    margin: 0 auto;
     display: flex;
-    gap: 24px;
+    margin: 0 auto;
     margin-bottom: 24px;
 }
 
 .builder .grid .grid-column {
     flex-basis: 100%;
     border: 1px solid rgba(0, 0, 0, 0.00);
+}
+
+.builder .grid .grid-column:not(:last-child) {
+    margin-right: 24px;
 }
 
 @media screen and (min-width: 0px) {
@@ -97,6 +99,18 @@
     .grid .grid-row {
         max-width: 1280px;
     }
+}
+
+.preview-container {
+    display: flex;
+}
+
+.preview-column {
+    flex-basis: 100%;
+}
+
+.preview-column:not(:last-child) {
+    margin-right: 24px;
 }
 
 .builder .sidebar {
@@ -174,6 +188,9 @@
     top: 0;
     left: 0;
     width: 100%;
+    /* display: flex;
+    flex-direction: column;
+    gap: 24px; */
 }
 
 /*

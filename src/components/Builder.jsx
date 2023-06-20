@@ -64,11 +64,6 @@ const PageBuilder = () => {
 
     const handleDragStart = (e) => {
         const { active } = e;
-        let activeData = {};
-        if (active.data.current) {
-            activeData = active.data.current;
-        }
-
         setPreviousItems(items);
         setActiveId(active.id);
     };
@@ -403,18 +398,6 @@ const PageBuilder = () => {
                             },
                         },
                     ];
-                } else if (withinHorizontalBounds) {
-                    // Handle edge case where you're re-ordering columns, and you drag over the gap between columns.
-                    // This registers as hovering over the underlying row, but we still want the closest column.
-                    const closestCols = closestCenters.filter(
-                        (c) =>
-                            c.data.droppableContainer.data.current.type ===
-                            "column"
-                    );
-                    if (closestCols[0]) {
-                        lastOverId.current = closestCols[0].id;
-                        return [{ id: closestCols[0].id }];
-                    }
                 }
             }
 
@@ -454,8 +437,19 @@ const PageBuilder = () => {
             } else {
                 // Dragging a new item onto the grid, so construct the drag preview using the element defaults
                 let componentType = activeId.replace("-menu-item", "");
-                //return constructComponent(Components[componentType]);
-                return <div>preview</div>;
+                return (
+                    <div className="preview-container">
+                        {Components[componentType].map((c, index) => {
+                            return (
+                                <div key={uuid()} className="preview-column">
+                                    {constructComponent(
+                                        Components[componentType][index]
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
             }
         }
 
@@ -560,7 +554,10 @@ const PageBuilder = () => {
                     <BuilderElementsMenu />
                 </div>
                 <DragOverlay dropAnimation={null}>
-                    <div className="drag-handle-visible">
+                    <div
+                        className="drag-handle-visible"
+                        style={{ width: "1280px" }}
+                    >
                         <div className="dragging drag-overlay">
                             {getComponentForPreview()}
                         </div>

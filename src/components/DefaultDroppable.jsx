@@ -19,6 +19,7 @@ const DefaultDroppable = (props) => {
                     height: "100px",
                     borderStyle: "dashed",
                     borderColor: "#A2A2A2",
+                    margin: "0 auto",
                 }}
             ></div>
         </div>
