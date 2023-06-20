@@ -78,7 +78,6 @@ const PageBuilder = () => {
         if (!active || !over) {
             return;
         }
-
         // If an element is being hovered over itself, there's nothing to be done
         const isHoveringOverSelf = active.id === over.id;
         if (isHoveringOverSelf) {
@@ -354,14 +353,30 @@ const PageBuilder = () => {
             const pointerIntersections = pointerWithin(args);
 
             // For collisions where pointer is within, we only want collisions with columns, not container rows.
-            const filteredPointerIntersections = pointerIntersections.filter(
+            const columnPointerIntersections = pointerIntersections.filter(
                 (i) => i.data.droppableContainer.data.current.type !== "row"
             );
-            let overId = getFirstCollision(filteredPointerIntersections, "id");
+            let over = getFirstCollision(columnPointerIntersections);
 
-            if (overId != null) {
-                lastOverId.current = overId;
-                return [{ id: overId }];
+            if (over != null) {
+                // TODO: jankiness logic should probably go in the handleDragOver method, not here, because we need context around whether or not user is combining/decombining, and this logic shouldn't about that
+                //
+                // If hovering near the top or bottom edge of a row, don't combine.
+                // Only combine if hovering closer to the center of a row. This reduces jankiness somewhat.
+                // const rect = over.data.droppableContainer.rect.current;
+                // const nearTopEdge =
+                //     args.pointerCoordinates.y >= rect.top &&
+                //     args.pointerCoordinates.y <= rect.top + rect.height / 5;
+
+                // const nearBottomEdge =
+                //     args.pointerCoordinates.y >=
+                //         rect.bottom - rect.height / 5 &&
+                //     args.pointerCoordinates.y <= rect.bottom;
+
+                //if (!nearTopEdge && !nearBottomEdge) {
+                lastOverId.current = over.id;
+                return [{ id: over.id }];
+                //}
             }
 
             // explain this logic
@@ -370,7 +385,7 @@ const PageBuilder = () => {
                 (c) => c.data.droppableContainer.data.current.type === "row"
             );
 
-            const over = getFirstCollision(closestRows);
+            over = getFirstCollision(closestRows);
 
             if (over != null) {
                 // Figure out if we are hovering above or below the nearest element

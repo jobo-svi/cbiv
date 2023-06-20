@@ -96,6 +96,21 @@ const BuilderElementsMenu = () => {
                     </button>
                 </BuilderElementsMenuItem>
             </div>
+            <div className="element-wrapper">
+                <BuilderElementsMenuItem
+                    id="fourFlipCards-menu-item"
+                    data={{
+                        component: "fourFlipCards",
+                        height: Components.flipcard.defaultHeight,
+                        isNewElement: true,
+                    }}
+                >
+                    <button className="element">
+                        <FontAwesomeIcon icon="fa-solid fa-heading" /> FOUR FLIP
+                        CARDS
+                    </button>
+                </BuilderElementsMenuItem>
+            </div>
         </div>
     );
 };

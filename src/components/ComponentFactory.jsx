@@ -81,6 +81,28 @@ export const Components = {
             defaultHeight: 96,
         },
     ],
+    fourFlipCards: [
+        {
+            type: FlipCard,
+            component: "flipcard",
+            defaultHeight: 300,
+        },
+        {
+            type: FlipCard,
+            component: "flipcard",
+            defaultHeight: 300,
+        },
+        {
+            type: FlipCard,
+            component: "flipcard",
+            defaultHeight: 300,
+        },
+        {
+            type: FlipCard,
+            component: "flipcard",
+            defaultHeight: 300,
+        },
+    ],
 };
 
 // Get the props for a component. Recursively handle nested sub-components
