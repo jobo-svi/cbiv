@@ -25,10 +25,6 @@ export function useBuilderHistory(activeId, items, previousItems) {
             return;
         }
 
-        var output = formatters.jsonpatch.format(differences);
-        // console.log(JSON.stringify(previousItems));
-        // console.log(JSON.stringify(output));
-
         // This removes all future (redo) states after current index.
         let sessionHistory = getSessionHistory();
         const copy = sessionHistory.slice(0, index + 1);
@@ -40,13 +36,6 @@ export function useBuilderHistory(activeId, items, previousItems) {
 
         console.log(`session storage size: ${sessionStorageSize()}kb`);
     }, [items, historyEnabled]);
-
-    useEffect(() => {
-        if (!activeId) {
-            // Save to localstorage until we get real saving working.
-            localStorage.setItem("builder-session", JSON.stringify(items));
-        }
-    }, [items]);
 
     const undo = () => {
         // Don't track history while performing undo/redo operations

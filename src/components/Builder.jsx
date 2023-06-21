@@ -515,6 +515,11 @@ const PageBuilder = () => {
         clear();
     };
 
+    const handleSave = () => {
+        // in place of saving to database, save to localstorage
+        localStorage.setItem("builder-session", JSON.stringify(items));
+    };
+
     function getItems() {
         return JSON.parse(JSON.stringify(items));
     }
@@ -586,6 +591,7 @@ const PageBuilder = () => {
                             >
                                 RESET
                             </button>
+                            <button onClick={handleSave}>SAVE</button>
                             <button onClick={handleStressTest}>
                                 GENERATE 3500 PARAGRAPHS
                             </button>
