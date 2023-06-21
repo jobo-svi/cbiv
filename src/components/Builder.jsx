@@ -23,6 +23,7 @@ import BuilderNavbar from "./BuilderNavbar";
 import { Components, constructComponent } from "./ComponentFactory";
 import DefaultDroppable from "./DefaultDroppable";
 import VirtualizedGrid from "./VirtualizedGrid";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -284,6 +285,8 @@ const PageBuilder = () => {
             updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current;
             setItems(updateItems);
+            setDragOverlayWidth(over.rect.width);
+            setDragOverlayScale(1);
         } else if (over.data.current.type === "column") {
             if (columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
@@ -311,6 +314,9 @@ const PageBuilder = () => {
                     recentlyMovedToNewContainer.current;
                     setItems(updateItems);
                     columnTimerId.current = null;
+
+                    setDragOverlayWidth(over.rect.width);
+                    setDragOverlayScale(0.5);
                 }, columnDelayTiming);
             }
         }
@@ -552,6 +558,10 @@ const PageBuilder = () => {
         });
     };
 
+    const [dragOverlayWidth, setDragOverlayWidth] = useState(1280);
+    const [dragOverlayScale, setDragOverlayScale] = useState(1);
+    const dragOverlayRef = useRef(null);
+
     return (
         <div className="builder">
             <BuilderNavbar />
@@ -611,9 +621,17 @@ const PageBuilder = () => {
                 <DragOverlay dropAnimation={null}>
                     <div
                         className="drag-overlay hovered"
-                        style={{ position: "relative", width: "1280px" }}
+                        style={{
+                            position: "relative",
+                            //transform: `scaleX(${dragOverlayScale})`,
+                        }}
                     >
-                        {getComponentForPreview()}
+                        {/* {getComponentForPreview()} */}
+                        <div
+                            style={{ transform: `scaleX(${dragOverlayScale})` }}
+                        >
+                            asdf
+                        </div>
                         <div className="drag-handle">
                             <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
                         </div>
