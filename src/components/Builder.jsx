@@ -73,6 +73,7 @@ const PageBuilder = () => {
         if (!active || !over) {
             return;
         }
+
         // If an element is being hovered over itself, there's nothing to be done
         const isHoveringOverSelf = active.id === over.id;
         if (isHoveringOverSelf) {
@@ -221,12 +222,13 @@ const PageBuilder = () => {
                 "new-column-placeholder-0",
                 updateItems
             );
-            // If element is hovering over its own row, or close enough to its own row, no need to swap positions
-            const hoveringOverSelf = fromRow?.id === over.id;
-
             const toRowIndex = updateItems.findIndex(
                 (row) => row.id === over.id
             );
+
+            // If element is hovering over its own row, or close enough to its own row, no need to swap positions
+            const hoveringOverSelf = fromRow?.id === over.id;
+
             const collision = collisions.find((c) => c.id === over.id);
             const hoveringNextToSelf =
                 (collision.data.relativePosition === "below" &&
@@ -235,7 +237,6 @@ const PageBuilder = () => {
                     toRowIndex - 1 === fromRowIndex);
 
             // If there are non-new columns in the row we're coming from, that indicates that they've been combined with other elements, and we should decombine them
-            //const decombining = fromRow?.columns.length > 1;
             const decombining = fromRow?.columns.some(
                 (col) => !col.id.includes("new-column-placeholder-")
             );
@@ -247,7 +248,6 @@ const PageBuilder = () => {
             ) {
                 return;
             }
-            console.log(fromRow, over.id);
 
             // is there already a placeholder? Remove it if so.
             updateItems.map((row) => {
@@ -255,7 +255,13 @@ const PageBuilder = () => {
                     (col) => !col.id.includes("new-column-placeholder")
                 );
             });
-            updateItems = updateItems.filter((row) => row.columns.length > 0);
+
+            // Where to insert
+            let index = updateItems.findIndex((row) => row.id === over.id);
+            // Adjust insert index based on where we're hovering relative to the element
+            if (collision.data.relativePosition === "below") {
+                index += 1;
+            }
 
             // insert new row
             const cols = Components[active.data.current.component].map(
@@ -274,15 +280,8 @@ const PageBuilder = () => {
                 columns: [...cols],
             };
 
-            // Where to insert
-            let index = updateItems.findIndex((row) => row.id === over.id);
-
-            // Adjust insert index based on where we're hovering relative to the element
-            if (collision.data.relativePosition === "below") {
-                index += 1;
-            }
-
             updateItems.splice(index, 0, newOb);
+            updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current;
             setItems(updateItems);
         } else if (over.data.current.type === "column") {

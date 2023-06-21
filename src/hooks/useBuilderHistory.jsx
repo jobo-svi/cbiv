@@ -34,7 +34,7 @@ export function useBuilderHistory(activeId, items, previousItems) {
         setIndex(copy.length - 1);
         setLastIndex(copy.length - 1);
 
-        console.log(`session storage size: ${sessionStorageSize()}kb`);
+        //console.log(`session storage size: ${sessionStorageSize()}kb`);
     }, [items, historyEnabled]);
 
     const undo = () => {
