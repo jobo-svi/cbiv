@@ -14,6 +14,10 @@ const SortableRow = (props) => {
     } = useSortable({
         id: props.id,
         disabled: true,
+        transition: {
+            duration: 275, // milliseconds
+            easing: "ease-in-out",
+        },
         data: { type: props.type, rowIndex: props.rowIndex },
     });
 

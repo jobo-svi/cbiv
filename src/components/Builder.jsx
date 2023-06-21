@@ -247,6 +247,7 @@ const PageBuilder = () => {
             ) {
                 return;
             }
+            console.log(fromRow, over.id);
 
             // is there already a placeholder? Remove it if so.
             updateItems.map((row) => {
@@ -371,8 +372,6 @@ const PageBuilder = () => {
                         rect.bottom - rect.height / 3 &&
                     args.pointerCoordinates.y <= rect.bottom;
                 const nearEdge = nearTopEdge || nearBottomEdge;
-
-                console.log(args.active, items);
 
                 // only apply if not near edge, or you ARE near the edge but you're in a combined column
                 const row = items.find((row) =>

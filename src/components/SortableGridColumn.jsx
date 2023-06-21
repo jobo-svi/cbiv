@@ -17,6 +17,10 @@ const SortableGridColumn = (props) => {
         active,
     } = useSortable({
         id: props.id,
+        transition: {
+            duration: 275, // milliseconds
+            easing: "ease-in-out",
+        },
         data: {
             id: props.id,
             index: props.index,
