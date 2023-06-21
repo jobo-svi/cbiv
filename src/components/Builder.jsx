@@ -357,24 +357,36 @@ const PageBuilder = () => {
             let over = getFirstCollision(columnPointerIntersections);
 
             if (over != null) {
-                // TODO: jankiness logic should probably go in the handleDragOver method, not here, because we need context around whether or not user is combining/decombining, and this logic shouldn't about that
-                //
+                // TODO: This anti jank logic, itself, is a bit janky when combining/decombining with large images, because the size of the threshold changes based on the height of the element.
+                //       Maybe it should only apply when combining, and NOT when decombining.
                 // If hovering near the top or bottom edge of a row, don't combine.
                 // Only combine if hovering closer to the center of a row. This reduces jankiness somewhat.
-                // const rect = over.data.droppableContainer.rect.current;
-                // const nearTopEdge =
-                //     args.pointerCoordinates.y >= rect.top &&
-                //     args.pointerCoordinates.y <= rect.top + rect.height / 5;
+                const rect = over.data.droppableContainer.rect.current;
+                const nearTopEdge =
+                    args.pointerCoordinates.y >= rect.top &&
+                    args.pointerCoordinates.y <= rect.top + rect.height / 3;
 
-                // const nearBottomEdge =
-                //     args.pointerCoordinates.y >=
-                //         rect.bottom - rect.height / 5 &&
-                //     args.pointerCoordinates.y <= rect.bottom;
+                const nearBottomEdge =
+                    args.pointerCoordinates.y >=
+                        rect.bottom - rect.height / 3 &&
+                    args.pointerCoordinates.y <= rect.bottom;
+                const nearEdge = nearTopEdge || nearBottomEdge;
 
-                //if (!nearTopEdge && !nearBottomEdge) {
-                lastOverId.current = over.id;
-                return [{ id: over.id }];
-                //}
+                console.log(args.active, items);
+
+                // only apply if not near edge, or you ARE near the edge but you're in a combined column
+                const row = items.find((row) =>
+                    row.columns.find(
+                        (col) =>
+                            col.id === args.active.id ||
+                            col.id.includes("new-column-placeholder")
+                    )
+                );
+                const isInCombinedColumn = row?.columns.length > 1;
+                if (!nearEdge || isInCombinedColumn) {
+                    lastOverId.current = over.id;
+                    return [{ id: over.id }];
+                }
             }
 
             // explain this logic

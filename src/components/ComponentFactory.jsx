@@ -34,7 +34,7 @@ export const Components = {
                 src: `img/image-2.jpg`,
                 alt: "Alt Text",
             },
-            defaultHeight: 826,
+            defaultHeight: 500,
         },
     ],
     flipcard: [

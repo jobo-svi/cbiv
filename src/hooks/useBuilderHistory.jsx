@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { create } from "jsondiffpatch/dist/jsondiffpatch.umd";
+import { create, formatters } from "jsondiffpatch/dist/jsondiffpatch.umd";
 
 export function useBuilderHistory(activeId, items, previousItems) {
     const [index, setIndex] = useState(-1);
@@ -24,6 +24,10 @@ export function useBuilderHistory(activeId, items, previousItems) {
         if (!historyEnabled || differences === undefined) {
             return;
         }
+
+        var output = formatters.jsonpatch.format(differences);
+        // console.log(JSON.stringify(previousItems));
+        // console.log(JSON.stringify(output));
 
         // This removes all future (redo) states after current index.
         let sessionHistory = getSessionHistory();
