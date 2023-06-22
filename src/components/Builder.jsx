@@ -32,6 +32,11 @@ const PageBuilder = () => {
 
     const [previousItems, setPreviousItems] = useState(items);
     const [activeId, setActiveId] = useState(null);
+    const [itemToEdit, setItemToEdit] = useState(null);
+    // How long you have to wait before item combines with an existing row
+    const [columnDelayTiming, setColumnDelayTiming] = useState(450);
+    const [dragOverlayWidth, setDragOverlayWidth] = useState(0);
+
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
     const columnTimerId = useRef(null);
@@ -40,11 +45,6 @@ const PageBuilder = () => {
     // Builder history
     const { undo, redo, clear, canUndo, canRedo, setHistoryEnabled } =
         useBuilderHistory(activeId, items, previousItems);
-
-    const [itemToEdit, setItemToEdit] = useState(null);
-
-    // How long you have to wait before item combines with an existing row
-    const [columnDelayTiming, setColumnDelayTiming] = useState(450);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -65,11 +65,7 @@ const PageBuilder = () => {
                 .getBoundingClientRect();
 
             setDragOverlayWidth(columnDimensions.width);
-            setDragOverlayHeight(columnDimensions.height);
         } else {
-            setDragOverlayHeight(
-                Components[active.data.current.component].defaultHeight
-            );
             setDragOverlayWidth(gridWrapperRef.current.clientWidth);
         }
 
@@ -185,7 +181,6 @@ const PageBuilder = () => {
                             updateItems[over.data.current.rowIndex].columns
                                 .length
                     );
-                    setDragOverlayHeight(over.rect.height);
                 }, columnDelayTiming);
             } else {
                 setItems(updateItems);
@@ -489,7 +484,7 @@ const PageBuilder = () => {
         };
     }
 
-    const getComponentForPreview = () => {
+    const getDragPreview = () => {
         if (activeId !== null) {
             let col = items
                 .flatMap((row) => row.columns)
@@ -589,9 +584,6 @@ const PageBuilder = () => {
         });
     };
 
-    const [dragOverlayWidth, setDragOverlayWidth] = useState(1280);
-    const [dragOverlayHeight, setDragOverlayHeight] = useState(0);
-
     return (
         <div className="builder">
             <BuilderNavbar />
@@ -666,7 +658,7 @@ const PageBuilder = () => {
                                 background: "#F8F8F8",
                             }}
                         >
-                            {getComponentForPreview()}
+                            {getDragPreview()}
                         </div>
                         <div className="drag-handle">
                             <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
