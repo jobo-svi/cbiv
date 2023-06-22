@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { forwardRef, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
     SortableContext,
@@ -7,8 +7,9 @@ import {
 } from "@dnd-kit/sortable";
 import SortableGridColumn from "./SortableGridColumn";
 import SortableRow from "./SortableRow";
+import DefaultDroppable from "./DefaultDroppable";
 
-const VirtualizedGrid = ({ items, activeId, handleDelete }) => {
+const VirtualizedGrid = forwardRef(({ items, activeId, handleDelete }, ref) => {
     const parentRef = useRef(null);
     const count = items.length;
     const virtualizer = useVirtualizer({
@@ -34,60 +35,78 @@ const VirtualizedGrid = ({ items, activeId, handleDelete }) => {
                     <div
                         className="virtualize-inner-scroller"
                         style={{
-                            transform: `translateY(${vItems[0].start}px)`,
+                            transform: `translateY(${
+                                vItems.length > 0 ? vItems[0].start : 0
+                            }px)`,
                         }}
                     >
-                        {vItems.map((virtualRow) => {
-                            const row = items[virtualRow.index];
-                            const rowIndex = virtualRow.index;
-                            return (
-                                <div
-                                    key={row.id}
-                                    data-index={virtualRow.index}
-                                    ref={virtualizer.measureElement}
-                                >
-                                    <SortableRow
-                                        id={row.id}
-                                        activeId={activeId}
-                                        items={items}
-                                        rowIndex={rowIndex}
-                                        type="row"
-                                    >
-                                        <SortableContext
-                                            items={row.columns.map(
-                                                (col) => col.id
-                                            )}
-                                            strategy={
-                                                horizontalListSortingStrategy
-                                            }
+                        <div className="grid-wrapper" ref={ref}>
+                            {items.length === 0 && <DefaultDroppable />}
+                            {items.length > 0 &&
+                                vItems.map((virtualRow) => {
+                                    const row = items[virtualRow.index];
+                                    const rowIndex = virtualRow.index;
+                                    return (
+                                        <div
+                                            key={row.id}
+                                            data-index={virtualRow.index}
+                                            ref={virtualizer.measureElement}
                                         >
-                                            {items[rowIndex].columns.map(
-                                                (column, colIndex) => {
-                                                    return (
-                                                        <SortableGridColumn
-                                                            id={column.id}
-                                                            key={column.id}
-                                                            index={colIndex}
-                                                            rowIndex={rowIndex}
-                                                            column={column}
-                                                            type="column"
-                                                            handleDelete={
-                                                                handleDelete
-                                                            }
-                                                        />
-                                                    );
-                                                }
-                                            )}
-                                        </SortableContext>
-                                    </SortableRow>
-                                </div>
-                            );
-                        })}
+                                            <SortableRow
+                                                id={row.id}
+                                                activeId={activeId}
+                                                items={items}
+                                                rowIndex={rowIndex}
+                                                type="row"
+                                            >
+                                                <SortableContext
+                                                    items={row.columns.map(
+                                                        (col) => col.id
+                                                    )}
+                                                    strategy={
+                                                        horizontalListSortingStrategy
+                                                    }
+                                                >
+                                                    {items[
+                                                        rowIndex
+                                                    ].columns.map(
+                                                        (column, colIndex) => {
+                                                            return (
+                                                                <SortableGridColumn
+                                                                    id={
+                                                                        column.id
+                                                                    }
+                                                                    key={
+                                                                        column.id
+                                                                    }
+                                                                    index={
+                                                                        colIndex
+                                                                    }
+                                                                    rowIndex={
+                                                                        rowIndex
+                                                                    }
+                                                                    column={
+                                                                        column
+                                                                    }
+                                                                    type="column"
+                                                                    handleDelete={
+                                                                        handleDelete
+                                                                    }
+                                                                />
+                                                            );
+                                                        }
+                                                    )}
+                                                </SortableContext>
+                                            </SortableRow>
+                                        </div>
+                                    );
+                                })}
+                        </div>
                     </div>
                 </div>
             </div>
         </SortableContext>
     );
-};
+});
 
 export default VirtualizedGrid;

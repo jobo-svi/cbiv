@@ -10,7 +10,7 @@ const DefaultDroppable = (props) => {
         },
     });
     return (
-        <div>
+        <div style={{ margin: "0 1rem" }}>
             <div
                 id="initial-droppable"
                 ref={setNodeRef}

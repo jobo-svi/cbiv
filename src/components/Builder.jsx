@@ -35,6 +35,7 @@ const PageBuilder = () => {
     const lastOverId = useRef(null);
     const recentlyMovedToNewContainer = useRef(false);
     const columnTimerId = useRef(null);
+    const gridWrapperRef = useRef(null);
 
     // Builder history
     const { undo, redo, clear, canUndo, canRedo, setHistoryEnabled } =
@@ -56,6 +57,21 @@ const PageBuilder = () => {
         const { active } = e;
         setPreviousItems(items);
         setActiveId(active.id);
+
+        // Dndkit doesn't know what element we're hovering over when dragging starts, so we gotta manually get the dimensions with vanilla js
+        if (!active.data.current.isNewElement) {
+            const columnDimensions = document
+                .getElementById(active.id)
+                .getBoundingClientRect();
+
+            setDragOverlayWidth(columnDimensions.width);
+            setDragOverlayHeight(columnDimensions.height);
+        } else {
+            setDragOverlayHeight(
+                Components[active.data.current.component].defaultHeight
+            );
+            setDragOverlayWidth(gridWrapperRef.current.clientWidth);
+        }
 
         // Don't track history while actively dragging.
         setHistoryEnabled(false);
@@ -163,6 +179,13 @@ const PageBuilder = () => {
                     );
                     setItems(updateItems);
                     columnTimerId.current = null;
+
+                    setDragOverlayWidth(
+                        gridWrapperRef.current.clientWidth /
+                            updateItems[over.data.current.rowIndex].columns
+                                .length
+                    );
+                    setDragOverlayHeight(over.rect.height);
                 }, columnDelayTiming);
             } else {
                 setItems(updateItems);
@@ -206,6 +229,7 @@ const PageBuilder = () => {
             updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current = true;
             setItems(updateItems);
+            setDragOverlayWidth(gridWrapperRef.current.clientWidth);
         }
     }
 
@@ -253,11 +277,12 @@ const PageBuilder = () => {
                 );
             });
 
-            // Where to insert
-            let index = updateItems.findIndex((row) => row.id === over.id);
             // Adjust insert index based on where we're hovering relative to the element
+            let insertIndex = updateItems.findIndex(
+                (row) => row.id === over.id
+            );
             if (collision.data.relativePosition === "below") {
-                index += 1;
+                insertIndex += 1;
             }
 
             // insert new row
@@ -277,13 +302,11 @@ const PageBuilder = () => {
                 columns: [...cols],
             };
 
-            updateItems.splice(index, 0, newOb);
+            updateItems.splice(insertIndex, 0, newOb);
             updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current;
             setItems(updateItems);
-
-            setDragOverlayWidth(over.rect.width);
-            setDragOverlayScale(1);
+            setDragOverlayWidth(gridWrapperRef.current.clientWidth);
         } else if (over.data.current.type === "column") {
             if (columnTimerId.current === null) {
                 const hoveringOverSelf = over?.id.includes(
@@ -319,8 +342,12 @@ const PageBuilder = () => {
                     setItems(updateItems);
                     recentlyMovedToNewContainer.current;
                     columnTimerId.current = null;
-                    setDragOverlayWidth(over.rect.width);
-                    setDragOverlayScale(0.5);
+                    const width =
+                        (gridWrapperRef.current.clientWidth /
+                            updateItems[over.data.current.rowIndex].columns
+                                .length) *
+                        cols.length;
+                    setDragOverlayWidth(width);
                 }, columnDelayTiming);
             }
         }
@@ -563,7 +590,7 @@ const PageBuilder = () => {
     };
 
     const [dragOverlayWidth, setDragOverlayWidth] = useState(1280);
-    const [dragOverlayScale, setDragOverlayScale] = useState(1);
+    const [dragOverlayHeight, setDragOverlayHeight] = useState(0);
 
     return (
         <div className="builder">
@@ -607,15 +634,12 @@ const PageBuilder = () => {
                                 GENERATE 3500 PARAGRAPHS
                             </button>
                         </div>
-                        {items.length > 0 ? (
-                            <VirtualizedGrid
-                                items={items}
-                                activeId={activeId}
-                                handleDelete={handleDelete}
-                            />
-                        ) : (
-                            <DefaultDroppable />
-                        )}
+                        <VirtualizedGrid
+                            items={items}
+                            ref={gridWrapperRef}
+                            activeId={activeId}
+                            handleDelete={handleDelete}
+                        />
                     </div>
                 </div>
                 <div className="sidebar" style={{ overflow: "auto" }}>
@@ -626,14 +650,20 @@ const PageBuilder = () => {
                         className="drag-overlay hovered"
                         style={{
                             position: "relative",
-                            width: "1280px",
+                            width: `${gridWrapperRef.current?.clientWidth}px`,
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "flex-end",
                         }}
                     >
                         <div
                             style={{
-                                //transform: `scaleX(${dragOverlayScale})`,
                                 width: `${dragOverlayWidth}px`,
-                                border: "1px solid red",
+                                border: "1px solid rgba(0, 0, 0, 0.05)",
+                                boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+                                borderRadius: "4px",
+                                transition: "width 300ms ease",
+                                background: "#F8F8F8",
                             }}
                         >
                             {getComponentForPreview()}

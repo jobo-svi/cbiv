@@ -87,20 +87,30 @@
     margin-right: 24px;
 }
 
+.grid .grid-wrapper {
+    margin: 0 auto;
+}
+
 @media screen and (min-width: 0px) {
-    .grid .grid-row {
-        max-width: 480px;
+
+    .grid .grid-wrapper,
+    #initial-droppable {
+        max-width: 1280px;
     }
 }
 
 @media screen and (min-width: 600px) {
-    .grid .grid-row {
-        max-width: 960px;
+
+    .grid .grid-wrapper,
+    #initial-droppable {
+        max-width: 1280px;
     }
 }
 
 @media screen and (min-width: 1024px) {
-    .grid .grid-row {
+
+    .grid .grid-wrapper,
+    #initial-droppable {
         max-width: 1280px;
     }
 }
@@ -348,22 +358,20 @@
     padding: 15px;
 }
 
-.builder .grid-column.hovered,
-.builder .drag-overlay.hovered {
+.builder .grid-column.hovered {
     border: 1px solid rgba(0, 0, 0, 0.05);
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     border-radius: 4px;
 }
 
-.builder .grid-column.dragging,
-.builder .drag-overlay.dragging {
+.builder .grid-column.dragging {
     opacity: 0.5;
 }
 
-.builder .drag-overlay {
+/* .builder .drag-overlay {
     background: #f8f8f8;
     opacity: .8;
-}
+} */
 
 .builder .grid-column .delete {
     color: rgb(226, 27, 27);
