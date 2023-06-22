@@ -79,7 +79,8 @@
 
 .builder .grid .grid-column {
     position: relative;
-    flex-basis: 100%;
+    /* flex-basis: 100%; */
+    flex: 1;
     border: 1px solid rgba(0, 0, 0, 0.00);
 }
 
@@ -120,7 +121,8 @@
 }
 
 .preview-container .preview-column {
-    flex-basis: 100%;
+    /* flex-basis: 100%; */
+    flex: 1;
 }
 
 .preview-container .preview-column:not(:last-child) {
