@@ -24,6 +24,13 @@ import { Components, constructComponent } from "./ComponentFactory";
 import DefaultDroppable from "./DefaultDroppable";
 import VirtualizedGrid from "./VirtualizedGrid";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
+import { create } from "jsondiffpatch/dist/jsondiffpatch.umd";
+
+const diffpatcher = create({
+    objectHash: function (obj) {
+        return obj.id;
+    },
+});
 
 const PageBuilder = () => {
     // The lesson elements
@@ -141,6 +148,7 @@ const PageBuilder = () => {
             updateItems[fromRowIndex].columns = updateItems[
                 fromRowIndex
             ].columns.filter((col) => col.id !== fromCol.id);
+
             // Figure out which side of column we're dragging element onto
             const isRightOfOverItem =
                 over &&
@@ -157,7 +165,6 @@ const PageBuilder = () => {
             const isAddingNewColumn = fromRowIndex !== toRowIndex;
             if (isAddingNewColumn && columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
-                    recentlyMovedToNewContainer.current = true;
                     // When we move columns in and out of rows, leave the empty rows so that the layout doesn't jump/shift around too much
                     updateItems = updateItems.filter(
                         (row) =>
@@ -165,31 +172,26 @@ const PageBuilder = () => {
                             updateItems.findIndex((r) => r.id === row.id) <
                                 toRowIndex
                     );
-                    setItems(updateItems);
-                    columnTimerId.current = null;
+
+                    var differences = diffpatcher.diff(items, updateItems);
+                    if (differences !== undefined) {
+                        setItems(updateItems);
+                        recentlyMovedToNewContainer.current = true;
+                        columnTimerId.current = null;
+                    }
                 }, columnDelayTiming);
             } else {
-                setItems(updateItems);
+                var differences = diffpatcher.diff(items, updateItems);
+                if (differences !== undefined) {
+                    setItems(updateItems);
+                }
             }
         } else if (over.data.current.type === "row") {
-            // If element is hovering over its own row, or close enough to its own row, no need to swap positions
-            const hoveringOverSelf = fromRow?.id === over.id;
-
             const toRowIndex = updateItems.findIndex(
                 (row) => row.id === over.id
             );
             const collision = collisions.find((c) => c.id === over.id);
-            const hoveringNextToSelf =
-                (collision.data.relativePosition === "below" &&
-                    toRowIndex + 1 === fromRowIndex) ||
-                (collision.data.relativePosition === "above" &&
-                    toRowIndex - 1 === fromRowIndex);
-
             const decombining = fromRow?.columns.length > 1;
-
-            if (!decombining && (hoveringOverSelf || hoveringNextToSelf)) {
-                return;
-            }
 
             // first remove orig location
             updateItems.map((row) => {
@@ -208,48 +210,20 @@ const PageBuilder = () => {
             );
 
             updateItems = updateItems.filter((row) => row.columns.length > 0);
-            recentlyMovedToNewContainer.current = true;
-            setItems(updateItems);
+
+            var differences = diffpatcher.diff(items, updateItems);
+            if (differences !== undefined) {
+                recentlyMovedToNewContainer.current = true;
+                setItems(updateItems);
+            }
         }
     }
 
     function addNewElement(over, active, collisions) {
         let updateItems = JSON.parse(JSON.stringify(items));
 
+        // Move all the new columns from one row to another row
         if (over.data.current.type === "row") {
-            // Move all the new columns from one row to another row
-            const fromRow = getRow("new-column-placeholder-0", updateItems);
-            const fromRowIndex = getRowIndex(
-                "new-column-placeholder-0",
-                updateItems
-            );
-            const toRowIndex = updateItems.findIndex(
-                (row) => row.id === over.id
-            );
-
-            // If element is hovering over its own row, or close enough to its own row, no need to swap positions
-            const hoveringOverSelf = fromRow?.id === over.id;
-
-            const collision = collisions.find((c) => c.id === over.id);
-            const hoveringNextToSelf =
-                (collision.data.relativePosition === "below" &&
-                    toRowIndex + 1 === fromRowIndex) ||
-                (collision.data.relativePosition === "above" &&
-                    toRowIndex - 1 === fromRowIndex);
-
-            // If there are non-new columns in the row we're coming from, that indicates that they've been combined with other elements, and we should decombine them
-            const decombining = fromRow?.columns.some(
-                (col) => !col.id.includes("new-column-placeholder-")
-            );
-
-            if (
-                fromRow &&
-                !decombining &&
-                (hoveringOverSelf || hoveringNextToSelf)
-            ) {
-                return;
-            }
-
             // is there already a placeholder? Remove it if so.
             updateItems.map((row) => {
                 row.columns = row.columns.filter(
@@ -257,9 +231,10 @@ const PageBuilder = () => {
                 );
             });
 
-            // Where to insert
-            let index = updateItems.findIndex((row) => row.id === over.id);
             // Adjust insert index based on where we're hovering relative to the element
+            let index = updateItems.findIndex((row) => row.id === over.id);
+
+            const collision = collisions.find((c) => c.id === over.id);
             if (collision.data.relativePosition === "below") {
                 index += 1;
             }
@@ -283,10 +258,14 @@ const PageBuilder = () => {
 
             updateItems.splice(index, 0, newOb);
             updateItems = updateItems.filter((row) => row.columns.length > 0);
-            recentlyMovedToNewContainer.current;
-            setItems(updateItems);
-            setDragOverlayWidth(over.rect.width);
-            setDragOverlayScale(1);
+
+            var differences = diffpatcher.diff(items, updateItems);
+            if (differences !== undefined) {
+                recentlyMovedToNewContainer.current;
+                setItems(updateItems);
+                setDragOverlayWidth(over.rect.width);
+                setDragOverlayScale(1);
+            }
         } else if (over.data.current.type === "column") {
             if (columnTimerId.current === null) {
                 columnTimerId.current = setTimeout(() => {
@@ -296,6 +275,7 @@ const PageBuilder = () => {
                             (col) => !col.id.includes("new-column-placeholder")
                         );
                     });
+
                     // insert new column
                     const cols = Components[active.data.current.component].map(
                         (c, index) => {
@@ -311,12 +291,15 @@ const PageBuilder = () => {
                     updateItems[over.data.current.rowIndex].columns.push(
                         ...cols
                     );
-                    recentlyMovedToNewContainer.current;
-                    setItems(updateItems);
-                    columnTimerId.current = null;
+                    var differences = diffpatcher.diff(items, updateItems);
 
-                    setDragOverlayWidth(over.rect.width);
-                    setDragOverlayScale(0.5);
+                    if (differences !== undefined) {
+                        setItems(updateItems);
+                        recentlyMovedToNewContainer.current;
+                        columnTimerId.current = null;
+                        setDragOverlayWidth(over.rect.width);
+                        setDragOverlayScale(0.5);
+                    }
                 }, columnDelayTiming);
             }
         }
@@ -623,14 +606,17 @@ const PageBuilder = () => {
                         className="drag-overlay hovered"
                         style={{
                             position: "relative",
-                            //transform: `scaleX(${dragOverlayScale})`,
+                            width: "1280px",
                         }}
                     >
-                        {/* {getComponentForPreview()} */}
                         <div
-                            style={{ transform: `scaleX(${dragOverlayScale})` }}
+                            style={{
+                                //transform: `scaleX(${dragOverlayScale})`,
+                                width: `${dragOverlayWidth}px`,
+                                border: "1px solid red",
+                            }}
                         >
-                            asdf
+                            {getComponentForPreview()}
                         </div>
                         <div className="drag-handle">
                             <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />

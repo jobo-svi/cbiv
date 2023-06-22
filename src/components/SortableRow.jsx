@@ -15,8 +15,8 @@ const SortableRow = (props) => {
         id: props.id,
         disabled: true,
         transition: {
-            duration: 275, // milliseconds
-            easing: "ease-in-out",
+            duration: 300, // milliseconds
+            easing: "ease",
         },
         data: { type: props.type, rowIndex: props.rowIndex },
     });
