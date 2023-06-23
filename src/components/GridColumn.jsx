@@ -1,22 +1,35 @@
 import React, { forwardRef } from "react";
 
-const GridColumn = forwardRef((props, ref) => {
-    return (
-        <div
-            id={props.id}
-            key={props.id}
-            ref={ref}
-            className={`grid-column ${props.className}`}
-            onMouseOver={props.handleMouseOver}
-            onMouseOut={props.handleMouseOut}
-            style={{
-                ...props.positionStyle,
-                ...props.style,
-            }}
-        >
-            {props.children}
-        </div>
-    );
-});
+const GridColumn = forwardRef(
+    (
+        {
+            id,
+            children,
+            column,
+            className,
+            handleMouseOver,
+            handleMouseOut,
+            style,
+        },
+        ref
+    ) => {
+        return (
+            <div
+                id={id}
+                key={id}
+                ref={ref}
+                className={`grid-column ${className}`}
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
+                style={{
+                    ...style,
+                    ...(column.props.style ? column.props.style : {}),
+                }}
+            >
+                {children}
+            </div>
+        );
+    }
+);
 
 export default GridColumn;

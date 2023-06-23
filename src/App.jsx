@@ -10,6 +10,7 @@ import {
     faRotateLeft,
     faRotateRight,
     faTrashCan,
+    faGripVertical,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -20,7 +21,8 @@ library.add(
     faUpDownLeftRight,
     faRotateLeft,
     faRotateRight,
-    faTrashCan
+    faTrashCan,
+    faGripVertical
 );
 
 function App() {

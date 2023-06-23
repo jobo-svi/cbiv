@@ -40,12 +40,26 @@ const SortableRow = (props) => {
         }
     }
 
+    const gridTemplateColumns = props.items[props.rowIndex].columns
+        .map((col) => {
+            console.log(col);
+            if (col.gridWidth) {
+                return col.gridWidth;
+            }
+            return "1fr";
+        })
+        .join(" ");
+
     return (
         <div
             ref={setNodeRef}
             className="grid-row"
             id={props.id}
-            style={{ height: height !== null ? `${height}px` : "", ...style }}
+            style={{
+                gridTemplateColumns: gridTemplateColumns,
+                height: height !== null ? `${height}px` : "",
+                ...style,
+            }}
             {...attributes}
             {...listeners}
             data-row-index={props.rowIndex}

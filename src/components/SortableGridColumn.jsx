@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { constructComponent } from "./ComponentFactory";
@@ -14,7 +15,7 @@ const SortableGridColumn = (props) => {
         transform,
         transition,
         isDragging,
-        active,
+        active: sortIsActive,
     } = useSortable({
         id: props.id,
         transition: {
@@ -29,7 +30,20 @@ const SortableGridColumn = (props) => {
         },
     });
 
-    const [showDragHandle, setShowDragHandle] = useState(false);
+    const {
+        setNodeRef: setResizeNodeRef,
+        listeners: resizeListeners,
+        attributes: resizeAttributes,
+        transform: resizeTransform,
+    } = useDraggable({
+        id: "resize-" + props.id,
+        data: {
+            id: props.id,
+            index: props.index,
+            type: "resize",
+        },
+    });
+
     const [hovered, setHovered] = useState(false);
 
     // We don't want anything to scale
@@ -44,8 +58,12 @@ const SortableGridColumn = (props) => {
         opacity: isDragging || props.id.includes("placeholder") ? ".5" : 1,
     };
 
+    const resizeStyle = {
+        transform: CSS.Translate.toString(resizeTransform),
+    };
+
     const classes = [];
-    if (hovered && !active) {
+    if (hovered && !sortIsActive) {
         classes.push("hovered");
     }
 
@@ -60,7 +78,7 @@ const SortableGridColumn = (props) => {
     return (
         <GridColumn
             ref={setNodeRef}
-            showDragHandle={showDragHandle}
+            column={props.column}
             handleMouseOver={handleMouseOver}
             handleMouseOut={handleMouseOut}
             className={classes.join(" ")}
@@ -74,7 +92,7 @@ const SortableGridColumn = (props) => {
                 {...attributes}
                 className="drag-handle"
                 style={{
-                    display: hovered && !active ? "" : "none",
+                    display: hovered && !sortIsActive ? "" : "none",
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
@@ -82,11 +100,23 @@ const SortableGridColumn = (props) => {
             <div
                 className="delete"
                 style={{
-                    display: hovered && !active ? "" : "none",
+                    display: hovered && !sortIsActive ? "" : "none",
                 }}
                 onClick={() => props.handleDelete(props.id)}
             >
                 <FontAwesomeIcon icon="fa-solid fa-trash-can" />
+            </div>
+            <div
+                className="resize"
+                ref={setResizeNodeRef}
+                {...resizeListeners}
+                {...resizeAttributes}
+                style={{
+                    ...resizeStyle,
+                    visibility: hovered && !sortIsActive ? "visible" : "hidden",
+                }}
+            >
+                <FontAwesomeIcon icon="fa-solid fa-grip-vertical" />
             </div>
         </GridColumn>
     );

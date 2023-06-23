@@ -23,6 +23,7 @@ import BuilderNavbar from "./BuilderNavbar";
 import { Components, constructComponent } from "./ComponentFactory";
 import DefaultDroppable from "./DefaultDroppable";
 import VirtualizedGrid from "./VirtualizedGrid";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -55,6 +56,11 @@ const PageBuilder = () => {
 
     const handleDragStart = (e) => {
         const { active } = e;
+
+        if (active.data.current.type === "resize") {
+            return;
+        }
+
         setPreviousItems(items);
         setActiveId(active.id);
 
@@ -76,6 +82,10 @@ const PageBuilder = () => {
     const handleDragOver = (e) => {
         const { active, over, collisions } = e;
 
+        if (active.data.current.type === "resize") {
+            return;
+        }
+
         // Unset the column hover timer every time our over target changes
         clearTimeout(columnTimerId.current);
         columnTimerId.current = null;
@@ -93,6 +103,28 @@ const PageBuilder = () => {
             addNewElement(over, active, collisions);
         } else {
             moveElement(over, active, collisions);
+        }
+    };
+
+    const handleDragMove = (e) => {
+        const { over, active, collisions, delta } = e;
+
+        if (active.data.current.type !== "resize") {
+            return;
+        }
+
+        if (Math.round(delta.x) === -256) {
+            let updateItems = getItems();
+            let item = updateItems
+                .flatMap((row) => row.columns)
+                .find((col) => col.id === active.data.current.id);
+
+            if (item) {
+                item.props.style = { flex: "0 0 50%", ...item.props.style };
+            }
+
+            console.log(updateItems);
+            setItems(updateItems);
         }
     };
 
@@ -559,7 +591,7 @@ const PageBuilder = () => {
 
         setItems(() => {
             let stressTestItems = [];
-            for (let i = 0; i < 3500; i++) {
+            for (let i = 0; i < 10; i++) {
                 stressTestItems.push({
                     id: uuid(),
                     columns: [
@@ -575,6 +607,9 @@ const PageBuilder = () => {
                             component: "paragraph",
                             props: {
                                 text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
+                                style: {
+                                    flex: "0 0 75%",
+                                },
                             },
                         },
                     ],
@@ -594,6 +629,7 @@ const PageBuilder = () => {
                 collisionDetection={collisionDetectionStrategy}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
+                onDragMove={handleDragMove}
                 onDragEnd={handleDragEnd}
                 measuring={{
                     droppable: {
@@ -637,33 +673,42 @@ const PageBuilder = () => {
                 <div className="sidebar" style={{ overflow: "auto" }}>
                     <BuilderElementsMenu />
                 </div>
-                <DragOverlay dropAnimation={null}>
-                    <div
-                        className="drag-overlay hovered"
-                        style={{
-                            position: "relative",
-                            width: `${gridWrapperRef.current?.clientWidth}px`,
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "flex-end",
-                        }}
-                    >
+                <DragOverlay
+                    dropAnimation={null}
+                    modifiers={!activeId ? [restrictToHorizontalAxis] : []}
+                >
+                    {!activeId && (
+                        <FontAwesomeIcon icon="fa-solid fa-grip-vertical" />
+                    )}
+                    {activeId && (
                         <div
+                            className="drag-overlay hovered"
                             style={{
-                                width: `${dragOverlayWidth}px`,
-                                border: "1px solid rgba(0, 0, 0, 0.05)",
-                                boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
-                                borderRadius: "4px",
-                                transition: "width 300ms ease",
-                                background: "#F8F8F8",
+                                position: "relative",
+                                width: `${gridWrapperRef.current?.clientWidth}px`,
+                                display: "flex",
+                                flexDirection: "row",
+                                justifyContent: "flex-end",
                             }}
                         >
-                            {getDragPreview()}
+                            <div
+                                style={{
+                                    width: `${dragOverlayWidth}px`,
+                                    border: "1px solid rgba(0, 0, 0, 0.05)",
+                                    boxShadow:
+                                        "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+                                    borderRadius: "4px",
+                                    transition: "width 300ms ease",
+                                    background: "#F8F8F8",
+                                }}
+                            >
+                                {getDragPreview()}
+                            </div>
+                            <div className="drag-handle">
+                                <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
+                            </div>
                         </div>
-                        <div className="drag-handle">
-                            <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
-                        </div>
-                    </div>
+                    )}
                 </DragOverlay>
             </DndContext>
         </div>
