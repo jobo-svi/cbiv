@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     DndContext,
     DragOverlay,
@@ -42,6 +42,12 @@ const PageBuilder = () => {
     const recentlyMovedToNewContainer = useRef(false);
     const columnTimerId = useRef(null);
     const gridWrapperRef = useRef(null);
+
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            recentlyMovedToNewContainer.current = false;
+        });
+    }, [items]);
 
     // Builder history
     const { undo, redo, clear, canUndo, canRedo, setHistoryEnabled } =
@@ -93,7 +99,7 @@ const PageBuilder = () => {
             return;
         }
 
-        // If an element is being hovered over itself, there's nothing to be done
+        // We handle the sorting of columns within a row in the drag end handler.
         const isHoveringOverSelf = active.id === over.id;
         if (isHoveringOverSelf) {
             return;
@@ -136,6 +142,26 @@ const PageBuilder = () => {
         columnTimerId.current = null;
 
         let updateItems = JSON.parse(JSON.stringify(items));
+
+        // Handle reordering of columns
+        if (
+            updateItems
+                .flatMap((row) => row.columns)
+                .find((col) => col.id === active.id)
+        ) {
+            const row = getRow(active.id, updateItems);
+
+            const oldColIndex = row.columns.findIndex(
+                (col) => col.id === active.id
+            );
+
+            const newColIndex = row.columns.findIndex(
+                (col) => col.id === over.id
+            );
+
+            let toMove = row.columns.splice(oldColIndex, 1);
+            row.columns.splice(newColIndex, 0, toMove[0]);
+        }
 
         // Replace any placeholder elements with real ids
         updateItems.map((row) => {
@@ -215,7 +241,8 @@ const PageBuilder = () => {
                     );
                 }, columnDelayTiming);
             } else {
-                setItems(updateItems);
+                // Reordering columns
+                //setItems(updateItems);
             }
         } else if (over.data.current.type === "row") {
             // If element is hovering over its own row, or close enough to its own row, no need to swap positions
@@ -331,7 +358,7 @@ const PageBuilder = () => {
 
             updateItems.splice(insertIndex, 0, newOb);
             updateItems = updateItems.filter((row) => row.columns.length > 0);
-            recentlyMovedToNewContainer.current;
+            recentlyMovedToNewContainer.current = true;
             setItems(updateItems);
             setDragOverlayWidth(gridWrapperRef.current.clientWidth);
         } else if (over.data.current.type === "column") {
@@ -367,7 +394,7 @@ const PageBuilder = () => {
                     );
 
                     setItems(updateItems);
-                    recentlyMovedToNewContainer.current;
+                    recentlyMovedToNewContainer.current = true;
                     columnTimerId.current = null;
                     const width =
                         (gridWrapperRef.current.clientWidth /

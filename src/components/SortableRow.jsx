@@ -1,4 +1,4 @@
-import { useSortable } from "@dnd-kit/sortable";
+import { defaultAnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 const SortableRow = (props) => {
@@ -42,7 +42,6 @@ const SortableRow = (props) => {
 
     const gridTemplateColumns = props.items[props.rowIndex].columns
         .map((col) => {
-            console.log(col);
             if (col.gridWidth) {
                 return col.gridWidth;
             }
