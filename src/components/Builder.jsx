@@ -112,30 +112,73 @@ const PageBuilder = () => {
         }
     };
 
+    // The width that an element was at the beginning of resizing.
+    // We have to track this because dndkit returns deltas based on the width of the element at the start of dragging, regardless of its current width.
+    const initialResizeWidth = useRef(null);
+
     const handleDragMove = (e) => {
-        const { over, active, collisions, delta } = e;
+        const { active, delta } = e;
 
         if (active.data.current.type !== "resize") {
             return;
         }
 
-        if (Math.round(delta.x) === -256) {
-            let updateItems = getItems();
-            let item = updateItems
-                .flatMap((row) => row.columns)
-                .find((col) => col.id === active.data.current.id);
+        let updateItems = getItems();
 
-            if (item) {
-                item.props.style = { flex: "0 0 50%", ...item.props.style };
+        if (initialResizeWidth.current === null) {
+            initialResizeWidth.current = document
+                .getElementById(active.data.current.id)
+                .getBoundingClientRect().width;
+        }
+
+        const row = getRow(active.data.current.id, updateItems);
+        const col = row.columns.find(
+            (col) => col.id === active.data.current.id
+        );
+
+        if (row && col) {
+            let newWidth = null;
+
+            if (delta.x < 0) {
+                newWidth = Math.round(
+                    initialResizeWidth.current + Math.abs(delta.x)
+                );
+            } else if (delta.x > 0) {
+                newWidth = Math.round(
+                    initialResizeWidth.current - Math.abs(delta.x)
+                );
             }
+            const totalWidth =
+                gridWrapperRef.current.clientWidth -
+                24 * (row.columns.length - 1);
 
-            console.log(updateItems);
-            setItems(updateItems);
+            const percentageWidth = Math.round((newWidth / totalWidth) * 100);
+            const snapPoints = [25, 33, 50, 66, 75];
+
+            var closest = snapPoints.reduce(function (prev, curr) {
+                return Math.abs(curr - percentageWidth) <
+                    Math.abs(prev - percentageWidth)
+                    ? curr
+                    : prev;
+            });
+
+            const newGridWidth = `calc(${totalWidth}px * ${closest / 100})`;
+
+            if (col.gridWidth !== newGridWidth) {
+                // This width calculation takes into account the grid gap
+                col.gridWidth = newGridWidth;
+                console.log("set items");
+                setItems(updateItems);
+            }
         }
     };
 
     const handleDragEnd = (e) => {
         const { over, active, collisions } = e;
+
+        if (active.data.current.type === "resize") {
+            return;
+        }
 
         // Unset the column hover timer every time our over target changes
         clearTimeout(columnTimerId.current);
@@ -145,6 +188,7 @@ const PageBuilder = () => {
 
         // Handle reordering of columns
         if (
+            over &&
             updateItems
                 .flatMap((row) => row.columns)
                 .find((col) => col.id === active.id)
@@ -183,6 +227,7 @@ const PageBuilder = () => {
         // We can re-enable history tracking now that dragging has ended.
         setHistoryEnabled(true);
         lastOverId.current = null;
+        initialResizeWidth.current = null;
     };
 
     function moveElement(over, active, collisions) {
@@ -660,6 +705,10 @@ const PageBuilder = () => {
                 onDragEnd={handleDragEnd}
                 measuring={{
                     droppable: {
+                        strategy: MeasuringStrategy.Always,
+                        frequency: 100,
+                    },
+                    draggable: {
                         strategy: MeasuringStrategy.Always,
                         frequency: 100,
                     },

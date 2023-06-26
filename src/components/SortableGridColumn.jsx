@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { constructComponent } from "./ComponentFactory";
@@ -106,18 +106,36 @@ const SortableGridColumn = (props) => {
             >
                 <FontAwesomeIcon icon="fa-solid fa-trash-can" />
             </div>
-            <div
-                className="resize"
-                ref={setResizeNodeRef}
-                {...resizeListeners}
-                {...resizeAttributes}
-                style={{
-                    ...resizeStyle,
-                    visibility: hovered && !sortIsActive ? "visible" : "hidden",
-                }}
-            >
-                <FontAwesomeIcon icon="fa-solid fa-grip-vertical" />
-            </div>
+            {props.index !== 0 && (
+                <div
+                    className="resize-left"
+                    ref={setResizeNodeRef}
+                    {...resizeListeners}
+                    {...resizeAttributes}
+                    style={{
+                        ...resizeStyle,
+                        visibility:
+                            hovered && !sortIsActive ? "visible" : "hidden",
+                    }}
+                >
+                    <FontAwesomeIcon icon="fa-solid fa-grip-vertical" />
+                </div>
+            )}
+            {/* {props.index !== props.row.columns.length - 1 && (
+                <div
+                    className="resize-right"
+                    ref={setResizeNodeRef}
+                    {...resizeListeners}
+                    {...resizeAttributes}
+                    style={{
+                        ...resizeStyle,
+                        visibility:
+                            hovered && !sortIsActive ? "visible" : "hidden",
+                    }}
+                >
+                    <FontAwesomeIcon icon="fa-solid fa-grip-vertical" />
+                </div>
+            )} */}
         </GridColumn>
     );
 };

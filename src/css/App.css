@@ -72,23 +72,15 @@
 }
 
 .builder .grid .grid-row {
-    /* display: flex; */
     display: grid;
-    /* grid-template-columns: 1fr 50% 1fr; */
     gap: 24px;
     margin-bottom: 24px;
 }
 
 .builder .grid .grid-column {
     position: relative;
-    /* flex-basis: 100%; */
-    /* flex: 1; */
     border: 1px solid rgba(0, 0, 0, 0.00);
 }
-
-/* .builder .grid .grid-column {
-    margin-right: 24px;
-} */
 
 .grid .grid-wrapper {
     margin: 0 auto;
@@ -386,9 +378,15 @@
     cursor: pointer;
 }
 
-.builder .grid-column .resize {
+.builder .grid-column .resize-left {
     position: absolute;
-    top: 50%;
-    transform: translate(-100%, -50%);
+    top: 0%;
+    cursor: grab;
+}
+
+.builder .grid-column .resize-right {
+    position: absolute;
+    top: 0%;
+    right: 0%;
     cursor: grab;
 }

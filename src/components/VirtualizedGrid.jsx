@@ -85,6 +85,7 @@ const VirtualizedGrid = forwardRef(({ items, activeId, handleDelete }, ref) => {
                                                                     rowIndex={
                                                                         rowIndex
                                                                     }
+                                                                    row={row}
                                                                     column={
                                                                         column
                                                                     }
