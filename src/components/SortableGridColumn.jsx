@@ -40,6 +40,7 @@ const SortableGridColumn = (props) => {
             id: props.id,
             index: props.index,
             type: "resize",
+            resizePosition: props.index === 0 ? "right" : "left",
         },
     });
 
@@ -105,9 +106,9 @@ const SortableGridColumn = (props) => {
             >
                 <FontAwesomeIcon icon="fa-solid fa-trash-can" />
             </div>
-            {props.index !== 0 && (
+            {props.row.columns.length > 1 && (
                 <div
-                    className="resize-left"
+                    className={`resize ${props.index !== 0 ? "left" : "right"}`}
                     ref={setResizeNodeRef}
                     {...resizeListeners}
                     {...resizeAttributes}

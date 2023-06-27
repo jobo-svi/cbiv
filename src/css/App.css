@@ -379,8 +379,22 @@
     cursor: pointer;
 }
 
-.builder .grid-column .resize-left {
+.builder .grid-column .resize {
     position: absolute;
+    background: #D7D7D7;
     top: 0%;
-    cursor: grab;
+    bottom: 0%;
+    width: 24px;
+    cursor: ew-resize;
+
+}
+
+.builder .grid-column .resize.left {
+
+
+    left: -24px;
+}
+
+.builder .grid-column .resize.right {
+    right: -26px;
 }

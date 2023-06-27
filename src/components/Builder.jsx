@@ -122,16 +122,19 @@ const PageBuilder = () => {
         }
 
         let updateItems = getItems();
-
         const draggingRow = getRow(active.data.current.id, updateItems);
         const draggingCol = draggingRow.columns.find(
             (col) => col.id === active.data.current.id
         );
 
+        const isResizeLeft = active.data.current.resizePosition === "left";
+        const modifier = isResizeLeft ? -1 : 1;
         const neighboringCol =
-            draggingRow.columns[active.data.current.index - 1];
+            draggingRow.columns[active.data.current.index + modifier];
 
         if (draggingRow && draggingCol && neighboringCol) {
+            // The width that an element was at the beginning of resizing.
+            // We have to track this because dndkit returns deltas based on the width of the element at the start of dragging, regardless of its current width.
             if (initialResizeWidth.current === null) {
                 initialResizeWidth.current = document
                     .getElementById(active.data.current.id)
@@ -146,14 +149,26 @@ const PageBuilder = () => {
 
             let newWidth = null;
 
-            if (delta.x < 0) {
-                newWidth = Math.round(
-                    initialResizeWidth.current + Math.abs(delta.x)
-                );
-            } else if (delta.x > 0) {
-                newWidth = Math.round(
-                    initialResizeWidth.current - Math.abs(delta.x)
-                );
+            if (active.data.current.resizePosition === "left") {
+                if (delta.x < 0) {
+                    newWidth = Math.round(
+                        initialResizeWidth.current + Math.abs(delta.x)
+                    );
+                } else if (delta.x > 0) {
+                    newWidth = Math.round(
+                        initialResizeWidth.current - Math.abs(delta.x)
+                    );
+                }
+            } else {
+                if (delta.x < 0) {
+                    newWidth = Math.round(
+                        initialResizeWidth.current - Math.abs(delta.x)
+                    );
+                } else if (delta.x > 0) {
+                    newWidth = Math.round(
+                        initialResizeWidth.current + Math.abs(delta.x)
+                    );
+                }
             }
             const totalWidth =
                 gridWrapperRef.current.clientWidth -
@@ -224,15 +239,14 @@ const PageBuilder = () => {
     };
 
     const handleDragEnd = (e) => {
-        const { over, active, collisions } = e;
-
-        initialResizeWidth.current = null;
-        initialNeighborWidth.current = null;
+        const { over, active } = e;
 
         // We can re-enable history tracking now that dragging has ended.
         setHistoryEnabled(true);
 
         if (active.data.current.type === "resize") {
+            initialResizeWidth.current = null;
+            initialNeighborWidth.current = null;
             return;
         }
 
@@ -503,8 +517,6 @@ const PageBuilder = () => {
                     updateItems[over.data.current.rowIndex].columns.map(
                         (col) => (col.gridWidth = null)
                     );
-
-                    console.log(updateItems);
 
                     setItems(updateItems);
                     recentlyMovedToNewContainer.current = true;
