@@ -14,14 +14,12 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import uuid from "react-uuid";
-
 import "../css/App.css";
 import { useBuilderHistory } from "../hooks/useBuilderHistory";
 import { snapDragHandleToCursor } from "../modifiers/snapDragHandleToCursor";
 import BuilderElementsMenu from "./BuilderElementsMenu";
 import BuilderNavbar from "./BuilderNavbar";
 import { Components, constructComponent } from "./ComponentFactory";
-import DefaultDroppable from "./DefaultDroppable";
 import VirtualizedGrid from "./VirtualizedGrid";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 
@@ -43,11 +41,10 @@ const PageBuilder = () => {
     const columnTimerId = useRef(null);
     const gridWrapperRef = useRef(null);
 
-    useEffect(() => {
-        requestAnimationFrame(() => {
-            recentlyMovedToNewContainer.current = false;
-        });
-    }, [items]);
+    // The width that an element was at the beginning of resizing.
+    // We have to track this because dndkit returns deltas based on the width of the element at the start of dragging, regardless of its current width.
+    const initialResizeWidth = useRef(null);
+    const initialNeighborWidth = useRef(null);
 
     // Builder history
     const { undo, redo, clear, canUndo, canRedo, setHistoryEnabled } =
@@ -60,16 +57,24 @@ const PageBuilder = () => {
         })
     );
 
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            recentlyMovedToNewContainer.current = false;
+        });
+    }, [items]);
+
     const handleDragStart = (e) => {
         const { active } = e;
+
+        // Don't track history while actively dragging.
+        setHistoryEnabled(false);
+        setPreviousItems(items);
 
         if (active.data.current.type === "resize") {
             return;
         }
 
-        setPreviousItems(items);
         setActiveId(active.id);
-
         // Dndkit doesn't know what element we're hovering over when dragging starts, so we gotta manually get the dimensions with vanilla js
         if (!active.data.current.isNewElement) {
             const columnDimensions = document
@@ -80,9 +85,6 @@ const PageBuilder = () => {
         } else {
             setDragOverlayWidth(gridWrapperRef.current.clientWidth);
         }
-
-        // Don't track history while actively dragging.
-        setHistoryEnabled(false);
     };
 
     const handleDragOver = (e) => {
@@ -112,10 +114,6 @@ const PageBuilder = () => {
         }
     };
 
-    // The width that an element was at the beginning of resizing.
-    // We have to track this because dndkit returns deltas based on the width of the element at the start of dragging, regardless of its current width.
-    const initialResizeWidth = useRef(null);
-
     const handleDragMove = (e) => {
         const { active, delta } = e;
 
@@ -125,18 +123,27 @@ const PageBuilder = () => {
 
         let updateItems = getItems();
 
-        if (initialResizeWidth.current === null) {
-            initialResizeWidth.current = document
-                .getElementById(active.data.current.id)
-                .getBoundingClientRect().width;
-        }
-
-        const row = getRow(active.data.current.id, updateItems);
-        const col = row.columns.find(
+        const draggingRow = getRow(active.data.current.id, updateItems);
+        const draggingCol = draggingRow.columns.find(
             (col) => col.id === active.data.current.id
         );
 
-        if (row && col) {
+        const neighboringCol =
+            draggingRow.columns[active.data.current.index - 1];
+
+        if (draggingRow && draggingCol && neighboringCol) {
+            if (initialResizeWidth.current === null) {
+                initialResizeWidth.current = document
+                    .getElementById(active.data.current.id)
+                    .getBoundingClientRect().width;
+            }
+
+            if (initialNeighborWidth.current === null) {
+                initialNeighborWidth.current = document
+                    .getElementById(neighboringCol.id)
+                    .getBoundingClientRect().width;
+            }
+
             let newWidth = null;
 
             if (delta.x < 0) {
@@ -150,10 +157,42 @@ const PageBuilder = () => {
             }
             const totalWidth =
                 gridWrapperRef.current.clientWidth -
-                24 * (row.columns.length - 1);
+                24 * (draggingRow.columns.length - 1);
 
+            const startingWidth = Math.round(
+                (initialResizeWidth.current / totalWidth) * 100
+            );
             const percentageWidth = Math.round((newWidth / totalWidth) * 100);
-            const snapPoints = [25, 33, 50, 66, 75];
+
+            let snapPoints = [
+                8.333, 16.667, 25, 33.333, 41.667, 50, 58.333, 66.667, 75,
+                83.333, 91.667,
+            ];
+
+            // Figure out the max width the column can be
+            let sumOfNonNeighboringWidths = 0;
+            draggingRow.columns
+                .filter(
+                    (col) =>
+                        col.id !== draggingCol.id &&
+                        col.id !== neighboringCol.id
+                )
+                .map((col) => {
+                    if (col.gridWidth) {
+                        sumOfNonNeighboringWidths += col.gridWidth;
+                    } else {
+                        // manually calculate its width
+                        sumOfNonNeighboringWidths += parseFloat(
+                            document
+                                .getElementById(col.id)
+                                .style.width.replace("%", "")
+                        );
+                    }
+                });
+
+            snapPoints = snapPoints.filter(
+                (s) => s < 100 - sumOfNonNeighboringWidths
+            );
 
             var closest = snapPoints.reduce(function (prev, curr) {
                 return Math.abs(curr - percentageWidth) <
@@ -162,12 +201,23 @@ const PageBuilder = () => {
                     : prev;
             });
 
-            const newGridWidth = `calc(${totalWidth}px * ${closest / 100})`;
+            const neighborPercentageWidth = Math.round(
+                (initialNeighborWidth.current / totalWidth) * 100
+            );
 
-            if (col.gridWidth !== newGridWidth) {
-                // This width calculation takes into account the grid gap
-                col.gridWidth = newGridWidth;
-                console.log("set items");
+            const newNeighborWidth =
+                neighborPercentageWidth + (startingWidth - closest);
+
+            var closestNeighborWidth = snapPoints.reduce(function (prev, curr) {
+                return Math.abs(curr - newNeighborWidth) <
+                    Math.abs(prev - newNeighborWidth)
+                    ? curr
+                    : prev;
+            });
+
+            if (draggingCol.gridWidth !== closest) {
+                draggingCol.gridWidth = closest;
+                neighboringCol.gridWidth = closestNeighborWidth;
                 setItems(updateItems);
             }
         }
@@ -175,6 +225,12 @@ const PageBuilder = () => {
 
     const handleDragEnd = (e) => {
         const { over, active, collisions } = e;
+
+        initialResizeWidth.current = null;
+        initialNeighborWidth.current = null;
+
+        // We can re-enable history tracking now that dragging has ended.
+        setHistoryEnabled(true);
 
         if (active.data.current.type === "resize") {
             return;
@@ -223,11 +279,7 @@ const PageBuilder = () => {
         updateItems = updateItems.filter((row) => row.columns.length > 0);
         setItems(updateItems);
         setActiveId(null);
-
-        // We can re-enable history tracking now that dragging has ended.
-        setHistoryEnabled(true);
         lastOverId.current = null;
-        initialResizeWidth.current = null;
     };
 
     function moveElement(over, active, collisions) {
@@ -276,6 +328,10 @@ const PageBuilder = () => {
                             updateItems.findIndex((r) => r.id === row.id) <
                                 toRowIndex
                     );
+                    // If adding a new column, reset column widths to all be equal
+                    updateItems[over.data.current.rowIndex].columns.map(
+                        (col) => (col.gridWidth = null)
+                    );
                     setItems(updateItems);
                     columnTimerId.current = null;
 
@@ -285,9 +341,6 @@ const PageBuilder = () => {
                                 .length
                     );
                 }, columnDelayTiming);
-            } else {
-                // Reordering columns
-                //setItems(updateItems);
             }
         } else if (over.data.current.type === "row") {
             // If element is hovering over its own row, or close enough to its own row, no need to swap positions
@@ -309,6 +362,13 @@ const PageBuilder = () => {
                 return;
             }
 
+            // If decombining a column, reset column widths in the from row, to all be equal
+            if (decombining) {
+                updateItems[fromRowIndex].columns.map(
+                    (col) => (col.gridWidth = null)
+                );
+            }
+
             // first remove orig location
             updateItems.map((row) => {
                 row.columns = row.columns.filter((col) => col.id !== active.id);
@@ -327,6 +387,7 @@ const PageBuilder = () => {
 
             updateItems = updateItems.filter((row) => row.columns.length > 0);
             recentlyMovedToNewContainer.current = true;
+
             setItems(updateItems);
             setDragOverlayWidth(gridWrapperRef.current.clientWidth);
         }
@@ -438,9 +499,18 @@ const PageBuilder = () => {
                         ...cols
                     );
 
+                    // If adding a new column, reset column widths to all be equal
+                    updateItems[over.data.current.rowIndex].columns.map(
+                        (col) => (col.gridWidth = null)
+                    );
+
+                    console.log(updateItems);
+
                     setItems(updateItems);
                     recentlyMovedToNewContainer.current = true;
                     columnTimerId.current = null;
+
+                    // Update drag overlay width
                     const width =
                         (gridWrapperRef.current.clientWidth /
                             updateItems[over.data.current.rowIndex].columns
@@ -627,6 +697,11 @@ const PageBuilder = () => {
         setHistoryEnabled(true);
 
         let updateItems = getItems();
+
+        // If deleting a column, reset the widths of the remaining columns
+        const row = getRow(columnId, updateItems);
+        row.columns.map((col) => (col.gridWidth = null));
+
         updateItems.map((row) => {
             row.columns = row.columns.filter(
                 (col) => !col.id.includes(columnId)
@@ -663,7 +738,7 @@ const PageBuilder = () => {
 
         setItems(() => {
             let stressTestItems = [];
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 3500; i++) {
                 stressTestItems.push({
                     id: uuid(),
                     columns: [
@@ -679,9 +754,6 @@ const PageBuilder = () => {
                             component: "paragraph",
                             props: {
                                 text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
-                                style: {
-                                    flex: "0 0 75%",
-                                },
                             },
                         },
                     ],

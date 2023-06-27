@@ -21,7 +21,6 @@ const SortableRow = (props) => {
         data: { type: props.type, rowIndex: props.rowIndex },
     });
 
-    //console.log(transform, transition);
     // We don't want anything to scale
     if (transform) {
         transform.scaleX = 1;
@@ -40,22 +39,12 @@ const SortableRow = (props) => {
         }
     }
 
-    const gridTemplateColumns = props.items[props.rowIndex].columns
-        .map((col) => {
-            if (col.gridWidth) {
-                return col.gridWidth;
-            }
-            return "1fr";
-        })
-        .join(" ");
-
     return (
         <div
             ref={setNodeRef}
             className="grid-row"
             id={props.id}
             style={{
-                gridTemplateColumns: gridTemplateColumns,
                 height: height !== null ? `${height}px` : "",
                 ...style,
             }}
