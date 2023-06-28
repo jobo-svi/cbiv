@@ -87,11 +87,17 @@
     margin: 0 auto;
 }
 
-@media screen and (min-width: 0px) {
+@media screen and (max-width: 600px) {
+    .builder .grid .grid-row {
+        flex-direction: column;
+    }
 
-    .grid .grid-wrapper,
-    #initial-droppable {
-        max-width: 1280px;
+    .builder .grid .grid-row .grid-column {
+        width: 100% !important;
+    }
+
+    .builder .grid .grid-row .grid-column .resize {
+        display: none;
     }
 }
 
@@ -116,7 +122,6 @@
 }
 
 .preview-container .preview-column {
-    /* flex-basis: 100%; */
     flex: 1;
 }
 
@@ -390,8 +395,6 @@
 }
 
 .builder .grid-column .resize.left {
-
-
     left: -24px;
 }
 

@@ -12,7 +12,7 @@ const BuilderElementsMenuItem = (props) => {
             ref={setNodeRef}
             {...listeners}
             {...attributes}
-            style={{ touchAction: "manipulation" }}
+            style={{ touchAction: "none" }}
         >
             {props.children}
         </div>

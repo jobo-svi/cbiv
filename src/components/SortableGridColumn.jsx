@@ -82,7 +82,7 @@ const SortableGridColumn = (props) => {
             handleMouseOver={handleMouseOver}
             handleMouseOut={handleMouseOut}
             className={classes.join(" ")}
-            style={style}
+            style={{ touchAction: "none", ...style }}
             {...props}
         >
             {constructComponent(props.column)}
