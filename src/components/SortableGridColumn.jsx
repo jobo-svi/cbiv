@@ -82,7 +82,7 @@ const SortableGridColumn = (props) => {
             handleMouseOver={handleMouseOver}
             handleMouseOut={handleMouseOut}
             className={classes.join(" ")}
-            style={{ touchAction: "none", ...style }}
+            style={style}
             {...props}
         >
             {constructComponent(props.column)}
@@ -92,6 +92,7 @@ const SortableGridColumn = (props) => {
                 {...attributes}
                 className="drag-handle"
                 style={{
+                    touchAction: "none",
                     display: hovered && !active ? "" : "none",
                 }}
             >
