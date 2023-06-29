@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef } from "react";
 
 const GridColumn = forwardRef(
     (
@@ -24,6 +24,7 @@ const GridColumn = forwardRef(
                 style={{
                     ...style,
                     ...(column.props.style ? column.props.style : {}),
+                    minHeight: "100",
                 }}
             >
                 {children}

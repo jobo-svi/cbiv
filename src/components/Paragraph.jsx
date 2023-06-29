@@ -1,7 +1,7 @@
 import React from "react";
 
 const Paragraph = (props) => {
-    return <p>{props.text}</p>;
+    return <div dangerouslySetInnerHTML={{ __html: props.text }}></div>;
 };
 
 export default Paragraph;

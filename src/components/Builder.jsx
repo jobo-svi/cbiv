@@ -31,7 +31,8 @@ const PageBuilder = () => {
 
     const [previousItems, setPreviousItems] = useState(items);
     const [activeId, setActiveId] = useState(null);
-    const [itemToEdit, setItemToEdit] = useState(null);
+    const [editId, setEditId] = useState(null);
+
     // How long you have to wait before item combines with an existing row
     const [columnDelayTiming, setColumnDelayTiming] = useState(450);
     const [dragOverlayWidth, setDragOverlayWidth] = useState(0);
@@ -733,6 +734,8 @@ const PageBuilder = () => {
 
     const handleClear = () => {
         setItems([]);
+        setActiveId(null);
+        setEditId(null);
         clear();
     };
 
@@ -758,14 +761,14 @@ const PageBuilder = () => {
                             id: uuid(),
                             component: "paragraph",
                             props: {
-                                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
+                                text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",
                             },
                         },
                         {
                             id: uuid(),
                             component: "paragraph",
                             props: {
-                                text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.",
+                                text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",
                             },
                         },
                     ],
@@ -773,6 +776,17 @@ const PageBuilder = () => {
             }
             return stressTestItems;
         });
+    };
+
+    const handleEdit = (contents) => {
+        let updateItems = getItems();
+        let columnToEdit = getColumn(editId, updateItems);
+
+        if (columnToEdit) {
+            columnToEdit.props.text = contents;
+            setItems(updateItems);
+            setEditId(null);
+        }
     };
 
     return (
@@ -826,6 +840,9 @@ const PageBuilder = () => {
                             items={items}
                             ref={gridWrapperRef}
                             activeId={activeId}
+                            editId={editId}
+                            setEditId={setEditId}
+                            handleEdit={handleEdit}
                             handleDelete={handleDelete}
                         />
                     </div>

@@ -1,7 +1,7 @@
 import React from "react";
 
 const Header = (props) => {
-  return <h1>{props.text}</h1>;
+    return <div dangerouslySetInnerHTML={{ __html: props.text }}></div>;
 };
 
 export default Header;

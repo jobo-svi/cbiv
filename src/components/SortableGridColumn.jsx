@@ -17,13 +17,14 @@ const SortableGridColumn = (props) => {
         isDragging,
         active,
     } = useSortable({
-        id: props.id,
+        id: props.column.id,
+        disabled: props.editId !== null,
         transition: {
             duration: 300, // milliseconds
             easing: "ease",
         },
         data: {
-            id: props.id,
+            id: props.column.id,
             index: props.index,
             rowIndex: props.rowIndex,
             type: props.type,
@@ -35,9 +36,9 @@ const SortableGridColumn = (props) => {
         listeners: resizeListeners,
         attributes: resizeAttributes,
     } = useDraggable({
-        id: "resize-" + props.id,
+        id: "resize-" + props.column.id,
         data: {
-            id: props.id,
+            id: props.column.id,
             index: props.index,
             type: "resize",
             resizePosition: props.index === 0 ? "right" : "left",
@@ -45,7 +46,7 @@ const SortableGridColumn = (props) => {
     });
 
     const dragType = active?.data.current.type;
-    const [hovered, setHovered] = useState(false);
+    const [columnStatus, setColumnStatus] = useState("idle");
 
     // We don't want anything to scale
     if (transform) {
@@ -56,34 +57,33 @@ const SortableGridColumn = (props) => {
     const style = {
         transform: CSS.Translate.toString(transform),
         transition: dragType !== "resize" ? transition : null, // if resizing, the transition defined in CSS takes over
-        opacity: isDragging || props.id.includes("placeholder") ? ".5" : 1,
+        opacity:
+            isDragging || props.column.id.includes("placeholder") ? ".5" : 1,
         width: !props.column.gridWidth
             ? `${100 / props.row.columns.length}%`
             : `${props.column.gridWidth}%`,
     };
 
     const classes = [];
-    if (hovered && !active) {
+    if (columnStatus === "hovered" && !active) {
         classes.push("hovered");
     }
 
-    const handleMouseOver = () => {
-        setHovered(true);
-    };
-
-    const handleMouseOut = () => {
-        setHovered(false);
-    };
-
     return (
-        <GridColumn
+        <div
+            id={props.column.id}
+            key={props.column.id}
             ref={setNodeRef}
-            column={props.column}
-            handleMouseOver={handleMouseOver}
-            handleMouseOut={handleMouseOut}
-            className={classes.join(" ")}
-            style={style}
-            {...props}
+            className={`grid-column ${classes.join(" ")}`}
+            onClick={() => {
+                props.setEditId(props.column.id);
+            }}
+            onMouseOver={() => setColumnStatus("hovered")}
+            onMouseOut={() => setColumnStatus("idle")}
+            style={{
+                ...style,
+                ...(props.column.props.style ? props.column.props.style : {}),
+            }}
         >
             {constructComponent(props.column)}
             <div
@@ -93,7 +93,12 @@ const SortableGridColumn = (props) => {
                 className="drag-handle"
                 style={{
                     touchAction: "none",
-                    display: hovered && !active ? "" : "none",
+                    display:
+                        props.editId === null &&
+                        columnStatus === "hovered" &&
+                        !active
+                            ? ""
+                            : "none",
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-up-down-left-right" />
@@ -101,9 +106,17 @@ const SortableGridColumn = (props) => {
             <div
                 className="delete"
                 style={{
-                    display: hovered && !active ? "" : "none",
+                    display:
+                        props.editId === null &&
+                        columnStatus === "hovered" &&
+                        !active
+                            ? ""
+                            : "none",
                 }}
-                onClick={() => props.handleDelete(props.id)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    props.handleDelete(props.column.id);
+                }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-trash-can" />
             </div>
@@ -114,13 +127,18 @@ const SortableGridColumn = (props) => {
                     {...resizeListeners}
                     {...resizeAttributes}
                     style={{
-                        visibility: hovered && !active ? "visible" : "hidden",
+                        visibility:
+                            props.editId === null &&
+                            columnStatus === "hovered" &&
+                            !active
+                                ? "visible"
+                                : "hidden",
                     }}
                 >
                     <FontAwesomeIcon icon="fa-solid fa-grip-vertical" />
                 </div>
             )}
-        </GridColumn>
+        </div>
     );
 };
 
