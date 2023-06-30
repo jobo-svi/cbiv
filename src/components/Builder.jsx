@@ -848,7 +848,8 @@ const PageBuilder = () => {
                     </div>
                 </div>
                 <div className="sidebar" style={{ overflow: "auto" }}>
-                    <BuilderElementsMenu />
+                    {editId !== null && <div>edit sidebar</div>}
+                    {editId === null && <BuilderElementsMenu />}
                 </div>
                 <DragOverlay
                     dropAnimation={null}

@@ -401,3 +401,24 @@
 .builder .grid-column .resize.right {
     right: -26px;
 }
+
+/* editor themes */
+.editor-textBold {
+    font-weight: 700
+}
+
+.editor-textItalic {
+    font-style: italic
+}
+
+.editor-textUnderline {
+    text-decoration: underline
+}
+
+.editor-textStrikethrough {
+    text-decoration: line-through
+}
+
+.editor-textUnderlineStrikethrough {
+    text-decoration: underline line-through;
+}

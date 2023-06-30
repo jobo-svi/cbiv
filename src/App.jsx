@@ -11,6 +11,14 @@ import {
     faRotateRight,
     faTrashCan,
     faGripVertical,
+    faBold,
+    faStrikethrough,
+    faItalic,
+    faUnderline,
+    faAlignLeft,
+    faAlignCenter,
+    faAlignRight,
+    faAlignJustify,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -22,7 +30,15 @@ library.add(
     faRotateLeft,
     faRotateRight,
     faTrashCan,
-    faGripVertical
+    faGripVertical,
+    faBold,
+    faStrikethrough,
+    faItalic,
+    faUnderline,
+    faAlignLeft,
+    faAlignCenter,
+    faAlignRight,
+    faAlignJustify
 );
 
 function App() {

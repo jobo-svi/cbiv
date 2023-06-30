@@ -12,13 +12,29 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import EditorToolbar from "./EditorToolbar";
 
 const EditableGridColumn = (props) => {
     const editorStateRef = useRef();
     const editedContents = useRef(props.column.props.text);
 
+    // https://lexical.dev/docs/getting-started/theming
+    // good examples of css can also be found in lexical's playground css source code
+    const exampleTheme = {
+        text: {
+            bold: "editor-textBold",
+            italic: "editor-textItalic",
+            strikethrough: "editor-textStrikethrough",
+            subscript: "editor-textSubscript",
+            superscript: "editor-textSuperscript",
+            underline: "editor-textUnderline",
+            underlineStrikethrough: "editor-textUnderlineStrikethrough",
+        },
+    };
+
     const initialConfig = {
         namespace: "MyEditor",
+        theme: exampleTheme,
         onError,
         editorState: (editor) => prepopulateEditorState(editor),
         nodes: [HeadingNode],
@@ -33,19 +49,9 @@ const EditableGridColumn = (props) => {
                 "text/html"
             );
 
-            console.log(dom);
-
             // Once you have the DOM instance it's easy to generate LexicalNodes.
             const nodes = $generateNodesFromDOM(editor, dom);
-            const root = $getRoot();
-
-            // nodes.forEach((node, i) => {
-            //     if ($isElementNode(node) || $isDecoratorNode(node)) {
-            //         root.append(node);
-            //     } else {
-            //         root.append($createParagraphNode(node));
-            //     }
-            // });
+            console.log(nodes);
 
             // Select the root
             $getRoot().select();
@@ -120,7 +126,9 @@ const EditableGridColumn = (props) => {
                     }
                 />
                 <OnChangePlugin onChange={onChange} />
+
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <EditorToolbar />
                     <button
                         style={{ margin: ".5rem", border: "1px solid #343536" }}
                         onClick={handleEditComplete}
