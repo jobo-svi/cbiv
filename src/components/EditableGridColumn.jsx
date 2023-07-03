@@ -30,14 +30,22 @@ const EditableGridColumn = (props) => {
             underline: "editor-textUnderline",
             underlineStrikethrough: "editor-textUnderlineStrikethrough",
         },
+        heading: {
+            h1: "editor-h1",
+            // h2: 'editor-h2',
+            // h3: 'editor-h3',
+            // h4: 'editor-h4',
+            // h5: 'editor-h5',
+            // h6: 'editor-h6',
+        },
     };
 
     const initialConfig = {
         namespace: "MyEditor",
         theme: exampleTheme,
         onError,
-        editorState: (editor) => prepopulateEditorState(editor),
         nodes: [HeadingNode],
+        editorState: (editor) => prepopulateEditorState(editor),
     };
 
     function prepopulateEditorState(editor) {
@@ -48,10 +56,10 @@ const EditableGridColumn = (props) => {
                 editedContents.current,
                 "text/html"
             );
+            console.log(dom);
 
             // Once you have the DOM instance it's easy to generate LexicalNodes.
             const nodes = $generateNodesFromDOM(editor, dom);
-            console.log(nodes);
 
             // Select the root
             $getRoot().select();
@@ -68,6 +76,7 @@ const EditableGridColumn = (props) => {
             editorStateRef.current = editorState;
             const htmlString = $generateHtmlFromNodes(editor);
             editedContents.current = htmlString;
+            console.log(JSON.stringify(editorState));
         });
     }
 
