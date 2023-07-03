@@ -1,91 +1,72 @@
-import { useEffect, useRef } from "react";
-import {
-    $createParagraphNode,
-    $getRoot,
-    $insertNodes,
-    $isElementNode,
-    $isDecoratorNode,
-} from "lexical";
-import { $generateNodesFromDOM, $generateHtmlFromNodes } from "@lexical/html";
-import { $createHeadingNode, HeadingNode } from "@lexical/rich-text";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createEditor, Editor, Transforms, Element } from "slate";
+import { Slate, Editable, withReact } from "slate-react";
 import EditorToolbar from "./EditorToolbar";
+import CustomEditor from "./CustomEditor";
+
+const Leaf = (props) => {
+    const classes = [];
+    if (props.leaf.bold) {
+        classes.push("editor-textBold");
+    }
+
+    if (props.leaf.italic) {
+        classes.push("editor-textItalic");
+    }
+
+    if (props.leaf.underline && props.leaf.strikethrough) {
+        classes.push("editor-textUnderlineStrikethrough");
+    } else if (props.leaf.underline) {
+        classes.push("editor-textUnderline");
+    } else if (props.leaf.strikethrough) {
+        classes.push("editor-textStrikethrough");
+    }
+
+    return (
+        <span {...props.attributes} className={classes.join(" ")}>
+            {props.children}
+        </span>
+    );
+};
+
+const CodeElement = (props) => {
+    return (
+        <pre {...props.attributes}>
+            <code>{props.children}</code>
+        </pre>
+    );
+};
+
+const DefaultElement = (props) => {
+    return <p {...props.attributes}>{props.children}</p>;
+};
+
+const initialValue = [
+    {
+        type: "paragraph",
+        children: [{ text: "A line of text in a paragraph." }],
+    },
+];
 
 const EditableGridColumn = (props) => {
-    const editorStateRef = useRef();
-    const editedContents = useRef(props.column.props.text);
+    // Create a Slate editor object that won't change across renders.
+    const [editor] = useState(() => withReact(createEditor()));
 
-    // https://lexical.dev/docs/getting-started/theming
-    // good examples of css can also be found in lexical's playground css source code
-    const exampleTheme = {
-        text: {
-            bold: "editor-textBold",
-            italic: "editor-textItalic",
-            strikethrough: "editor-textStrikethrough",
-            subscript: "editor-textSubscript",
-            superscript: "editor-textSuperscript",
-            underline: "editor-textUnderline",
-            underlineStrikethrough: "editor-textUnderlineStrikethrough",
-        },
-        heading: {
-            h1: "editor-h1",
-            // h2: 'editor-h2',
-            // h3: 'editor-h3',
-            // h4: 'editor-h4',
-            // h5: 'editor-h5',
-            // h6: 'editor-h6',
-        },
-    };
+    // Define a rendering function based on the element passed to `props`. We use
+    // `useCallback` here to memoize the function for subsequent renders.
+    const renderElement = useCallback((props) => {
+        switch (props.element.type) {
+            case "code":
+                return <CodeElement {...props} />;
+            default:
+                return <DefaultElement {...props} />;
+        }
+    }, []);
 
-    const initialConfig = {
-        namespace: "MyEditor",
-        theme: exampleTheme,
-        onError,
-        nodes: [HeadingNode],
-        editorState: (editor) => prepopulateEditorState(editor),
-    };
-
-    function prepopulateEditorState(editor) {
-        editor.update(() => {
-            // In the browser you can use the native DOMParser API to parse the HTML string.
-            const parser = new DOMParser();
-            const dom = parser.parseFromString(
-                editedContents.current,
-                "text/html"
-            );
-            console.log(dom);
-
-            // Once you have the DOM instance it's easy to generate LexicalNodes.
-            const nodes = $generateNodesFromDOM(editor, dom);
-
-            // Select the root
-            $getRoot().select();
-
-            // Insert them at a selection.
-            $insertNodes(nodes);
-        });
-    }
-
-    // When the editor changes, you can get notified via the
-    // LexicalOnChangePlugin!
-    function onChange(editorState, editor) {
-        editorState.read(() => {
-            editorStateRef.current = editorState;
-            const htmlString = $generateHtmlFromNodes(editor);
-            editedContents.current = htmlString;
-            console.log(JSON.stringify(editorState));
-        });
-    }
-
-    // Catch any errors that occur during Lexical updates and log them
-    // or throw them as needed. If you don't throw them, Lexical will
-    // try to recover gracefully without losing user data.
-    function onError(error) {
-        console.error(error);
-    }
+    // Define a leaf rendering function that is memoized with `useCallback`.
+    const renderLeaf = useCallback((props) => {
+        return <Leaf {...props} />;
+    }, []);
 
     const style = {
         width: !props.column.gridWidth
@@ -111,33 +92,45 @@ const EditableGridColumn = (props) => {
                 background: "#D1D1D1",
             }}
         >
-            <LexicalComposer initialConfig={initialConfig}>
-                <RichTextPlugin
-                    contentEditable={
-                        <ContentEditable
-                            style={{
-                                minHeight: "100px",
-                                outline: "0px solid transparent",
-                            }}
-                        />
-                    }
-                    placeholder={
-                        <div
-                            style={{
-                                position: "absolute",
-                                top: "0",
-                                left: "0",
-                                pointerEvents: "none",
-                            }}
-                        >
-                            Enter some text...
-                        </div>
-                    }
-                />
-                <OnChangePlugin onChange={onChange} />
+            <Slate editor={editor} initialValue={initialValue}>
+                <Editable
+                    renderElement={renderElement}
+                    renderLeaf={renderLeaf}
+                    onKeyDown={(event) => {
+                        if (!event.ctrlKey) {
+                            return;
+                        }
 
+                        // Replace the `onKeyDown` logic with our new commands.
+                        switch (event.key) {
+                            case "`": {
+                                event.preventDefault();
+                                CustomEditor.toggleCodeBlock(editor);
+                                break;
+                            }
+
+                            case "b": {
+                                event.preventDefault();
+                                CustomEditor.toggleBoldMark(editor);
+                                break;
+                            }
+
+                            case "i": {
+                                event.preventDefault();
+                                CustomEditor.toggleItalicMark(editor);
+                                break;
+                            }
+
+                            case "u": {
+                                event.preventDefault();
+                                CustomEditor.toggleUnderlineMark(editor);
+                                break;
+                            }
+                        }
+                    }}
+                />
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <EditorToolbar />
+                    <EditorToolbar editor={editor} />
                     <button
                         style={{ margin: ".5rem", border: "1px solid #343536" }}
                         onClick={handleEditComplete}
@@ -145,7 +138,7 @@ const EditableGridColumn = (props) => {
                         DONE
                     </button>
                 </div>
-            </LexicalComposer>
+            </Slate>
         </div>
     );
 };

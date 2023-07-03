@@ -1,80 +1,47 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-    $getRoot,
-    $getSelection,
-    $isRangeSelection,
-    FORMAT_TEXT_COMMAND,
-    FORMAT_ELEMENT_COMMAND,
-    UNDO_COMMAND,
-    REDO_COMMAND,
-} from "lexical";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { mergeRegister } from "@lexical/utils";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createEditor, Editor, Transforms, Element } from "slate";
+import { Slate, Editable, withReact } from "slate-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import CustomEditor from "./CustomEditor";
 
-const EditorToolbar = () => {
-    const [editor] = useLexicalComposerContext();
+const EditorToolbar = ({ editor }) => {
     const [isBold, setIsBold] = useState(false);
     const [isItalic, setIsItalic] = useState(false);
     const [isStrikethrough, setIsStrikethrough] = useState(false);
     const [isUnderline, setIsUnderline] = useState(false);
 
-    const updateToolbar = useCallback(() => {
-        const selection = $getSelection();
-
-        if ($isRangeSelection(selection)) {
-            setIsBold(selection.hasFormat("bold"));
-            setIsItalic(selection.hasFormat("italic"));
-            setIsStrikethrough(selection.hasFormat("strikethrough"));
-            setIsUnderline(selection.hasFormat("underline"));
-        }
-    }, [editor]);
-
-    useEffect(() => {
-        return mergeRegister(
-            editor.registerUpdateListener(({ editorState }) => {
-                editorState.read(() => {
-                    updateToolbar();
-                });
-            })
-        );
-    }, [updateToolbar, editor]);
-
     return (
         <div>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+                    CustomEditor.toggleBoldMark(editor);
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-bold" />
             </button>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(
-                        FORMAT_TEXT_COMMAND,
-                        "strikethrough"
-                    );
+                    CustomEditor.toggleStrikethroughMark(editor);
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-strikethrough" />
             </button>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+                    CustomEditor.toggleItalicMark(editor);
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-italic" />
             </button>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+                    CustomEditor.toggleUnderlineMark(editor);
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-underline" />
             </button>
 
-            <button
+            {/* <button
                 onClick={() => {
                     editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
                 }}
@@ -101,7 +68,7 @@ const EditorToolbar = () => {
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-align-justify" />
-            </button>
+            </button> */}
         </div>
     );
 };
