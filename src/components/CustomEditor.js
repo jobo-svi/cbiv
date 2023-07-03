@@ -1,4 +1,4 @@
-import { Editor, Transforms } from "slate";
+import { Editor, Element as SlateElement, Transforms } from "slate";
 
 const CustomEditor = {
     isBoldMarkActive(editor) {
@@ -21,12 +21,35 @@ const CustomEditor = {
         return marks ? marks.strikethrough === true : false;
     },
 
-    isCodeBlockActive(editor) {
-        const [match] = Editor.nodes(editor, {
-            match: (n) => n.type === "code",
-        });
+    isAlignmentActive(editor, alignment) {
+        const { selection } = editor;
+        if (!selection) return false;
+
+        const [match] = Array.from(
+            Editor.nodes(editor, {
+                at: Editor.unhangRange(editor, selection),
+                match: (n) =>
+                    !Editor.isEditor(n) &&
+                    SlateElement.isElement(n) &&
+                    n["align"] === alignment,
+            })
+        );
 
         return !!match;
+    },
+
+    toggleAlignBlock(editor, alignment) {
+        const isActive = this.isAlignmentActive(editor, alignment);
+
+        const newProperties = {
+            align: isActive ? undefined : alignment,
+        };
+
+        Transforms.setNodes(editor, newProperties);
+
+        const [match] = Editor.nodes(editor, {
+            match: (n) => !Editor.isEditor(n) && SlateElement.isElement(n),
+        });
     },
 
     toggleBoldMark(editor) {
@@ -63,15 +86,6 @@ const CustomEditor = {
         } else {
             Editor.addMark(editor, "strikethrough", true);
         }
-    },
-
-    toggleCodeBlock(editor) {
-        const isActive = CustomEditor.isCodeBlockActive(editor);
-        Transforms.setNodes(
-            editor,
-            { type: isActive ? null : "code" },
-            { match: (n) => Editor.isBlock(editor, n) }
-        );
     },
 };
 

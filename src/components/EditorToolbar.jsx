@@ -41,34 +41,34 @@ const EditorToolbar = ({ editor }) => {
                 <FontAwesomeIcon icon="fa-solid fa-underline" />
             </button>
 
-            {/* <button
+            <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left");
+                    CustomEditor.toggleAlignBlock(editor, "left");
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-align-left" />
             </button>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center");
+                    CustomEditor.toggleAlignBlock(editor, "center");
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-align-center" />
             </button>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right");
+                    CustomEditor.toggleAlignBlock(editor, "right");
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-align-right" />
             </button>
             <button
                 onClick={() => {
-                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify");
+                    CustomEditor.toggleAlignBlock(editor, "justify");
                 }}
             >
                 <FontAwesomeIcon icon="fa-solid fa-align-justify" />
-            </button> */}
+            </button>
         </div>
     );
 };
