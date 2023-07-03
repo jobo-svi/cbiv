@@ -39,6 +39,7 @@ const DefaultElement = ({ attributes, children, element }) => {
 };
 
 const EditableGridColumn = (props) => {
+    console.log(props);
     // Create a Slate editor object that won't change across renders.
     const [editor] = useState(() => withReact(createEditor()));
 
@@ -73,10 +74,8 @@ const EditableGridColumn = (props) => {
             : `${props.column.gridWidth}%`,
     };
 
-    const handleEditComplete = () => {
-        if (editedContents.current) {
-            props.handleEdit(editedContents.current);
-        }
+    const handleEditComplete = (editor) => {
+        props.handleEdit(serialize(editor));
     };
 
     const serialize = (node) => {
@@ -100,14 +99,9 @@ const EditableGridColumn = (props) => {
                 classes.push("editor-textStrikethrough");
             }
 
-            string = `<span class="${classes.join(" ")}">${string}</span>`;
-            // if (node.bold) {
-            //     string = `<strong>${string}</strong>`;
-            // }
-
-            // if (node.italic) {
-            //     string =
-            // }
+            if (classes.length > 0) {
+                string = `<span class="${classes.join(" ")}">${string}</span>`;
+            }
             return string;
         }
 
@@ -185,7 +179,7 @@ const EditableGridColumn = (props) => {
                     <EditorToolbar editor={editor} />
                     <button
                         style={{ margin: ".5rem", border: "1px solid #343536" }}
-                        onClick={handleEditComplete}
+                        onClick={() => handleEditComplete(editor)}
                     >
                         DONE
                     </button>
