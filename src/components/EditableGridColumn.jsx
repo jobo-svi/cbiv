@@ -1,66 +1,175 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createEditor, Editor, Transforms, Element, Text } from "slate";
+import { useCallback, useMemo, useState } from "react";
+import { createEditor, Element as SlateElement, Text } from "slate";
 import { Slate, Editable, withReact } from "slate-react";
+import { jsx } from "slate-hyperscript";
 import EditorToolbar from "./EditorToolbar";
 import CustomEditor from "./CustomEditor";
+import Leaf from "./editor/Leaf";
+import Element from "./editor/Element";
 
-const Leaf = (props) => {
-    const classes = [];
-    if (props.leaf.bold) {
-        classes.push("editor-textBold");
+// Convert nodes to html on save
+const serialize = (node) => {
+    if (Text.isText(node)) {
+        let string = node.text; //escapeHtml(node.text);
+
+        if (node.strikethrough) {
+            string = `<s>${string}</s>`;
+        }
+
+        if (node.underline) {
+            string = `<u>${string}</u>`;
+        }
+
+        if (node.italic) {
+            string = `<em>${string}</em>`;
+        }
+
+        if (node.bold) {
+            string = `<strong>${string}</strong>`;
+        }
+
+        if (node.superscript) {
+            string = `<sup>${string}</sup>`;
+        }
+
+        if (node.subscript) {
+            string = `<sub>${string}</sub>`;
+        }
+
+        return `<span>${string}</span>`;
     }
 
-    if (props.leaf.italic) {
-        classes.push("editor-textItalic");
+    const children = node.children.map((n) => serialize(n)).join("");
+
+    const styles = [];
+
+    if (node.align) {
+        styles.push(`text-align: ${node.align}`);
     }
 
-    if (props.leaf.underline && props.leaf.strikethrough) {
-        classes.push("editor-textUnderlineStrikethrough");
-    } else if (props.leaf.underline) {
-        classes.push("editor-textUnderline");
-    } else if (props.leaf.strikethrough) {
-        classes.push("editor-textStrikethrough");
+    if (node.backgroundColor) {
+        styles.push(`background-color: ${node.backgroundColor}`);
     }
 
-    return (
-        <span {...props.attributes} className={classes.join(" ")}>
-            {props.children}
-        </span>
-    );
+    switch (node.type) {
+        case "h1":
+            return `<h1 style="${styles.join(";")}">${children}</h1>`;
+        case "h2":
+            return `<h2 style="${styles.join(";")}">${children}</h2>`;
+        case "h3":
+            return `<h3 style="${styles.join(";")}">${children}</h3>`;
+        case "paragraph":
+            return `<p style="${styles.join(";")}">${children}</p>`;
+        default:
+            return children;
+    }
 };
 
-const DefaultElement = ({ attributes, children, element }) => {
-    const style = { textAlign: element.align };
-    return (
-        <p style={style} {...attributes}>
-            {children}
-        </p>
-    );
+// convert html to nodes when opening the editor
+const deserialize = (el, markAttributes = {}) => {
+    if (el.nodeType === Node.TEXT_NODE) {
+        return jsx("text", markAttributes, el.textContent);
+    } else if (el.nodeType !== Node.ELEMENT_NODE) {
+        return null;
+    }
+
+    const nodeAttributes = { ...markAttributes };
+
+    if (el.nodeName === "S") {
+        nodeAttributes.strikethrough = true;
+    }
+
+    if (el.nodeName === "U") {
+        nodeAttributes.underline = true;
+    }
+
+    if (el.nodeName === "EM") {
+        nodeAttributes.italic = true;
+    }
+
+    if (el.nodeName === "STRONG") {
+        nodeAttributes.bold = true;
+    }
+
+    if (el.nodeName === "SUP") {
+        nodeAttributes.superscript = true;
+    }
+
+    if (el.nodeName === "SUB") {
+        nodeAttributes.subscript = true;
+    }
+
+    const children = Array.from(el.childNodes)
+        .map((node) => deserialize(node, nodeAttributes))
+        .flat();
+
+    if (children.length === 0) {
+        children.push(jsx("text", nodeAttributes, ""));
+    }
+
+    const blockLevelAttributes = {};
+
+    if (el.style.textAlign) {
+        blockLevelAttributes.align = el.style.textAlign;
+    }
+
+    if (el.style.backgroundColor) {
+        blockLevelAttributes.backgroundColor = el.style.backgroundColor;
+    }
+
+    switch (el.nodeName) {
+        case "BODY":
+            return jsx("fragment", {}, children);
+        //   case 'BR':
+        //     return '\n'
+        case "H1":
+            return jsx(
+                "element",
+                { type: "h1", ...blockLevelAttributes },
+                children
+            );
+        case "H2":
+            return jsx(
+                "element",
+                { type: "h2", ...blockLevelAttributes },
+                children
+            );
+        case "H3":
+            return jsx(
+                "element",
+                { type: "h3", ...blockLevelAttributes },
+                children
+            );
+        case "P":
+            return jsx(
+                "element",
+                { type: "paragraph", ...blockLevelAttributes },
+                children
+            );
+        default:
+            return children;
+    }
 };
 
 const EditableGridColumn = (props) => {
-    console.log(props);
     // Create a Slate editor object that won't change across renders.
-    const [editor] = useState(() => withReact(createEditor()));
+    //const [editor] = useMemo(() => withReact(createEditor()), []);
+    const editor = useMemo(() => withReact(createEditor()), []);
 
-    const initialValue = useMemo(
-        () =>
-            JSON.parse(localStorage.getItem("content")) || [
-                {
-                    type: "paragraph",
-                    children: [{ text: "A line of text in a paragraph." }],
-                },
-            ],
-        []
-    );
+    const initialValue = useMemo(() => {
+        // Deserialize html into Slate nodes
+        const document = new DOMParser().parseFromString(
+            props.column.props.text,
+            "text/html"
+        );
+        const deserialized = deserialize(document.body);
+        return deserialized;
+    }, []);
 
     // Define a rendering function based on the element passed to `props`. We use
     // `useCallback` here to memoize the function for subsequent renders.
     const renderElement = useCallback((props) => {
-        switch (props.element.type) {
-            default:
-                return <DefaultElement {...props} />;
-        }
+        return <Element {...props} />;
     }, []);
 
     // Define a leaf rendering function that is memoized with `useCallback`.
@@ -76,43 +185,6 @@ const EditableGridColumn = (props) => {
 
     const handleEditComplete = (editor) => {
         props.handleEdit(serialize(editor));
-    };
-
-    const serialize = (node) => {
-        if (Text.isText(node)) {
-            let string = node.text; //escapeHtml(node.text);
-
-            const classes = [];
-            if (node.bold) {
-                classes.push("editor-textBold");
-            }
-
-            if (node.italic) {
-                classes.push("editor-textItalic");
-            }
-
-            if (node.underline && node.strikethrough) {
-                classes.push("editor-textUnderlineStrikethrough");
-            } else if (node.underline) {
-                classes.push("editor-textUnderline");
-            } else if (node.strikethrough) {
-                classes.push("editor-textStrikethrough");
-            }
-
-            if (classes.length > 0) {
-                string = `<span class="${classes.join(" ")}">${string}</span>`;
-            }
-            return string;
-        }
-
-        const children = node.children.map((n) => serialize(n)).join("");
-
-        switch (node.type) {
-            case "paragraph":
-                return `<p>${children}</p>`;
-            default:
-                return children;
-        }
     };
 
     return (
@@ -136,18 +208,14 @@ const EditableGridColumn = (props) => {
                     );
                     if (isAstChange) {
                         // Save the value to Local Storage.
-                        const content = JSON.stringify(value);
-                        localStorage.setItem("content", content);
-
-                        // Test out serializing to html
-                        const res = serialize(editor);
-                        console.log(res);
+                        console.log(value);
                     }
                 }}
             >
                 <Editable
                     renderElement={renderElement}
                     renderLeaf={renderLeaf}
+                    autoFocus
                     onKeyDown={(event) => {
                         if (!event.ctrlKey) {
                             return;
@@ -157,26 +225,26 @@ const EditableGridColumn = (props) => {
                         switch (event.key) {
                             case "b": {
                                 event.preventDefault();
-                                CustomEditor.toggleBoldMark(editor);
+                                CustomEditor.toggleMark(editor, "bold");
                                 break;
                             }
 
                             case "i": {
                                 event.preventDefault();
-                                CustomEditor.toggleItalicMark(editor);
+                                CustomEditor.toggleMark(editor, "italic");
                                 break;
                             }
 
                             case "u": {
                                 event.preventDefault();
-                                CustomEditor.toggleUnderlineMark(editor);
+                                CustomEditor.toggleMark(editor, "underline");
                                 break;
                             }
                         }
                     }}
                 />
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <EditorToolbar editor={editor} />
+                    <EditorToolbar />
                     <button
                         style={{ margin: ".5rem", border: "1px solid #343536" }}
                         onClick={() => handleEditComplete(editor)}

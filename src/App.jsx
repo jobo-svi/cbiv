@@ -19,6 +19,14 @@ import {
     faAlignCenter,
     faAlignRight,
     faAlignJustify,
+    faSubscript,
+    faSuperscript,
+    fa1,
+    fa2,
+    fa3,
+    fa4,
+    fa5,
+    fa6,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -38,7 +46,15 @@ library.add(
     faAlignLeft,
     faAlignCenter,
     faAlignRight,
-    faAlignJustify
+    faAlignJustify,
+    faSubscript,
+    faSuperscript,
+    fa1,
+    fa2,
+    fa3,
+    fa4,
+    fa5,
+    fa6
 );
 
 function App() {

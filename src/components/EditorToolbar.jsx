@@ -1,74 +1,93 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createEditor, Editor, Transforms, Element } from "slate";
-import { Slate, Editable, withReact } from "slate-react";
+import { Slate, Editable, withReact, useSlate } from "slate-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CustomEditor from "./CustomEditor";
 
-const EditorToolbar = ({ editor }) => {
-    const [isBold, setIsBold] = useState(false);
-    const [isItalic, setIsItalic] = useState(false);
-    const [isStrikethrough, setIsStrikethrough] = useState(false);
-    const [isUnderline, setIsUnderline] = useState(false);
+const MarkButton = ({ format, children }) => {
+    const editor = useSlate();
+    return (
+        <button
+            onClick={() => {
+                CustomEditor.toggleMark(editor, format);
+            }}
+            style={{
+                border: CustomEditor.isMarkActive(editor, format)
+                    ? "1px solid black"
+                    : "",
+            }}
+        >
+            {children}
+        </button>
+    );
+};
 
+const BlockButton = ({ format, children }) => {
+    const editor = useSlate();
+    return (
+        <button
+            onClick={() => {
+                CustomEditor.toggleBlock(editor, format);
+            }}
+            style={{
+                border: CustomEditor.isBlockActive(editor, format)
+                    ? "1px solid black"
+                    : "",
+            }}
+        >
+            {children}
+        </button>
+    );
+};
+
+const EditorToolbar = () => {
     return (
         <div>
-            <button
-                onClick={() => {
-                    CustomEditor.toggleBoldMark(editor);
-                }}
-            >
+            <MarkButton format="bold">
                 <FontAwesomeIcon icon="fa-solid fa-bold" />
-            </button>
-            <button
-                onClick={() => {
-                    CustomEditor.toggleStrikethroughMark(editor);
-                }}
-            >
-                <FontAwesomeIcon icon="fa-solid fa-strikethrough" />
-            </button>
-            <button
-                onClick={() => {
-                    CustomEditor.toggleItalicMark(editor);
-                }}
-            >
+            </MarkButton>
+            <MarkButton format="italic">
                 <FontAwesomeIcon icon="fa-solid fa-italic" />
-            </button>
-            <button
-                onClick={() => {
-                    CustomEditor.toggleUnderlineMark(editor);
-                }}
-            >
+            </MarkButton>
+            <MarkButton format="underline">
                 <FontAwesomeIcon icon="fa-solid fa-underline" />
-            </button>
+            </MarkButton>
+            <MarkButton format="strikethrough">
+                <FontAwesomeIcon icon="fa-solid fa-strikethrough" />
+            </MarkButton>
+            <MarkButton format="superscript">
+                <FontAwesomeIcon icon="fa-solid fa-superscript" />
+            </MarkButton>
+            <MarkButton format="subscript">
+                <FontAwesomeIcon icon="fa-solid fa-subscript" />
+            </MarkButton>
 
-            <button
-                onClick={() => {
-                    CustomEditor.toggleAlignBlock(editor, "left");
-                }}
-            >
+            <BlockButton format="h1">
+                <FontAwesomeIcon icon="fa-solid fa-1" />
+            </BlockButton>
+            <BlockButton format="h2">
+                <FontAwesomeIcon icon="fa-solid fa-2" />
+            </BlockButton>
+            <BlockButton format="h3">
+                <FontAwesomeIcon icon="fa-solid fa-3" />
+            </BlockButton>
+            <BlockButton format="left">
                 <FontAwesomeIcon icon="fa-solid fa-align-left" />
-            </button>
-            <button
-                onClick={() => {
-                    CustomEditor.toggleAlignBlock(editor, "center");
-                }}
-            >
+            </BlockButton>
+            <BlockButton format="center">
                 <FontAwesomeIcon icon="fa-solid fa-align-center" />
-            </button>
-            <button
-                onClick={() => {
-                    CustomEditor.toggleAlignBlock(editor, "right");
-                }}
-            >
+            </BlockButton>
+            <BlockButton format="right">
                 <FontAwesomeIcon icon="fa-solid fa-align-right" />
-            </button>
-            <button
+            </BlockButton>
+            <BlockButton format="justify">
+                <FontAwesomeIcon icon="fa-solid fa-align-justify" />
+            </BlockButton>
+            {/* <button
                 onClick={() => {
-                    CustomEditor.toggleAlignBlock(editor, "justify");
+                    CustomEditor.toggleBackgroundColor(editor);
                 }}
             >
-                <FontAwesomeIcon icon="fa-solid fa-align-justify" />
-            </button>
+                bg color
+            </button> */}
         </div>
     );
 };

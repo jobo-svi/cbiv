@@ -422,3 +422,9 @@
 .editor-textUnderlineStrikethrough {
     text-decoration: underline line-through;
 }
+
+[contenteditable] {
+    outline: 0px solid transparent;
+    padding-left: 5px;
+    padding-right: 5px;
+}
