@@ -23,7 +23,11 @@ const Leaf = ({ attributes, children, leaf }) => {
         children = <sub>{children}</sub>;
     }
 
-    return <span {...attributes}>{children}</span>;
+    return (
+        <span {...attributes} style={{ color: `${leaf.textColor}` }}>
+            {children}
+        </span>
+    );
 };
 
 export default Leaf;

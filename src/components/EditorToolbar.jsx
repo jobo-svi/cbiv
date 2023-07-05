@@ -1,6 +1,7 @@
 import { Slate, Editable, withReact, useSlate } from "slate-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CustomEditor from "./CustomEditor";
+import { useState } from "react";
 
 const MarkButton = ({ format, children }) => {
     const editor = useSlate();
@@ -17,6 +18,36 @@ const MarkButton = ({ format, children }) => {
         >
             {children}
         </button>
+    );
+};
+
+const Input = ({ onClick, placeholder }) => {
+    const [value, setValue] = useState("#000");
+    function handleChange(event) {
+        setValue(event.target.value);
+    }
+
+    return (
+        <span style={{ position: "relative" }}>
+            <input
+                type="text"
+                onChange={handleChange}
+                value={value}
+                placeholder={placeholder}
+            />
+            <button
+                style={{
+                    position: "absolute",
+                    right: "2px",
+                    top: "0px",
+                    height: "20px",
+                    lineHeight: "20px",
+                }}
+                onClick={() => onClick(value)}
+            >
+                done
+            </button>
+        </span>
     );
 };
 
@@ -39,6 +70,7 @@ const BlockButton = ({ format, children }) => {
 };
 
 const EditorToolbar = () => {
+    const editor = useSlate();
     return (
         <div>
             <MarkButton format="bold">
@@ -59,6 +91,12 @@ const EditorToolbar = () => {
             <MarkButton format="subscript">
                 <FontAwesomeIcon icon="fa-solid fa-subscript" />
             </MarkButton>
+            <Input
+                placeholder="text color"
+                onClick={(value) => {
+                    CustomEditor.setMarkProperty(editor, "textColor", value);
+                }}
+            />
 
             <BlockButton format="h1">
                 <FontAwesomeIcon icon="fa-solid fa-1" />
@@ -81,13 +119,16 @@ const EditorToolbar = () => {
             <BlockButton format="justify">
                 <FontAwesomeIcon icon="fa-solid fa-align-justify" />
             </BlockButton>
-            {/* <button
-                onClick={() => {
-                    CustomEditor.toggleBackgroundColor(editor);
+            <Input
+                placeholder="bg color"
+                onClick={(value) => {
+                    CustomEditor.setBlockProperty(
+                        editor,
+                        "backgroundColor",
+                        value
+                    );
                 }}
-            >
-                bg color
-            </button> */}
+            />
         </div>
     );
 };

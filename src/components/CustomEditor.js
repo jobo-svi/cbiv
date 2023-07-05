@@ -108,28 +108,21 @@ const CustomEditor = {
         return !!match;
     },
 
-    // isBackgroundColorActive(editor) {
-    //     const { selection } = editor;
-    //     if (!selection) return false;
+    setMarkProperty(editor, format, value) {
+        Editor.addMark(editor, format, value);
+    },
 
-    //     const [match] = Array.from(
-    //         Editor.nodes(editor, {
-    //             at: Editor.unhangRange(editor, selection),
-    //             match: (n) =>
-    //                 !Editor.isEditor(n) &&
-    //                 SlateElement.isElement(n) &&
-    //                 n["backgroundColor"],
-    //         })
-    //     );
+    setBlockProperty(editor, format, value) {
+        const newProperties = {
+            [format]: value,
+        };
 
-    //     return !!match;
-    // },
+        Transforms.setNodes(editor, newProperties);
+    },
 
-    // toggleBackgroundColor(editor, backgroundColor = "#6495ed") {
-    //     const isActive = this.isBackgroundColorActive(editor);
-
+    // setBackgroundColor(editor, backgroundColor = "#FFF") {
     //     const newProperties = {
-    //         backgroundColor: isActive ? undefined : backgroundColor,
+    //         backgroundColor: backgroundColor,
     //     };
 
     //     Transforms.setNodes(editor, newProperties);

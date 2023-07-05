@@ -36,30 +36,35 @@ const serialize = (node) => {
             string = `<sub>${string}</sub>`;
         }
 
-        return `<span>${string}</span>`;
+        const markStyles = [];
+        if (node.textColor) {
+            markStyles.push(`color: ${node.textColor}`);
+        }
+
+        return `<span style="${markStyles.join(";")}">${string}</span>`;
     }
 
     const children = node.children.map((n) => serialize(n)).join("");
 
-    const styles = [];
+    const blockStyles = [];
 
     if (node.align) {
-        styles.push(`text-align: ${node.align}`);
+        blockStyles.push(`text-align: ${node.align}`);
     }
 
     if (node.backgroundColor) {
-        styles.push(`background-color: ${node.backgroundColor}`);
+        blockStyles.push(`background-color: ${node.backgroundColor}`);
     }
 
     switch (node.type) {
         case "h1":
-            return `<h1 style="${styles.join(";")}">${children}</h1>`;
+            return `<h1 style="${blockStyles.join(";")}">${children}</h1>`;
         case "h2":
-            return `<h2 style="${styles.join(";")}">${children}</h2>`;
+            return `<h2 style="${blockStyles.join(";")}">${children}</h2>`;
         case "h3":
-            return `<h3 style="${styles.join(";")}">${children}</h3>`;
+            return `<h3 style="${blockStyles.join(";")}">${children}</h3>`;
         case "paragraph":
-            return `<p style="${styles.join(";")}">${children}</p>`;
+            return `<p style="${blockStyles.join(";")}">${children}</p>`;
         default:
             return children;
     }
@@ -97,6 +102,10 @@ const deserialize = (el, markAttributes = {}) => {
 
     if (el.nodeName === "SUB") {
         nodeAttributes.subscript = true;
+    }
+
+    if (el.style.color) {
+        nodeAttributes.textColor = el.style.color;
     }
 
     const children = Array.from(el.childNodes)
