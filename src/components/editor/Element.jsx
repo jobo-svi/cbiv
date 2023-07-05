@@ -2,7 +2,7 @@
 const Element = ({ attributes, children, element }) => {
     const style = {
         textAlign: element.align,
-        backgroundColor: element.backgroundColor,
+        background: element.background,
     };
 
     if (element.type === "h1") {

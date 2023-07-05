@@ -122,11 +122,7 @@ const EditorToolbar = () => {
             <Input
                 placeholder="bg color"
                 onClick={(value) => {
-                    CustomEditor.setBlockProperty(
-                        editor,
-                        "backgroundColor",
-                        value
-                    );
+                    CustomEditor.setBlockProperty(editor, "background", value);
                 }}
             />
         </div>

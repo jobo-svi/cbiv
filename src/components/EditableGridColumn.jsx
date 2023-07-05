@@ -52,8 +52,8 @@ const serialize = (node) => {
         blockStyles.push(`text-align: ${node.align}`);
     }
 
-    if (node.backgroundColor) {
-        blockStyles.push(`background-color: ${node.backgroundColor}`);
+    if (node.background) {
+        blockStyles.push(`background: ${node.background}`);
     }
 
     switch (node.type) {
@@ -122,8 +122,8 @@ const deserialize = (el, markAttributes = {}) => {
         blockLevelAttributes.align = el.style.textAlign;
     }
 
-    if (el.style.backgroundColor) {
-        blockLevelAttributes.backgroundColor = el.style.backgroundColor;
+    if (el.style.background) {
+        blockLevelAttributes.background = el.style.background;
     }
 
     switch (el.nodeName) {
