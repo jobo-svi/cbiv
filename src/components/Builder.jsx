@@ -22,6 +22,7 @@ import BuilderNavbar from "./BuilderNavbar";
 import { Components, constructComponent } from "./ComponentFactory";
 import VirtualizedGrid from "./VirtualizedGrid";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import PropertiesEditor from "./editor/PropertiesEditor";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -847,8 +848,11 @@ const PageBuilder = () => {
                         />
                     </div>
                 </div>
-                <div className="sidebar" style={{ overflow: "auto" }}>
-                    {editId !== null && <div>edit sidebar</div>}
+                <div
+                    className="sidebar"
+                    id="sidebar"
+                    style={{ overflow: "auto" }}
+                >
                     {editId === null && <BuilderElementsMenu />}
                 </div>
                 <DragOverlay

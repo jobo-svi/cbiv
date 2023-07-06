@@ -424,7 +424,7 @@
 }
 
 [contenteditable] {
-    outline: 0px solid transparent;
+    /* outline: 0px solid transparent; */
     padding-left: 5px;
     padding-right: 5px;
 }

@@ -119,14 +119,6 @@ const CustomEditor = {
 
         Transforms.setNodes(editor, newProperties);
     },
-
-    // setBackgroundColor(editor, backgroundColor = "#FFF") {
-    //     const newProperties = {
-    //         backgroundColor: backgroundColor,
-    //     };
-
-    //     Transforms.setNodes(editor, newProperties);
-    // },
 };
 
 export default CustomEditor;

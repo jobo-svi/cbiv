@@ -1,15 +1,97 @@
 import { useCallback, useMemo, useState } from "react";
-import { createEditor, Element as SlateElement, Text } from "slate";
+import { createPortal } from "react-dom";
+import {
+    createEditor,
+    Editor,
+    Element as SlateElement,
+    Transforms,
+} from "slate";
+import { isText } from "@udecode/plate-common";
 import { Slate, Editable, withReact } from "slate-react";
+
 import { jsx } from "slate-hyperscript";
 import EditorToolbar from "./EditorToolbar";
 import CustomEditor from "./CustomEditor";
 import Leaf from "./editor/Leaf";
 import Element from "./editor/Element";
+import PropertiesEditor from "./editor/PropertiesEditor";
+
+import {
+    createBoldPlugin,
+    createCodePlugin,
+    createItalicPlugin,
+    createStrikethroughPlugin,
+    createUnderlinePlugin,
+} from "@udecode/plate-basic-marks";
+import { createBlockquotePlugin } from "@udecode/plate-block-quote";
+import {
+    Plate,
+    createPlugins,
+    createPlateEditor,
+    usePlateEditorRef,
+} from "@udecode/plate-common";
+import { createHeadingPlugin } from "@udecode/plate-heading";
+import { createParagraphPlugin } from "@udecode/plate-paragraph";
+import { createPlateUI } from "@udecode/plate";
+import { serializeHtml } from "@udecode/plate-serializer-html";
+import {
+    createFontBackgroundColorPlugin,
+    createFontColorPlugin,
+    createFontSizePlugin,
+} from "@udecode/plate-font";
+import { createAlignPlugin } from "@udecode/plate-alignment";
+import {
+    ELEMENT_PARAGRAPH,
+    ELEMENT_H1,
+    ELEMENT_H2,
+    ELEMENT_H3,
+    ELEMENT_H4,
+    ELEMENT_H5,
+    ELEMENT_H6,
+    StyledElement,
+    withProps,
+} from "@udecode/plate";
+
+const plugins = createPlugins(
+    [
+        createParagraphPlugin(),
+        createBlockquotePlugin(),
+        createHeadingPlugin(),
+
+        createBoldPlugin(),
+        createItalicPlugin(),
+        createUnderlinePlugin(),
+        createStrikethroughPlugin(),
+        createCodePlugin(),
+
+        createFontColorPlugin(),
+        createFontBackgroundColorPlugin(),
+        createFontSizePlugin(),
+
+        createAlignPlugin({
+            inject: {
+                props: {
+                    validTypes: [
+                        ELEMENT_PARAGRAPH,
+                        ELEMENT_H1,
+                        ELEMENT_H2,
+                        ELEMENT_H3,
+                        ELEMENT_H4,
+                        ELEMENT_H5,
+                        ELEMENT_H6,
+                    ],
+                },
+            },
+        }),
+    ],
+    {
+        components: createPlateUI(),
+    }
+);
 
 // Convert nodes to html on save
 const serialize = (node) => {
-    if (Text.isText(node)) {
+    if (isText(node)) {
         let string = node.text; //escapeHtml(node.text);
 
         if (node.strikethrough) {
@@ -37,8 +119,8 @@ const serialize = (node) => {
         }
 
         const markStyles = [];
-        if (node.textColor) {
-            markStyles.push(`color: ${node.textColor}`);
+        if (node.color) {
+            markStyles.push(`color: ${node.color}`);
         }
 
         return `<span style="${markStyles.join(";")}">${string}</span>`;
@@ -52,8 +134,8 @@ const serialize = (node) => {
         blockStyles.push(`text-align: ${node.align}`);
     }
 
-    if (node.background) {
-        blockStyles.push(`background: ${node.background}`);
+    if (node.backgroundColor) {
+        blockStyles.push(`background-color: ${node.backgroundColor}`);
     }
 
     switch (node.type) {
@@ -63,7 +145,7 @@ const serialize = (node) => {
             return `<h2 style="${blockStyles.join(";")}">${children}</h2>`;
         case "h3":
             return `<h3 style="${blockStyles.join(";")}">${children}</h3>`;
-        case "paragraph":
+        case "p":
             return `<p style="${blockStyles.join(";")}">${children}</p>`;
         default:
             return children;
@@ -105,7 +187,7 @@ const deserialize = (el, markAttributes = {}) => {
     }
 
     if (el.style.color) {
-        nodeAttributes.textColor = el.style.color;
+        nodeAttributes.color = el.style.color;
     }
 
     const children = Array.from(el.childNodes)
@@ -122,8 +204,8 @@ const deserialize = (el, markAttributes = {}) => {
         blockLevelAttributes.align = el.style.textAlign;
     }
 
-    if (el.style.background) {
-        blockLevelAttributes.background = el.style.background;
+    if (el.style.backgroundColor) {
+        blockLevelAttributes.backgroundColor = el.style.backgroundColor;
     }
 
     switch (el.nodeName) {
@@ -152,7 +234,7 @@ const deserialize = (el, markAttributes = {}) => {
         case "P":
             return jsx(
                 "element",
-                { type: "paragraph", ...blockLevelAttributes },
+                { type: "p", ...blockLevelAttributes },
                 children
             );
         default:
@@ -160,10 +242,36 @@ const deserialize = (el, markAttributes = {}) => {
     }
 };
 
+const DoneEditingButton = ({ onClick }) => {
+    const plateEditor = usePlateEditorRef();
+
+    return (
+        <button
+            style={{ margin: ".5rem", border: "1px solid #343536" }}
+            onClick={() => onClick(plateEditor)}
+        >
+            DONE
+        </button>
+    );
+};
+
+/* [
+                    {
+                        type: "p",
+                        align: "justify",
+                        children: [
+                            {
+                                text: "This is editable plain text with react and history plugins, just like a <textarea>! This is editable plain text with react and history plugins, just like a <textarea>! This is editable plain text with react and history plugins, just like a <textarea>! This is editable plain text with react and history plugins, just like a <textarea>! This is editable plain text with react and history plugins, just like a <textarea>!",
+                                bold: true,
+                                backgroundColor: "#fff",
+                            },
+                        ],
+                    },
+                ] */
+
 const EditableGridColumn = (props) => {
     // Create a Slate editor object that won't change across renders.
-    //const [editor] = useMemo(() => withReact(createEditor()), []);
-    const editor = useMemo(() => withReact(createEditor()), []);
+    const [editor] = useState(() => withReact(createEditor()));
 
     const initialValue = useMemo(() => {
         // Deserialize html into Slate nodes
@@ -196,6 +304,10 @@ const EditableGridColumn = (props) => {
         props.handleEdit(serialize(editor));
     };
 
+    const editableProps = {
+        placeholder: "Type...",
+    };
+
     return (
         <div
             id={props.column.id}
@@ -208,23 +320,25 @@ const EditableGridColumn = (props) => {
                 background: "#D1D1D1",
             }}
         >
-            <Slate
-                editor={editor}
+            <Plate
+                editableProps={editableProps}
                 initialValue={initialValue}
-                onChange={(value) => {
-                    const isAstChange = editor.operations.some(
-                        (op) => "set_selection" !== op.type
-                    );
-                    if (isAstChange) {
-                        // Save the value to Local Storage.
-                        console.log(value);
-                    }
-                }}
+                plugins={plugins}
             >
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <DoneEditingButton onClick={handleEditComplete} />
+                </div>
+            </Plate>
+            {/* <Slate editor={editor} initialValue={initialValue}>
                 <Editable
                     renderElement={renderElement}
                     renderLeaf={renderLeaf}
-                    autoFocus
+                    autoFocus={true}
+                    onFocus={(event) => {
+                        if (!editor.selection) {
+                            Transforms.select(editor, Editor.end(editor, []));
+                        }
+                    }}
                     onKeyDown={(event) => {
                         if (!event.ctrlKey) {
                             return;
@@ -253,7 +367,7 @@ const EditableGridColumn = (props) => {
                     }}
                 />
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <EditorToolbar />
+                    <EditorToolbar editor={editor} />
                     <button
                         style={{ margin: ".5rem", border: "1px solid #343536" }}
                         onClick={() => handleEditComplete(editor)}
@@ -261,7 +375,16 @@ const EditableGridColumn = (props) => {
                         DONE
                     </button>
                 </div>
-            </Slate>
+
+                { "The property editor needs access to the Slate context, but needs to render in the sidebar which is outside of the context." }
+                { "So the fucky-wucky solution is to use a portal. There's probably a better way to do this, but I'm just one little manlet whose brain is tired."}
+                {createPortal(
+                    <PropertiesEditor
+                        onComplete={() => handleEditComplete(editor)}
+                    />,
+                    document.getElementById("sidebar")
+                )}
+            </Slate> */}
         </div>
     );
 };
