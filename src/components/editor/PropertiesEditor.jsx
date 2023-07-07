@@ -1,17 +1,48 @@
-import { Slate, Editable, withReact, useSlate } from "slate-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { usePlateEditorState } from "@udecode/plate-common";
 import BlockButton from "./BlockButton";
+import Input from "./Input";
 
 const PropertiesEditor = (props) => {
-    const editor = useSlate();
+    const editor = usePlateEditorState();
     return (
         <div id="properties-editor">
             <div
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
-
                     background: "white",
+                    marginBottom: "5px",
+                }}
+            >
+                <BlockButton format="p">
+                    <FontAwesomeIcon icon="fa-solid fa-paragraph" />
+                </BlockButton>
+                <BlockButton format="h1">
+                    <FontAwesomeIcon icon="fa-solid fa-1" />
+                </BlockButton>
+                <BlockButton format="h2">
+                    <FontAwesomeIcon icon="fa-solid fa-2" />
+                </BlockButton>
+                <BlockButton format="h3">
+                    <FontAwesomeIcon icon="fa-solid fa-3" />
+                </BlockButton>
+                <BlockButton format="h4">
+                    <FontAwesomeIcon icon="fa-solid fa-4" />
+                </BlockButton>
+                <BlockButton format="h5">
+                    <FontAwesomeIcon icon="fa-solid fa-5" />
+                </BlockButton>
+                <BlockButton format="h6">
+                    <FontAwesomeIcon icon="fa-solid fa-6" />
+                </BlockButton>
+            </div>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "white",
+                    marginBottom: "5px",
                 }}
             >
                 <p>Alignment</p>
@@ -30,14 +61,100 @@ const PropertiesEditor = (props) => {
                     </BlockButton>
                 </div>
             </div>
-            <div>
-                <button
-                    style={{ marginTop: "1rem", background: "white" }}
-                    onClick={props.onComplete}
-                >
-                    done
-                </button>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "white",
+                    marginBottom: "5px",
+                }}
+            >
+                <p>Font Size</p>
+                <div>
+                    <Input
+                        placeholder="font size"
+                        onClick={(value) => {
+                            editor.addMark("fontSize", value);
+                            console.log(editor);
+                        }}
+                    />
+                </div>
             </div>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "white",
+                    marginBottom: "5px",
+                }}
+            >
+                <p>Line Height</p>
+                <div>
+                    <Input
+                        placeholder="line height"
+                        onClick={(value) => {
+                            editor.setNodes({ lineHeight: value });
+                        }}
+                    />
+                </div>
+            </div>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "white",
+                    marginBottom: "5px",
+                }}
+            >
+                <p>Text Color</p>
+                <div>
+                    <Input
+                        placeholder="text color"
+                        onClick={(value) => {
+                            editor.addMark("color", value);
+                        }}
+                    />
+                </div>
+            </div>{" "}
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "white",
+                    marginBottom: "5px",
+                }}
+            >
+                <p>BG Color</p>
+                <div>
+                    <Input
+                        placeholder="bg color"
+                        onClick={(value) => {
+                            editor.setNodes({ backgroundColor: value });
+                        }}
+                    />
+                </div>
+            </div>
+            {/* <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    background: "white",
+                    marginBottom: "5px",
+                }}
+            >
+                <p>Indent</p>
+                <div>
+                    <button
+                        onClick={() => {
+                            editor.setNodes({ indent: 1 });
+                            console.log(editor);
+                        }}
+                    >
+                        increase indent
+                    </button>
+                </div>
+            </div> */}
+            {props.children}
         </div>
     );
 };
