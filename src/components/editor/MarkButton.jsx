@@ -1,23 +1,24 @@
-import { useSlate } from "slate-react";
-import CustomEditor from "../CustomEditor";
+import {
+  usePlateEditorState,
+  isMarkActive,
+  toggleMark,
+} from "@udecode/plate-common";
 
-const MarkButton = ({ format, children }) => {
-    const editor = useSlate();
-    return (
-        <button
-            onMouseDown={(event) => {
-                event.preventDefault();
-                CustomEditor.toggleMark(editor, format);
-            }}
-            style={{
-                border: CustomEditor.isMarkActive(editor, format)
-                    ? "1px solid black"
-                    : "",
-            }}
-        >
-            {children}
-        </button>
-    );
+const MarkButton = ({ mark, children }) => {
+  const editor = usePlateEditorState();
+  return (
+    <button
+      onMouseDown={(event) => {
+        event.preventDefault();
+        toggleMark(editor, { key: mark });
+      }}
+      style={{
+        border: isMarkActive(editor, mark) ? "1px solid black" : "",
+      }}
+    >
+      {children}
+    </button>
+  );
 };
 
 export default MarkButton;
