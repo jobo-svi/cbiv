@@ -12,7 +12,8 @@ const BlockButton = ({ format, blockType = "type", children }) => {
 
     return (
         <button
-            onClick={(event) => {
+            onMouseDown={(event) => {
+                event.preventDefault();
                 editor.setNodes({ [blockType]: format });
             }}
             style={{

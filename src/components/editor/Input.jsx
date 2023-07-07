@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-const Input = ({ onClick, placeholder }) => {
-    const [value, setValue] = useState("");
+const Input = ({ onClick, placeholder, initialValue }) => {
+    const [value, setValue] = useState(initialValue);
     function handleChange(event) {
         setValue(event.target.value);
     }

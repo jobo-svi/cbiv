@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { usePlateEditorState } from "@udecode/plate-common";
 import BlockButton from "./BlockButton";
@@ -5,6 +6,18 @@ import Input from "./Input";
 
 const PropertiesEditor = (props) => {
     const editor = usePlateEditorState();
+
+    const [fontSize, setFontSize] = useState(null);
+
+    useEffect(() => {
+        const marks = editor.getMarks();
+        setFontSize(marks?.fontSize ?? null);
+    }, [editor]);
+
+    useEffect(() => {
+        console.log("font size", fontSize);
+    }, [fontSize]);
+
     return (
         <div id="properties-editor">
             <div
@@ -73,9 +86,9 @@ const PropertiesEditor = (props) => {
                 <div>
                     <Input
                         placeholder="font size"
+                        initialValue={fontSize}
                         onClick={(value) => {
                             editor.addMark("fontSize", value);
-                            console.log(editor);
                         }}
                     />
                 </div>
