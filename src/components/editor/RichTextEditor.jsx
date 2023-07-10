@@ -66,7 +66,18 @@ const makeLeafComponent =
         );
     };
 
-// Let Plate know which plugins we want to use. Be not afraid, my child...
+// Let Plate know which plugins we want to use, and which elements we can use them on. Be not afraid, my child...
+const defaultValidTypes = [
+    ELEMENT_PARAGRAPH,
+    ELEMENT_H1,
+    ELEMENT_H2,
+    ELEMENT_H3,
+    ELEMENT_H4,
+    ELEMENT_H5,
+    ELEMENT_H6,
+    ELEMENT_BLOCKQUOTE,
+];
+
 const plugins = createPlugins(
     [
         createParagraphPlugin(),
@@ -76,42 +87,37 @@ const plugins = createPlugins(
         createItalicPlugin(),
         createUnderlinePlugin(),
         createStrikethroughPlugin(),
-        createCodePlugin(),
-        createFontColorPlugin(),
+        createFontColorPlugin({
+            inject: {
+                props: {
+                    validTypes: defaultValidTypes,
+                },
+            },
+        }),
         createFontBackgroundColorPlugin(),
         createFontSizePlugin(),
         createSubscriptPlugin(),
         createSuperscriptPlugin(),
-        createLineHeightPlugin(),
+        createLineHeightPlugin({
+            inject: {
+                props: {
+                    validTypes: defaultValidTypes,
+                },
+            },
+        }),
         createTablePlugin(),
         createSoftBreakPlugin(),
         createIndentPlugin({
             inject: {
                 props: {
-                    validTypes: [
-                        ELEMENT_PARAGRAPH,
-                        ELEMENT_H1,
-                        ELEMENT_H2,
-                        ELEMENT_H3,
-                        ELEMENT_H4,
-                        ELEMENT_H5,
-                        ELEMENT_H6,
-                    ],
+                    validTypes: defaultValidTypes,
                 },
             },
         }),
         createAlignPlugin({
             inject: {
                 props: {
-                    validTypes: [
-                        ELEMENT_PARAGRAPH,
-                        ELEMENT_H1,
-                        ELEMENT_H2,
-                        ELEMENT_H3,
-                        ELEMENT_H4,
-                        ELEMENT_H5,
-                        ELEMENT_H6,
-                    ],
+                    validTypes: defaultValidTypes,
                 },
             },
         }),
@@ -143,6 +149,8 @@ const RichTextEditor = (props) => {
             props.initialValue,
             "text/html"
         );
+
+        console.log(deserialize(document.body));
 
         return deserialize(document.body);
     }, []);

@@ -1,14 +1,13 @@
 import React from "react";
 import FlipCard from "./FlipCard";
-import Header from "./Header";
 import Image from "./Image";
-import Paragraph from "./Paragraph";
 import UndefinedElement from "./UndefinedElement";
+import RichText from "./RichText";
 
 export const Components = {
     header: [
         {
-            type: Header,
+            type: RichText,
             component: "header",
             props: {
                 text: "<h1>My Header</h1>",
@@ -18,10 +17,20 @@ export const Components = {
     ],
     paragraph: [
         {
-            type: Paragraph,
+            type: RichText,
             component: "paragraph",
             props: {
                 text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",
+            },
+            defaultHeight: 96,
+        },
+    ],
+    blockquote: [
+        {
+            type: RichText,
+            component: "blockquote",
+            props: {
+                text: "<blockquote>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</blockquote>",
             },
             defaultHeight: 96,
         },
@@ -46,7 +55,7 @@ export const Components = {
     ],
     headerAndParagraph: [
         {
-            type: Header,
+            type: RichText,
             component: "header",
             props: {
                 text: "<h1>My Header</h1>",
@@ -54,7 +63,7 @@ export const Components = {
             defaultHeight: 96,
         },
         {
-            type: Paragraph,
+            type: RichText,
             component: "paragraph",
             props: {
                 text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",
@@ -73,7 +82,7 @@ export const Components = {
             defaultHeight: 826,
         },
         {
-            type: Paragraph,
+            type: RichText,
             component: "paragraph",
             props: {
                 text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",

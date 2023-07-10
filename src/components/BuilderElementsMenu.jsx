@@ -38,6 +38,22 @@ const BuilderElementsMenu = () => {
             </div>
             <div className="element-wrapper">
                 <BuilderElementsMenuItem
+                    id="blockquote-menu-item"
+                    data={{
+                        component: "blockquote",
+                        height: Components.blockquote.defaultHeight,
+                        isNewElement: true,
+                    }}
+                >
+                    <button className="element">
+                        <FontAwesomeIcon icon="fa-solid fa-quote-left" />
+                        QUOTE
+                    </button>
+                </BuilderElementsMenuItem>
+            </div>
+
+            <div className="element-wrapper">
+                <BuilderElementsMenuItem
                     id="image-menu-item"
                     data={{
                         component: "image",

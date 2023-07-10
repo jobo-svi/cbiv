@@ -63,7 +63,6 @@ export const serialize = (node) => {
     }
 
     if (node.indent) {
-        console.log(node.indent);
         blockStyles.push(`margin-left: ${node.marginLeft}`);
     }
 

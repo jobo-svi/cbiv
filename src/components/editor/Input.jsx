@@ -4,7 +4,7 @@ const Input = ({ onClick, placeholder, initialValue }) => {
     const [value, setValue] = useState("");
 
     useEffect(() => {
-        setValue(initialValue);
+        setValue(initialValue ?? "");
     }, [initialValue]);
 
     function handleChange(event) {
