@@ -114,7 +114,7 @@ export const Components = {
     ],
 };
 
-// Get the props for a component. Recursively handle nested sub-components
+// Get the props for a component.
 const getProps = (item) => {
     const props = {
         key: item.id,

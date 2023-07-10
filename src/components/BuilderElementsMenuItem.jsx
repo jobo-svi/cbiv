@@ -1,5 +1,4 @@
 import { useDraggable } from "@dnd-kit/core";
-import React from "react";
 
 const BuilderElementsMenuItem = (props) => {
     const { attributes, listeners, setNodeRef } = useDraggable({

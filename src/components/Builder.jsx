@@ -22,7 +22,6 @@ import BuilderNavbar from "./BuilderNavbar";
 import { Components, constructComponent } from "./ComponentFactory";
 import VirtualizedGrid from "./VirtualizedGrid";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
-import PropertiesEditor from "./editor/PropertiesEditor";
 
 const PageBuilder = () => {
     // The lesson elements
@@ -89,6 +88,7 @@ const PageBuilder = () => {
         }
     };
 
+    // Fires any time cursor hovers over a droppable
     const handleDragOver = (e) => {
         const { active, over, collisions } = e;
 
@@ -116,6 +116,7 @@ const PageBuilder = () => {
         }
     };
 
+    // Fires any time the cursor position changes while dragging
     const handleDragMove = (e) => {
         const { active, delta } = e;
 
@@ -304,6 +305,7 @@ const PageBuilder = () => {
         const fromRowIndex = getRowIndex(active.id, updateItems);
         const fromCol = getColumn(active.id, updateItems);
 
+        // Moving existing column to a new location
         if (over.data.current.type === "column") {
             const toCol = getColumn(over.id, updateItems);
             const toRow = updateItems.find((row) =>
@@ -358,7 +360,9 @@ const PageBuilder = () => {
                     );
                 }, columnDelayTiming);
             }
-        } else if (over.data.current.type === "row") {
+        }
+        // Moving an existing column to a new row
+        else if (over.data.current.type === "row") {
             // If element is hovering over its own row, or close enough to its own row, no need to swap positions
             const hoveringOverSelf = fromRow?.id === over.id;
 
@@ -577,8 +581,6 @@ const PageBuilder = () => {
             let over = getFirstCollision(columnPointerIntersections);
 
             if (over != null) {
-                // TODO: This anti jank logic, itself, is a bit janky when combining/decombining with large images, because the size of the threshold changes based on the height of the element.
-                //       Maybe it should only apply when combining, and NOT when decombining.
                 // If hovering near the top or bottom edge of a row, don't combine.
                 // Only combine if hovering closer to the center of a row. This reduces jankiness somewhat.
                 const rect = over.data.droppableContainer.rect.current;
@@ -607,7 +609,7 @@ const PageBuilder = () => {
                 }
             }
 
-            // explain this logic
+            // If we're not directly over a column, find the closest row.
             const closestCenters = closestCenter(args);
             const closestRows = closestCenters.filter(
                 (c) => c.data.droppableContainer.data.current.type === "row"
@@ -749,36 +751,6 @@ const PageBuilder = () => {
         return JSON.parse(JSON.stringify(items));
     }
 
-    const handleStressTest = () => {
-        setHistoryEnabled(false);
-
-        setItems(() => {
-            let stressTestItems = [];
-            for (let i = 0; i < 3500; i++) {
-                stressTestItems.push({
-                    id: uuid(),
-                    columns: [
-                        {
-                            id: uuid(),
-                            component: "paragraph",
-                            props: {
-                                text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",
-                            },
-                        },
-                        {
-                            id: uuid(),
-                            component: "paragraph",
-                            props: {
-                                text: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris mattis felis sed suscipit consequat. Nullam feugiat quam sit amet est tincidunt, nec malesuada augue posuere. Curabitur posuere libero eu nunc rhoncus, sit amet ullamcorper magna mattis. Nullam et mauris in risus malesuada fringilla ut et lacus. Phasellus congue at velit ac cursus. Integer pretium magna vitae ex vehicula lobortis. Morbi tincidunt purus a lorem pharetra molestie. Morbi ac volutpat diam. In sollicitudin luctus dictum. In sollicitudin nisl sapien, ut dignissim nibh consectetur vitae.</p>",
-                            },
-                        },
-                    ],
-                });
-            }
-            return stressTestItems;
-        });
-    };
-
     const handleEdit = (contents) => {
         let updateItems = getItems();
         let columnToEdit = getColumn(editId, updateItems);
@@ -833,9 +805,6 @@ const PageBuilder = () => {
                                 RESET
                             </button>
                             <button onClick={handleSave}>SAVE</button>
-                            <button onClick={handleStressTest}>
-                                GENERATE 3500 PARAGRAPHS
-                            </button>
                         </div>
                         <VirtualizedGrid
                             items={items}

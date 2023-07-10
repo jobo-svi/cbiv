@@ -1,8 +1,7 @@
-import React from "react";
 import { useDroppable } from "@dnd-kit/core";
 
 const DefaultDroppable = (props) => {
-    const { isOver, setNodeRef } = useDroppable({
+    const { setNodeRef } = useDroppable({
         id: "initial-droppable",
         data: {
             rowIndex: 0,

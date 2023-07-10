@@ -1,7 +1,7 @@
 import { selectEditor, focusEditor, isText } from "@udecode/plate-common";
 import { useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import EditorToolbar from "../EditorToolbar";
+import EditorToolbar from "./EditorToolbar";
 import PropertiesEditor from "./PropertiesEditor";
 import {
     ELEMENT_H1,
@@ -23,7 +23,6 @@ import {
 import { createAlignPlugin } from "@udecode/plate-alignment";
 import {
     createBoldPlugin,
-    createCodePlugin,
     createItalicPlugin,
     createStrikethroughPlugin,
     createSubscriptPlugin,
@@ -150,8 +149,6 @@ const RichTextEditor = (props) => {
             "text/html"
         );
 
-        console.log(deserialize(document.body));
-
         return deserialize(document.body);
     }, []);
 
@@ -171,6 +168,7 @@ const RichTextEditor = (props) => {
         >
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <EditorToolbar />
+                <AutofocusPlugin />
                 <DoneEditingButton onClick={handleEditComplete} />
             </div>
             {/* The property editor needs access to the Slate context, but needs to render in the sidebar which is outside of the context. */}
@@ -187,7 +185,9 @@ const RichTextEditor = (props) => {
     );
 };
 
-const DoneEditingButton = ({ onClick }) => {
+// Auto focus the editor when it loads, and set the cursor to the end of the content,
+// so the user doesn't have to manually select the content before applying certain transforms.
+const AutofocusPlugin = () => {
     const plateEditor = usePlateEditorRef();
 
     useEffect(() => {
@@ -196,6 +196,13 @@ const DoneEditingButton = ({ onClick }) => {
             focusEditor(plateEditor);
         }
     }, []);
+
+    return null;
+};
+
+const DoneEditingButton = ({ onClick }) => {
+    const plateEditor = usePlateEditorRef();
+
     return (
         <button
             style={{ margin: ".5rem", border: "1px solid #343536" }}

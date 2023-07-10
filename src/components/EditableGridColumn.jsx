@@ -7,6 +7,7 @@ const EditableGridColumn = (props) => {
             : `${props.column.gridWidth}%`,
     };
 
+    // Render editor based on component type. Currently only can edit rich text.
     return (
         <div
             id={props.column.id}

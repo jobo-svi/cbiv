@@ -1,12 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import MarkButton from "./editor/MarkButton";
-import BlockButton from "./editor/BlockButton";
-import Input from "./editor/Input";
-import { usePlateEditorRef, setMarks, toggleMark } from "@udecode/plate-common";
-import { insertTable } from "@udecode/plate";
+import MarkButton from "./MarkButton";
 
 const EditorToolbar = () => {
-    const editor = usePlateEditorRef();
     return (
         <div>
             <MarkButton mark="bold">
@@ -27,14 +22,6 @@ const EditorToolbar = () => {
             <MarkButton mark="subscript">
                 <FontAwesomeIcon icon="fa-solid fa-subscript" />
             </MarkButton>
-
-            {/* <button
-                onClick={() => {
-                    insertTable(editor, { rowCount: 1, colCount: 2 });
-                }}
-            >
-                insert table
-            </button> */}
         </div>
     );
 };

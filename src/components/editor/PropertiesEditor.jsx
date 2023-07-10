@@ -12,12 +12,14 @@ const PropertiesEditor = (props) => {
     const [textColor, setTextColor] = useState("");
     const [backgroundColor, setBackgroundColor] = useState("");
 
+    // Prepopulate input values
     useEffect(() => {
+        // Inline attributes
         const marks = editor.getMarks();
         setFontSize(marks?.fontSize ?? null);
         setTextColor(marks?.color ?? null);
 
-        // Block level stuff
+        // Block level attributes
         const lh = findNode(editor, {
             match: (n) => n["lineHeight"],
         });

@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from "react";
-
 const FlipCard = (props) => {
     return (
         <div className="flip-card-container">

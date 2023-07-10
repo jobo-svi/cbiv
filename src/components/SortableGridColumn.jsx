@@ -4,7 +4,6 @@ import { useDraggable, useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { constructComponent } from "./ComponentFactory";
-import GridColumn from "./GridColumn";
 
 const SortableGridColumn = (props) => {
     const {
