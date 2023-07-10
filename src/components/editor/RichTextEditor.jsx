@@ -11,6 +11,7 @@ import {
     ELEMENT_H5,
     ELEMENT_H6,
     ELEMENT_PARAGRAPH,
+    ELEMENT_BLOCKQUOTE,
     MARK_BOLD,
     MARK_ITALIC,
     MARK_UNDERLINE,
@@ -122,6 +123,7 @@ const plugins = createPlugins(
             [ELEMENT_H5]: makeElementComponent("h5"),
             [ELEMENT_H6]: makeElementComponent("h6"),
             [ELEMENT_PARAGRAPH]: makeElementComponent("p"),
+            [ELEMENT_BLOCKQUOTE]: makeElementComponent("blockquote"),
             [MARK_BOLD]: makeLeafComponent("strong"),
             [MARK_ITALIC]: makeLeafComponent("em"),
             [MARK_UNDERLINE]: makeLeafComponent("u"),
@@ -148,7 +150,7 @@ const RichTextEditor = (props) => {
     };
 
     const editableProps = {
-        placeholder: "Type...",
+        placeholder: "Add your content here...",
         autoFocus: true,
     };
     return (

@@ -76,6 +76,10 @@ export const serialize = (node) => {
             return `<h3 style="${blockStyles.join(";")}">${children}</h3>`;
         case "p":
             return `<p style="${blockStyles.join(";")}">${children}</p>`;
+        case "blockquote":
+            return `<blockquote style="${blockStyles.join(
+                ";"
+            )}">${children}</blockquote>`;
         default:
             return children;
     }
@@ -176,6 +180,12 @@ export const deserialize = (el, markAttributes = {}) => {
             return jsx(
                 "element",
                 { type: "p", ...blockLevelAttributes },
+                children
+            );
+        case "BLOCKQUOTE":
+            return jsx(
+                "element",
+                { type: "blockquote", ...blockLevelAttributes },
                 children
             );
         default:

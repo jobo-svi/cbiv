@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { usePlateEditorState } from "@udecode/plate-common";
+import { usePlateEditorState, findNode } from "@udecode/plate-common";
 import BlockButton from "./BlockButton";
 import Input from "./Input";
 
@@ -8,15 +8,32 @@ const PropertiesEditor = (props) => {
     const editor = usePlateEditorState();
 
     const [fontSize, setFontSize] = useState(null);
+    const [lineHeight, setLineHeight] = useState(null);
+    const [textColor, setTextColor] = useState(null);
+    const [backgroundColor, setBackgroundColor] = useState(null);
 
     useEffect(() => {
         const marks = editor.getMarks();
         setFontSize(marks?.fontSize ?? null);
-    }, [editor]);
+        setTextColor(marks?.color ?? null);
 
-    useEffect(() => {
-        console.log("font size", fontSize);
-    }, [fontSize]);
+        // Block level stuff
+        const lh = findNode(editor, {
+            match: (n) => n["lineHeight"],
+        });
+
+        if (lh) {
+            setLineHeight(lh[0].lineHeight);
+        }
+
+        const bgColor = findNode(editor, {
+            match: (n) => n["backgroundColor"],
+        });
+
+        if (bgColor) {
+            setBackgroundColor(bgColor[0].backgroundColor);
+        }
+    }, [editor]);
 
     return (
         <div id="properties-editor">
@@ -48,6 +65,9 @@ const PropertiesEditor = (props) => {
                 </BlockButton>
                 <BlockButton format="h6">
                     <FontAwesomeIcon icon="fa-solid fa-6" />
+                </BlockButton>
+                <BlockButton format="blockquote">
+                    <FontAwesomeIcon icon="fa-solid fa-quote-left" />
                 </BlockButton>
             </div>
             <div
@@ -105,6 +125,7 @@ const PropertiesEditor = (props) => {
                 <div>
                     <Input
                         placeholder="line height"
+                        initialValue={lineHeight}
                         onClick={(value) => {
                             editor.setNodes({ lineHeight: value });
                         }}
@@ -123,12 +144,13 @@ const PropertiesEditor = (props) => {
                 <div>
                     <Input
                         placeholder="text color"
+                        initialValue={textColor}
                         onClick={(value) => {
                             editor.addMark("color", value);
                         }}
                     />
                 </div>
-            </div>{" "}
+            </div>
             <div
                 style={{
                     display: "flex",
@@ -141,6 +163,7 @@ const PropertiesEditor = (props) => {
                 <div>
                     <Input
                         placeholder="bg color"
+                        initialValue={backgroundColor}
                         onClick={(value) => {
                             editor.setNodes({ backgroundColor: value });
                         }}

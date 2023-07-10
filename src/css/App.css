@@ -427,3 +427,31 @@
     padding-left: 5px;
     padding-right: 5px;
 }
+
+blockquote {
+    padding: 1.2em 30px 1.2em 75px;
+    border-left: 8px solid #343536;
+    line-height: 1.6;
+    position: relative;
+    background: #EDEDED;
+}
+
+blockquote::before {
+    font-family: Arial;
+    content: "\201C";
+    color: #343536;
+    font-size: 4em;
+    position: absolute;
+    left: 10px;
+    top: -10px;
+}
+
+blockquote::after {
+    content: '';
+}
+
+blockquote span {
+    color: #333333;
+    font-style: normal;
+    margin-top: 1em;
+}

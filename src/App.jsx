@@ -27,6 +27,7 @@ import {
     fa4,
     fa5,
     fa6,
+    faQuoteLeft,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -54,7 +55,8 @@ library.add(
     fa3,
     fa4,
     fa5,
-    fa6
+    fa6,
+    faQuoteLeft
 );
 
 function App() {
