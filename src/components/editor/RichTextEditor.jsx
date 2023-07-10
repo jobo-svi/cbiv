@@ -18,6 +18,7 @@ import {
     MARK_STRIKETHROUGH,
     MARK_SUPERSCRIPT,
     MARK_SUBSCRIPT,
+    createSoftBreakPlugin,
 } from "@udecode/plate";
 import { createAlignPlugin } from "@udecode/plate-alignment";
 import {
@@ -83,6 +84,7 @@ const plugins = createPlugins(
         createSuperscriptPlugin(),
         createLineHeightPlugin(),
         createTablePlugin(),
+        createSoftBreakPlugin(),
         createIndentPlugin({
             inject: {
                 props: {
