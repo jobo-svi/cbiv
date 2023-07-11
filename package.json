@@ -16,6 +16,7 @@
         "@testing-library/user-event": "^13.5.0",
         "@udecode/plate": "^22.0.1",
         "@udecode/plate-common": "^22.0.1",
+        "@udecode/plate-link": "^22.0.1",
         "@udecode/plate-list": "^22.0.1",
         "@udecode/plate-serializer-html": "^22.0.1",
         "@udecode/plate-utils": "^22.0.1",
