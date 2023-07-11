@@ -3,8 +3,17 @@ import {
   usePlateEditorState,
   someNode,
   focusEditor,
+  getEditorString,
+  findNode,
+  getPluginType,
 } from "@udecode/plate-common";
-import { insertLink, upsertLink, validateUrl } from "@udecode/plate-link";
+import { ELEMENT_LINK } from "@udecode/plate";
+import {
+  insertLink,
+  upsertLink,
+  validateUrl,
+  triggerFloatingLinkInsert,
+} from "@udecode/plate-link";
 
 import MarkButton from "./MarkButton";
 import { useState } from "react";
@@ -40,13 +49,23 @@ const EditorToolbar = () => {
           event.preventDefault();
           event.stopPropagation();
 
-          //focusEditor(editor);
+          const at = editor.selection;
+
+          // selection contains at one edge edge or between the edges
+          const linkEntry = findNode(editor, {
+            at,
+            match: { type: getPluginType(editor, ELEMENT_LINK) },
+          });
+          const [linkNode, linkPath] = linkEntry ?? [];
 
           let url = window.prompt("enter link", "https://google.com");
-          insertLink(editor, { url: url, text: "da text" });
+
+          if (url) {
+            insertLink(editor, { url: url, text: "link text" });
+          }
         }}
       >
-        asdf
+        insert link
       </button>
     </div>
   );
